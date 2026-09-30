@@ -5,9 +5,9 @@
 ## 范围与入口
 
 - 目标远端：`https://github.com/piger114514/VividCode.git`。
-- 本地仓库根目录为课程项目根目录，包含 `CUGB_Graph/`、`Document/`、`PROJECT_BRIEF.md`、`AGENTS.md` 与规划文档。
-- 根目录 `README.md` 为仓库首页；源码详细使用指南仍为 `CUGB_Graph/README.md`。
-- 根目录 `.gitignore` 与现有 `CUGB_Graph/.gitignore` 共同排除编译输出、IDE 个人配置、Python 缓存、`.work`、`.codegraph` 和 `.vividcode`。
+- 本地仓库根目录为课程项目根目录，包含 `VividCode/`、`Document/`、`PROJECT_BRIEF.md`、`AGENTS.md` 与规划文档。
+- 根目录 `README.md` 为仓库首页；源码详细使用指南仍为 `VividCode/README.md`。
+- 根目录 `.gitignore` 与现有 `VividCode/.gitignore` 共同排除编译输出、IDE 个人配置、Python 缓存、`.work`、`.codegraph` 和 `.vividcode`。
 
 ## 用户意图与当前状态
 

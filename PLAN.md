@@ -9,9 +9,9 @@
 
 ## 现状（已核实）
 
-- `CUGB_Graph/ProjectScanner.h` 第 18 行 `extensions` 只含 `c/cc/cpp/cxx/h/hh/hpp/hxx/inl/ipp`，是“扫哪些文件”的唯一入口。
+- `VividCode/ProjectScanner.h` 第 18 行 `extensions` 只含 `c/cc/cpp/cxx/h/hh/hpp/hxx/inl/ipp`，是“扫哪些文件”的唯一入口。
 - 同文件第 19–20 行 `excluded` 只有 C/C++ 生成目录，缺 C#（`bin`/`obj`）和 Python（`__pycache__`/venv/缓存）目录。
-- `CUGB_Graph/CUGB_Graph.cpp` 有几处写死 “C++” 的界面文字：窗口标题、初始提示、文件对话框标题、统计标签、卡片“源文件”。
+- `VividCode/VividCode.cpp` 有几处写死 “C++” 的界面文字：窗口标题、初始提示、文件对话框标题、统计标签、卡片“源文件”。
 - demo 目录只有三份 C++ 文件；CMake 用 `copy_directory` 把 `demo/` 整体复制到产物目录，新增文件会自动带上。
 - `SmokeTest.h` 的断言不受影响：它只创建 `.cpp/.hpp/.h/.txt`，新增扩展名不会改变其结果（`notes.txt` 仍非源码、`build`/`.git` 仍被排除）。
 
@@ -20,15 +20,15 @@
 1. `ProjectScanner.h`：扩展名集合加入 `cs`、`py`、`pyw`、`pyi`（不区分大小写）。
 2. `ProjectScanner.h`：排除目录加入 C#/Python 常见生成与缓存目录：`bin`、`obj`、`__pycache__`、`.venv`、`venv`、`env`、`.pytest_cache`、`.mypy_cache`、`.tox`、`.idea`。
 3. `demo/` 新增 `Greeter.cs` 与 `Greeter.py`，让“打开演示”即可看到效果。
-4. 文档同步：`CUGB_Graph/README.md`、`Document/基础文件浏览.md`、`Document/vividcode代码解析.txt`（扩展名与“找源码文件”表述）、`PROJECT_BRIEF.md` 当前状态。`Document/README.md` 索引表无需改。
+4. 文档同步：`VividCode/README.md`、`Document/基础文件浏览.md`、`Document/vividcode代码解析.txt`（扩展名与“找源码文件”表述）、`PROJECT_BRIEF.md` 当前状态。`Document/README.md` 索引表无需改。
 
 ## Files to modify
 
-- `CUGB_Graph/ProjectScanner.h`
-- `CUGB_Graph/CUGB_Graph.cpp`
-- `CUGB_Graph/demo/Greeter.cs`（新增）
-- `CUGB_Graph/demo/Greeter.py`（新增）
-- `CUGB_Graph/README.md`
+- `VividCode/ProjectScanner.h`
+- `VividCode/VividCode.cpp`
+- `VividCode/demo/Greeter.cs`（新增）
+- `VividCode/demo/Greeter.py`（新增）
+- `VividCode/README.md`
 - `Document/基础文件浏览.md`
 - `Document/vividcode代码解析.txt`
 - `PROJECT_BRIEF.md`
@@ -42,14 +42,14 @@
 ## Steps
 
 - [x] 1. 改 `ProjectScanner.h`：扩展名加 `cs/py/pyw/pyi`；排除目录加 C#/Python 目录
-- [x] 2. 改 `CUGB_Graph.cpp`：5 处界面文字中性化
+- [x] 2. 改 `VividCode.cpp`：5 处界面文字中性化
 - [x] 3. 新增 `demo/Greeter.cs`、`demo/Greeter.py`
 - [x] 4. 更新 `README.md`、`Document/基础文件浏览.md`、`Document/vividcode代码解析.txt`、`PROJECT_BRIEF.md`
 - [x] 5. 构建与验证（见下）
 
 ## Verification
 
-- 运行 `CUGB_Graph/build.ps1`（或 CMake 构建）确认 Release x64 编译通过。
+- 运行 `VividCode/build.ps1`（或 CMake 构建）确认 Release x64 编译通过。
 - `ctest` 跑 `prototype_smoke` 与 `cli_lifecycle`，确认两组仍通过（SmokeTest 断言不因新增扩展名改变）。
 - 手动：运行 `build/Release/vividcode-viewer.exe`，点“打开演示”，应看到 `Greeter.cs`、`Greeter.py` 与三份 C++ 文件；点击任意文件能显示源码。
 - 手动：新建一个含 `.cs`/`.py`/`__pycache__`/`bin` 的临时目录并“打开项目”，确认 `.cs`/`.py` 出现在树中、`__pycache__`/`bin` 被排除、统计数字正确。

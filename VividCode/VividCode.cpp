@@ -1,14 +1,14 @@
-#include "CUGB_Graph.h"
+#include "VividCode.h"
 #include "ProjectScanner.h"
 #include "ProjectStore.h"
 #include "SemanticPanel.h"
 #include "RelationGraph.h"
 #include <QtWidgets>
 
-CUGB_Graph::CUGB_Graph(QWidget *parent) : QMainWindow(parent)
+VividCodeWindow::VividCodeWindow(QWidget *parent) : QMainWindow(parent)
 {
     ui.setupUi(this);
-    setWindowTitle(QStringLiteral("Vivid Code"));
+    setWindowTitle(QStringLiteral("vividcode"));
     resize(1320, 900);
     setMinimumSize(900, 600);
     auto *toolbar = addToolBar(QStringLiteral("项目"));
@@ -114,9 +114,9 @@ CUGB_Graph::CUGB_Graph(QWidget *parent) : QMainWindow(parent)
     rebuildViews();
 }
 
-CUGB_Graph::~CUGB_Graph() = default;
+VividCodeWindow::~VividCodeWindow() = default;
 
-bool CUGB_Graph::openProject(const QString &directory)
+bool VividCodeWindow::openProject(const QString &directory)
 {
     const QFileInfo info(directory);
     if (!info.isDir() || !info.isReadable()) {
@@ -146,7 +146,7 @@ bool CUGB_Graph::openProject(const QString &directory)
     return true;
 }
 
-void CUGB_Graph::rebuildViews()
+void VividCodeWindow::rebuildViews()
 {
     const QSignalBlocker treeBlocker(tree);
     tree->clear();
@@ -175,7 +175,7 @@ void CUGB_Graph::rebuildViews()
     tree->expandToDepth(1);
 }
 
-void CUGB_Graph::showFile(const QString &relativePath)
+void VividCodeWindow::showFile(const QString &relativePath)
 {
     if (!files.contains(relativePath)) return;
     currentFile = relativePath;

@@ -1,12 +1,12 @@
 #pragma once
-#include "CUGB_Graph.h"
+#include "VividCode.h"
 #include "SemanticPanel.h"
 #include "RelationGraphTest.h"
 #include <QtWidgets>
 
 // 可选真实工程验收：显式指定项目与它的真实编译数据库，索引写入项目 .vividcode。
 inline int runRealGraphValidation(QApplication &app, const QString &project, const QString &database) {
-    CUGB_Graph window; window.show();
+    VividCodeWindow window; window.show();
     if (!window.openProject(project)) return 1;
     auto *panel = window.findChild<SemanticPanel *>();
     QEventLoop loop; QTimer deadline; deadline.setSingleShot(true);
@@ -25,14 +25,14 @@ inline int runRealGraphValidation(QApplication &app, const QString &project, con
     if (state.contains("failed") || state.contains(QStringLiteral("失败"))) { qCritical().noquote() << state; return 1; }
     auto *units = panel->findChild<QComboBox *>("semanticUnits");
     int unitIndex = -1;
-    for (int i = 0; i < units->count(); ++i) if (units->itemText(i).startsWith("CUGB_Graph.cpp ")) { unitIndex = i; break; }
+    for (int i = 0; i < units->count(); ++i) if (units->itemText(i).startsWith("VividCode.cpp ")) { unitIndex = i; break; }
     if (unitIndex < 0) { qCritical() << "real project unit missing"; return 1; }
     units->setCurrentIndex(unitIndex);
     auto *symbols = panel->findChild<QTreeWidget *>("semanticSymbols");
     QString focusId;
     for (QTreeWidgetItemIterator it(symbols); *it; ++it) {
         const auto s = (*it)->data(0, Qt::UserRole).toJsonObject();
-        if (s.value("qualified_name").toString() == "CUGB_Graph::openProject") { focusId = s.value("id").toString(); break; }
+        if (s.value("qualified_name").toString() == "VividCodeWindow::openProject") { focusId = s.value("id").toString(); break; }
     }
     auto *focus = panel->findChild<QComboBox *>("semanticFocus");
     if (focusId.isEmpty() || focus->findData(focusId) < 0) return 1;
@@ -83,7 +83,7 @@ inline int runSemanticSmokeTest(QApplication &app) {
     QJsonArray commands{QJsonObject{{"directory", dir.path()}, {"file", "test.cpp"},
         {"arguments", QJsonArray{"clang++", "-std=c++17", "-c", "test.cpp"}}}};
     if (!write("compile_commands.json", QJsonDocument(commands).toJson())) return 1;
-    CUGB_Graph window; window.show(); window.openProject(dir.path());
+    VividCodeWindow window; window.show(); window.openProject(dir.path());
     auto *panel = window.findChild<SemanticPanel *>();
     if (!panel) return 1;
     window.findChild<QTabWidget *>()->setCurrentIndex(1);

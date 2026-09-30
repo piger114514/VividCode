@@ -18,24 +18,24 @@
 在 PowerShell 中进入源码目录后构建：
 
 ```powershell
-cd CUGB_Graph
+cd VividCode
 .\build.ps1
 ```
 
-构建后运行 `CUGB_Graph/build/Release/vividcode-viewer.exe`。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
+构建后运行 `VividCode/build/Release/vividcode-viewer.exe`。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
 
-构建脚本含本机默认依赖路径，其他电脑需按实际安装位置配置；详细说明见 [源码使用指南](CUGB_Graph/README.md) 与 [构建环境与运行](Document/构建环境与运行.md)。干净机器上的完整构建与分发尚未验证。
+构建脚本含本机默认依赖路径，其他电脑需按实际安装位置配置；详细说明见 [源码使用指南](VividCode/README.md) 与 [构建环境与运行](Document/构建环境与运行.md)。干净机器上的完整构建与分发尚未验证。
 
 ## 目录与文档
 
 | 路径 | 用途 |
 | --- | --- |
-| `CUGB_Graph/` | 已有源码工程、分析器、测试、演示与构建脚本 |
+| `VividCode/` | 已有源码工程、分析器、测试、演示与构建脚本 |
 | `Document/` | 功能说明、验证记录与开发交接 |
 | `PROJECT_BRIEF.md` | 项目背景、范围与阶段状态 |
 | `AGENTS.md` | AI 协作规则 |
 
-完整交接入口为 [文档索引](Document/README.md)。保留历史源码目录名 `CUGB_Graph`，正式产品名为 vividcode。
+完整交接入口为 [文档索引](Document/README.md)。源码目录为 `VividCode/`，原始 VS 解决方案为 `VividCode/VividCode.sln`；正式产品名与终端命令为 vividcode。
 
 ## 托管与开源计划
 

@@ -24,6 +24,12 @@ vividcode 定位为用户以后持续使用的真实代码分析与可视化桌�
 
 ## 3. 当前状态与环境事实
 
+### 2026-09-30：工程名称统一为 VividCode
+
+- 用户批准将源码目录改为 VividCode，原始解决方案改为 VividCode.sln，查看器工程改为 VividCode-viewer.vcxproj；控制台工程保留 vividcode.vcxproj。主窗口源码/UI/资源改为 VividCode.cpp/.h/.ui/.qrc，窗口类为 VividCodeWindow，以避开现有 VividCode 命名空间。
+- 程序入口、Qt 生成类型、CMake/VS 工程、测试中的名称和当前文档路径已同步；产品命令仍为 vividcode，生成目录仍为 .vividcode。旧生成缓存与本项目语义索引已备份到 .work/rename-backup。本次 CMake、原始 VS 和独立 Ninja Release 构建成功；CMake 四组 CTest 与原始 VS 产物 CLI/文件浏览/语义界面检查通过。新路径下本工程 10 个 TU 全部重新索引，openProject 调用关系和源码定位验证通过；本项目 .vividcode 副本已更新，当前用户 PATH 已迁移并验证 --help。Debug 未验证。详情见 Document/构建环境与运行.md。
+- 下方旧里程碑保留实际发生时的目录名称；不作为当前运行路径。
+
 ### 2026-09-30：GitHub 私人托管完成
 
 - 用户指定远端 `https://github.com/piger114514/VividCode`，要求目前私人开发，后续准备完成后公开开源；许可证尚未选择。
@@ -258,7 +264,7 @@ AI API、自带密钥、托管套餐、代码差异确认和修改后检查属�
 ## 10. 后续开始工作时的检查顺序
 
 1. 阅读本档案及适用的 AGENTS.md。
-2. 检查 `CUGB_Graph` 的现有工程、文档和未提交修改。
+2. 检查 `VividCode` 的现有工程、文档和未提交修改。
 3. 核实 Qt MSVC 组件及 Visual Studio 项目配置。
 4. 根据用户当次请求选定一个具体里程碑。
 5. 完成对应实现与验证，再更新本档案的状态。

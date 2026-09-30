@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Generation needs the viewer next to the CLI; build it first without linking its executable. -->
-    <ProjectReference Include="CUGB_Graph.vcxproj">
+    <ProjectReference Include="VividCode-viewer.vcxproj">
       <Project>{63FCAE82-3852-43AB-8F3E-15BCD0F7E073}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

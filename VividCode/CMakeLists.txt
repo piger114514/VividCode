@@ -10,10 +10,10 @@ add_library(vividcode_store STATIC ProjectStore.cpp ProjectStore.h ProjectScanne
 target_link_libraries(vividcode_store PUBLIC Qt6::Core)
 add_executable(vividcode cli_main.cpp)
 target_link_libraries(vividcode PRIVATE vividcode_store)
-add_executable(vividcode-viewer WIN32 main.cpp CUGB_Graph.cpp CUGB_Graph.h
+add_executable(vividcode-viewer WIN32 main.cpp VividCode.cpp VividCode.h
     SemanticPanel.cpp SemanticPanel.h
     RelationGraph.cpp RelationGraph.h
-    ProjectScanner.h CUGB_Graph.ui CUGB_Graph.qrc)
+    ProjectScanner.h VividCode.ui VividCode.qrc)
 target_link_libraries(vividcode-viewer PRIVATE Qt6::Widgets vividcode_store)
 if(MSVC)
     foreach(target vividcode vividcode-viewer vividcode_store)

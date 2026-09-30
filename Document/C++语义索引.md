@@ -1,6 +1,6 @@
 # C++ 语义索引
 
-更新日期：2026-09-27。
+更新日期：2026-09-30。
 
 ## 用户已确认的范围
 
@@ -33,7 +33,7 @@
 
 不猜测缺失的编译参数，不执行数据库里的编译命令。支持 Windows arguments 数组、command 字符串、常见 clang++ 和 MSVC/clang-cl 参数、相对 include 和强制包含。首版明确拒绝响应文件 `@file` 和预编译头参数，需从构建系统导出不使用这些参数的命令。
 
-本项目真实编译数据库：`CUGB_Graph/build/semantic-validation/compile_commands.json`。它来自独立 Ninja 构建，保留原始 VS 和常规 CMake 构建入口。其它 CMake 项目需用支持编译数据库的生成器（例如 Ninja），启用 `CMAKE_EXPORT_COMPILE_COMMANDS=ON`；VS 生成器本身不导出该文件。
+本项目真实编译数据库：`VividCode/build/semantic-validation/compile_commands.json`。它来自独立 Ninja 构建，保留原始 VS 和常规 CMake 构建入口。其它 CMake 项目需用支持编译数据库的生成器（例如 Ninja），启用 `CMAKE_EXPORT_COMPILE_COMMANDS=ON`；VS 生成器本身不导出该文件。
 
 ## 缓存与部署
 
@@ -46,14 +46,14 @@
 
 ## 源码入口和运行
 
-| 文件（相对 CUGB_Graph） | 职责 |
+| 文件（相对 VividCode） | 职责 |
 | --- | --- |
 | analyzer/clang_bridge.py | ctypes 绑定 libclang 公开 C API，字符串和游标生命周期 |
 | analyzer/extractor.py | AST 遍历、USR、位置、结构与关系；跳过外部声明子树，补充必要关系终点 |
 | analyzer/analyzer.py | 编译命令、路径检查、互斥、增量、SQLite 事务和 JSONL 协议 |
 | SemanticPanel.h/.cpp | QProcess 异步调用、TU/符号/类型选择、关系图与列表同步、状态、诊断及取消 |
 | RelationGraph.h/.cpp | buildRelationMap 构建类/成员层模型；证据合并、箭头、容器、缩放阈值、拖动及源码联动 |
-| CUGB_Graph.cpp | 页签与项目内源码定位 |
+| VividCode.cpp | 页签与项目内源码定位 |
 | ProjectStore.cpp | 分析运行包部署与生命周期互斥 |
 | prepare-analyzer.ps1 | 下载固定 Python 包并校验固定 SHA-256，复制本机 LLVM DLL/内置头文件及许可证 |
 | tests/test_analyzer.py、SemanticSmokeTest.h、RelationGraphTest.h | 后端真实解析、关系模型与界面端到端测试；可选真实项目验收 |
@@ -68,6 +68,8 @@
 index 输出 JSONL 协议 1（progress/diagnostic/result），失败退出非零；export 输出各 TU 配置与快照的单个 JSON。开发测试可显式设置 VIVIDCODE_LIBCLANG；GUI 清除此覆盖，使用随包 DLL。
 
 ## 已验证
+
+2026-09-30 命名迁移：主窗口为 VividCodeWindow，源码为 VividCode.cpp/.h。本次 CMake 四组 CTest 全部通过，原始 VS 产物的语义界面测试通过；新路径的 Ninja 编译数据库已实际编译验证。旧 .vividcode/semantic 备份后重新生成，新索引 10 个 TU 全部成功，真实关系图中 VividCodeWindow::openProject → scanProject 的调用处和头文件定义定位通过。旧编译数据库与旧索引不再作为当前数据使用。
 
 2026-09-27 关系图阶段：基础关系图版本的四组 CTest 已通过，真实工程 10 个 TU 索引成功，已核对 openProject → scanProject 的调用处和头文件定义。地图式类/成员层级的中间版本通过两组界面检查，之后补充了类双击展开及原始证据说明。最终版本已完成编译；用户明确要求完成后结束、不再检验，未对最后改动追加测试或真实工程重验。不要把此前检查写成最终版本已经完整验收。
 

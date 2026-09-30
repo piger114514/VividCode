@@ -1,3 +1,8 @@
+2026-09-30 工程命名更新：源码目录 VividCode/，原始 VS 解决方案 VividCode.sln。
+查看器工程 VividCode-viewer.vcxproj 使用 main.cpp，控制台工程 vividcode.vcxproj 使用 cli_main.cpp。
+VividCode.ui 自动生成 ui_VividCode.h；该生成文件不手工改名或编辑。
+本次 CMake 四组 CTest 及原始 VS 产物检查通过，新路径下 10 个真实 TU 索引及调用关系源码定位通过；PATH 已迁移。完整结果见 Document/构建环境与运行.md。
+
 2026-09-27 最新功能说明：真实关系图与类成员分层缩放
 
 原“文件概览”卡片画布已被真实 C++ 关系图替换。文件树继续用于多语言源码浏览。
@@ -6,7 +11,7 @@
 点击节点优先打开定义，缺少定义时打开声明；点击连线打开实际关系位置，同一连线有多处证据时可切换位置。
 
 当前代码入口与调用流程：
-1. CUGB_Graph.cpp 的 openProject、scanProject、rebuildViews 负责项目与文件树，showFile 负责只读源码。rebuildViews 不再创建文件卡片。
+1. VividCode.cpp 的 openProject、scanProject、rebuildViews 负责项目与文件树，showFile 负责只读源码。rebuildViews 不再创建文件卡片。
 2. SemanticPanel.cpp 管理索引进程、编译单元、符号选择及关系类型，连接 RelationGraph 和结构/关系列表。
 3. RelationGraph.cpp 的 buildRelationMap 使用真实符号 ID、parent_id 和原始关系 sites 建立显示模型。ID 区分重载，parent_id 表示索引得到的归属，不根据函数名字猜测所属类。
 4. 缩小时把类内部符号合并到所属类，跨类关系汇总但保留原始源码位置；类内部关系此时隐藏并计数。放大后显示实际符号和关系。没有已知类归属的项目符号按文件归组，缺少归属信息的外部符号明确显示在“项目外依赖”。
@@ -39,10 +44,10 @@ Release 与四组测试通过，包含本项目 9 个真实 TU 验证；完整�
 ============================================================
 
 本项目源码目录是：
-E:\CUGB\大二上\设计思维与创新创业\CUGB_Graph
+E:\CUGB\大二上\设计思维与创新创业\VividCode
 
-vividcode 是你正式确定的产品名。目录名和窗口类名暂时沿用 CUGB_Graph，
-这是内部名称，不妨碍程序显示为 vividcode，也不妨碍使用 vividcode 命令。
+vividcode 是产品名和命令名。源码目录为 VividCode，窗口类名为 VividCodeWindow。
+VividCode 同时是记录管理的命名空间，因此窗口类使用 VividCodeWindow 避免名称冲突。
 
 本次开发中，AI 在原有 Qt 空白工程上编写了：
   1. 文件扫描、目录树、真实关系图和只读源码界面。
@@ -81,7 +86,7 @@ AI 开发时使用 CodeGraph 帮助阅读代码，与 vividcode 运行时使用�
       └─ --c → VividCode::cleanHistory()
 
   main.cpp
-      └─ CUGB_Graph 窗口
+      └─ VividCodeWindow 窗口
           └─ openProject()
               ├─ scanProject()：找文件
               ├─ rebuildViews()：更新树和卡片
@@ -303,9 +308,9 @@ main.cpp 创建 QApplication，而不是 CLI 使用的 QCoreApplication。
   app.setPalette(...)：QPalette 指定背景、正文、按钮、选中项和禁用文字的颜色。
   app.setStyleSheet(...)：像 CSS 一样设置工具栏、输入框、页签和按钮的具体外观。
 当前 Window 为 #101010，Base 为 #181818，Text/WindowText 为 #f0f0f0。
-CUGB_Graph.cpp 里的画布和文件卡片不是普通文字控件，还需要设置画刷；
+VividCode.cpp 里的画布和文件卡片不是普通文字控件，还需要设置画刷；
 setBackgroundBrush 设置画布底色，setBrush 设置卡片文字和填充颜色。
-界面主要由 CUGB_Graph.cpp 创建，因此只改 .ui 文件未必能改变这些控件。
+界面主要由 VividCode.cpp 创建，因此只改 .ui 文件未必能改变这些控件。
 修改后要重新编译并重启查看器。本次 build/Release 新程序已通过两组界面检查，
 并目视检查 prototype-preview.png；没有主题切换按钮。
 
@@ -324,7 +329,7 @@ app.exec() 是事件循环：
 从普通 build/Release 目录双击查看器时，没有所属项目可自动定位。
 此时可以点击“打开项目”或“打开演示”，也可以传入项目目录参数。
 
-九、CUGB_Graph.h/.cpp：窗口是怎么工作的
+九、VividCode.h/.cpp：窗口是怎么工作的
 ============================================================
 
 .h 头文件主要声明“有哪些成员和函数”；.cpp 实现“函数具体怎么做”。
@@ -533,8 +538,8 @@ vividcode 的 .vividcode 仍然只管理 vividcode 自己生成的文件。
 
 第一遍：只读 cli_main.cpp，理解“参数 → 分支 → 函数 → 返回结果”。
 第二遍：读 ProjectScanner.h，理解目录列表和文件列表如何变化。
-第三遍：读 main.cpp 和 CUGB_Graph.h，认识窗口入口和成员变量。
-第四遍：读 CUGB_Graph.cpp 的 openProject、showFile、connect。
+第三遍：读 main.cpp 和 VividCode.h，认识窗口入口和成员变量。
+第四遍：读 VividCode.cpp 的 openProject、showFile、connect。
 第五遍：读 ProjectStore.cpp 的 generate、recordSnapshot、cleanHistory、removeGenerated。
 最后再研究内部的路径校验、锁和异常转换，不必一开始就记住所有 Qt API。
 
@@ -553,13 +558,13 @@ vividcode 的 .vividcode 仍然只管理 vividcode 自己生成的文件。
 十六、在 Visual Studio 中找到控制台入口
 ============================================================
 
-原始 CUGB_Graph/CUGB_Graph.sln 已加入独立的 vividcode.vcxproj。
+原始 VividCode/VividCode.sln 已加入独立的 vividcode.vcxproj。
 重新加载解决方案后，展开 vividcode → Source Files → cli_main.cpp。
 Source Files 是 VS 的逻辑分组，由 .vcxproj.filters 配置；不是磁盘上必须存在的同名文件夹。
 .sln 管理项目，.vcxproj 管理参与编译的文件，.filters 管理这些文件在 IDE 中怎样分组。
 cli_main.cpp 和 main.cpp 各有一个 main()，因此分别编译到控制台和查看器两个程序。
 
-使用 Release / x64 生成整个解决方案，产物位于 CUGB_Graph/x64/Release。
+使用 Release / x64 生成整个解决方案，产物位于 VividCode/x64/Release。
 控制台项目会先构建查看器，再部署 Qt 依赖和 demo。
 此输出已通过 --help、CLI 生命周期和 GUI 冒烟检查；Debug 尚未验证。
 CMake 输出仍在 build/Release，当前用户 PATH 指向这套输出。

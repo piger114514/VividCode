@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -111,16 +111,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <QtRcc Include="CUGB_Graph.qrc"/>
-    <QtUic Include="CUGB_Graph.ui"/>
-    <QtMoc Include="CUGB_Graph.h"/>
+    <QtRcc Include="VividCode.qrc"/>
+    <QtUic Include="VividCode.ui"/>
+    <QtMoc Include="VividCode.h"/>
     <QtMoc Include="SemanticPanel.h"/>
     <QtMoc Include="RelationGraph.h"/>
     <ClInclude Include="SemanticSmokeTest.h"/>
     <ClInclude Include="RelationGraphTest.h"/>
     <ClCompile Include="RelationGraph.cpp"/>
     <ClCompile Include="SemanticPanel.cpp"/>
-    <ClCompile Include="CUGB_Graph.cpp"/>
+    <ClCompile Include="VividCode.cpp"/>
     <ClCompile Include="main.cpp"/>
     <ClCompile Include="ProjectStore.cpp"/>
 

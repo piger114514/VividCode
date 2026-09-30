@@ -1,5 +1,5 @@
 #pragma once
-#include "CUGB_Graph.h"
+#include "VividCode.h"
 #include "ProjectScanner.h"
 #include <QtWidgets>
 
@@ -29,7 +29,7 @@ inline int runSmokeTest(QApplication &app)
         !write("notes.txt", "not source")) return 1;
     auto result = scanProject(root.path());
     if (!require(result.files.size() == 2 && result.skippedDirectories == 2, "scan and exclusions")) return 1;
-    CUGB_Graph window;
+    VividCodeWindow window;
     if (!require(window.openProject(root.path()), "open project")) return 1;
     window.show(); app.processEvents();
     auto *tree = window.findChild<QTreeWidget *>("fileTree");

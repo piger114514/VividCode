@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UI version="4.0" >
- <class>CUGB_GraphClass</class>
- <widget class="QMainWindow" name="CUGB_GraphClass" >
+ <class>VividCodeWindow</class>
+ <widget class="QMainWindow" name="VividCodeWindow" >
   <property name="objectName" >
-   <string notr="true">CUGB_GraphClass</string>
+   <string notr="true">VividCodeWindow</string>
   </property>
   <property name="geometry" >
    <rect>
@@ -23,7 +23,7 @@
  <layoutDefault spacing="6" margin="11" />
  <pixmapfunction></pixmapfunction>
  <resources>
-   <include location="CUGB_Graph.qrc"/>
+   <include location="VividCode.qrc"/>
  </resources>
  <connections/>
 </UI>

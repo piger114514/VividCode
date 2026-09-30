@@ -67,7 +67,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 脚本依次配置、编译 Release、部署 Qt DLL/插件、运行自动检查。Qt 安装位置不同时，使用 `-QtRoot` 参数；CMake 位置不同时，使用 `-CMake` 参数。本机 Qt 自带 CMake 曾在读取缓存时崩溃，脚本采用 `--fresh` 重新配置以避开该问题。
 
-原始 `CUGB_Graph.sln` 保留历史文件名，现包含 `vividcode-viewer` 和独立控制台项目 `vividcode`，依赖 Qt VS Tools 提供的 QtMsBuild。重新加载解决方案后，在 `vividcode → Source Files` 下可找到 `cli_main.cpp`。选择 **Release / x64** 生成解决方案，输出在 `x64/Release`；此构建及产物的 CLI 生命周期、GUI 冒烟检查已通过，Debug 尚未验证。调试窗口时将 vividcode-viewer 设为启动项目；调试控制台时选择 vividcode，默认参数为 --help。
+原始 `VividCode.sln` 现包含 `vividcode-viewer` 和独立控制台项目 `vividcode`，依赖 Qt VS Tools 提供的 QtMsBuild。重新加载解决方案后，在 `vividcode → Source Files` 下可找到 `cli_main.cpp`。选择 **Release / x64** 生成解决方案，输出在 `x64/Release`；此构建及产物的 CLI 生命周期、GUI 冒烟检查已通过，Debug 尚未验证。调试窗口时将 vividcode-viewer 设为启动项目；调试控制台时选择 vividcode，默认参数为 --help。
 
 CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcode.sln`，输出在 `build/Release`。不要编辑 CMake 生成的工程文件。现有用户 PATH 仍指向这套 CMake 输出；验证原始 VS 新产物时使用 `x64/Release` 中 exe 的完整路径。
 
@@ -80,16 +80,16 @@ CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcod
 | `main.cpp` | 创建 QApplication、创建窗口、进入事件循环 |
 | `cli_main.cpp` | 控制台参数解析，分派 --g/--d/--c |
 | `ProjectStore.h/.cpp` | 项目运行文件生成、记录保存、历史清理和限定目录删除 |
-| `CUGB_Graph.h` | 主窗口有哪些控件和状态，以及对外提供的打开项目函数 |
-| `CUGB_Graph.cpp` | 组装布局，使用 connect 连接按钮、文件选择与处理逻辑 |
+| `VividCode.h` | 主窗口有哪些控件和状态，以及对外提供的打开项目函数 |
+| `VividCode.cpp` | 组装布局，使用 connect 连接按钮、文件选择与处理逻辑 |
 | `ProjectScanner.h` | 遍历文件夹、筛选扩展名、排除生成目录，返回相对路径 |
 | `SemanticPanel.h/.cpp` | 导入索引、选择编译单元和符号、共享关系图与列表的筛选条件 |
 | `RelationGraph.h/.cpp` | 根据真实符号 ID 和 parent_id 建立分层关系图，绘制节点与箭头，处理缩放与源码导航 |
-| `CUGB_Graph.ui` | 原始 Qt Designer 主窗口外壳；基础版主要布局在 C++ 中创建 |
+| `VividCode.ui` | 原始 Qt Designer 主窗口外壳；基础版主要布局在 C++ 中创建 |
 | `SmokeTest.h` | 在临时目录中验证扫描、选中、刷新和异常输入 |
 | `CMakeLists.txt` | 指定源文件，启用 Qt 的 moc/uic/rcc，链接 Widgets |
 
-建议先在 `CUGB_Graph.cpp` 中修改窗口标题或按钮文字，执行 `build.ps1`，亲自走一遍“修改 → 编译 → 运行”。随后再研究 `openProject → scanProject → rebuildViews → showFile` 这条流程。
+建议先在 `VividCode.cpp` 中修改窗口标题或按钮文字，执行 `build.ps1`，亲自走一遍“修改 → 编译 → 运行”。随后再研究 `openProject → scanProject → rebuildViews → showFile` 这条流程。
 
 ## 当前范围与限制
 
@@ -101,6 +101,8 @@ CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcod
 - 每次打开或刷新重新扫描；已初始化项目会更新文件级历史记录。C++ 语义索引通过 SQLite 缓存，后台检查编译配置和文件变化；没有后台文件自动监控、布局持久化或最近项目恢复。
 - C++ 支持类、成员、函数、继承、直接调用及成员引用；关系图基于实际索引，外部符号缺少归属信息时明确归入“项目外依赖”。变量读写细分、其它语言语义分析、全项目关系图和 AI 接口尚未实现。
 
-最新构建：CMake 和原始 VS Release x64 均编译成功。基础关系图此前四组 CTest 通过，本工程 10 个真实编译单元解析及源码定位验证通过；中间分层版本两组界面检查通过。最后交互调整按用户要求不再追加检验，不将此前结果当作最终版本完整验收。原工程目录和内部 CUGB_Graph 类名保留用于兼容，不影响 vividcode 的产品名。
+最新构建：CMake 和原始 VS Release x64 均编译成功。基础关系图此前四组 CTest 通过，本工程 10 个真实编译单元解析及源码定位验证通过；中间分层版本两组界面检查通过。最后交互调整按用户要求不再追加检验，不将此前结果当作最终版本完整验收。2026-09-30 已将源码目录改为 VividCode，主窗口类改为 VividCodeWindow，源码文件改为 VividCode.h/.cpp；本次验证见构建环境与运行文档。
 
 用户已确定当前先实现真实关系及地图式类成员展开，本轮功能已完成。后续扩展以新的需求为准。
+
+2026-09-30 命名迁移验证：CMake/原始 VS/Ninja Release 构建成功；四组 CTest、原始 VS 产物 CLI 和界面检查通过；新路径的 10 个 TU 真实索引与调用关系源码定位通过。当前命令 PATH 指向 VividCode/build/Release，旧终端需重开。

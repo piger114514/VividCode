@@ -1,4 +1,4 @@
-#include "CUGB_Graph.h"
+#include "VividCode.h"
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyleFactory>
 #include "SmokeTest.h"
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-    CUGB_Graph window;
+    VividCodeWindow window;
     // 可把项目目录作为参数传入；每次打开都重新扫描磁盘。
     if (app.arguments().contains("--verify-startup"))
         return !generatedProject.isEmpty() && window.openProject(generatedProject) ? 0 : 1;
