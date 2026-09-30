@@ -13,7 +13,7 @@
 
 用户要求目前私人托管，后续准备完成后公开开源；尚未确定许可证。不要擅自公开仓库或选择许可证。
 
-已在根目录初始化 Git，分支为 `main`，`origin` 指向目标远端。GitHub API 已确认仓库为 `private`，当前账户具有推送权限；首次检查远端为空。本地首次提交准备完成，推送结果将在远端比对后记录。
+已在根目录初始化 Git，分支为 `main`，`origin` 指向目标远端。GitHub API 已确认仓库为 `private`，当前账户具有推送权限。首次提交 `4273fd5` 已推送成功，并通过 `git ls-remote` 确认远端 main 与本地提交一致；本地 main 已跟踪 origin/main。
 
 本次由沙箱建立 `.git`，与 Windows 用户身份不同。已在用户 Git 配置中仅将本项目绝对路径加入 `safe.directory`，便于后续正常使用 Git，未设置通配信任。
 
@@ -36,3 +36,4 @@
 - 对待上传文件扫描常见 GitHub/API 令牌和私钥头格式，未发现匹配；这不等同于全面的秘密信息审计。
 - `git diff --cached --check` 发现原有文件末尾额外空行；保留原文件，禁用该项格式告警后的检查通过，没有为托管任务改动产品源码。
 - GitHub 认证已完成，API 确认 `private: true`、`permissions.push: true`，`git ls-remote origin` 确认首次推送前远端无分支。
+- 首次推送后，本地 HEAD 与远端 main 同为 `4273fd5e999d0cf1734c060c90e236656698a645`，工作区干净；随后以文档提交记录本次验收结果。
