@@ -1,0 +1,30 @@
+# Local tools and generated project data
+.work/
+.codegraph/
+.vividcode/
+.vividcode.lock
+.vividcode-viewer.lock
+
+# Build outputs and IDE-local settings
+.vs/
+build/
+build-*/
+cmake-build-*/
+out/
+x64/
+x86/
+Debug/
+Release/
+*.user
+*.suo
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local credentials
+.env
+.env.*
+!.env.example

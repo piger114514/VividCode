@@ -1,0 +1,8 @@
+.vs/
+build/
+x64/
+**/x64/
+*.user
+.vividcode/
+.vividcode.lock
+.vividcode-viewer.lock
