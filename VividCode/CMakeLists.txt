@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
 add_library(vividcode_store STATIC ProjectStore.cpp ProjectStore.h ProjectScanner.h SharedRuntime.h)
 target_link_libraries(vividcode_store PUBLIC Qt6::Core)
 add_executable(vividcode cli_main.cpp)
@@ -12,8 +12,8 @@ target_link_libraries(vividcode PRIVATE vividcode_store)
 add_executable(vividcode-viewer WIN32 main.cpp VividCode.cpp VividCode.h
     SemanticPanel.cpp SemanticPanel.h
     RelationGraph.cpp RelationGraph.h
-    ProjectScanner.h VividCode.ui)
-target_link_libraries(vividcode-viewer PRIVATE Qt6::Widgets vividcode_store)
+    ProjectScanner.h ProjectDetection.h UnifiedGraphStore.h SourcePopup.h VividCode.ui)
+target_link_libraries(vividcode-viewer PRIVATE Qt6::Widgets Qt6::Sql vividcode_store)
 if(MSVC)
     foreach(target vividcode vividcode-viewer vividcode_store)
         target_compile_options(${target} PRIVATE /utf-8 /W4)
@@ -39,3 +39,9 @@ set_tests_properties(semantic_backend PROPERTIES ENVIRONMENT "VIVIDCODE_LIBCLANG
 add_test(NAME semantic_ui COMMAND powershell -NoProfile -ExecutionPolicy Bypass
     -File "${CMAKE_CURRENT_SOURCE_DIR}/tests/shared-viewer.Tests.ps1" -RuntimeDirectory "$<TARGET_FILE_DIR:vividcode>")
 set_tests_properties(semantic_ui PROPERTIES TIMEOUT 120)
+add_test(NAME csharp_backend COMMAND "$<TARGET_FILE_DIR:vividcode>/analyzer/python/python.exe" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csharp_analyzer.py" -v)
+set_tests_properties(csharp_backend PROPERTIES ENVIRONMENT "VIVIDCODE_CSHARP_ANALYZER=$<TARGET_FILE_DIR:vividcode>/csharp-analyzer/vividcode-csharp.exe" TIMEOUT 300)
+
+add_test(NAME csharp_ui COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+    -File "${CMAKE_CURRENT_SOURCE_DIR}/tests/shared-viewer.Tests.ps1" -RuntimeDirectory "$<TARGET_FILE_DIR:vividcode>" -CSharp)
+set_tests_properties(csharp_ui PROPERTIES TIMEOUT 150)

@@ -1,19 +1,20 @@
 # vividcode
 
-面向代码理解的桌面分析与可视化工具，使用 C++ / Qt 构建界面，使用独立 Python / libclang 分析进程解析 C++。
+面向代码理解的桌面分析与可视化工具，使用 C++ / Qt 构建界面，使用独立 Python / libclang 分析 C++，使用 C# / Roslyn 分析 C#。
 
 ## 当前能力
 
 - 浏览 C/C++、C#、Python、JavaScript/TypeScript 和 Java 源文件。
 - 导入 C++ 编译数据库，查看类、成员、函数、继承、直接调用和成员引用。
+- 导入 C# .csproj/.sln，查看跨文件/跨项目调用、继承、接口实现及成员引用。
 - 在关系图中缩放展开类成员，点击符号或关系位置定位源码。
 - 使用 `vividcode -g` 生成项目启动器和 JSON 历史、`-c` 清理旧记录、`-d` 删除当前项目记录及集中缓存。
 
-其它语言目前仅支持文件浏览。C++ 关系图按编译单元和配置展示局部关系；全项目关系图、其它语言语义分析及 AI 修改功能尚未实现。
+Python、JavaScript/TypeScript、Java 目前仅支持文件浏览。C++ 按编译单元/配置展示局部关系；C# 可查看已加载配置的多项目汇总。动态目标推断、C++ 全项目图及 AI 修改尚未实现。C# 操作与验证边界见 [C# 语义索引](Document/C%23语义索引.md)。
 
 ## 构建与运行
 
-当前主要开发环境为 Windows、Visual Studio 2022 C++ 工具链、Qt 6.11.2 MSVC 64 位和 LLVM/libclang。分析运行包准备脚本使用 Python 3.13.7 embeddable；首次准备需要联网获取 Python，并读取本机 LLVM 文件。
+当前主要开发环境为 Windows、Visual Studio 2022 C++ 工具链、Qt 6.11.2 MSVC 64 位和 LLVM/libclang，以及 .NET SDK。分析运行包准备脚本使用 Python 3.13.7 embeddable；首次准备需要联网获取 Python，并读取本机 LLVM 文件。
 
 在 PowerShell 中进入源码目录后构建：
 
@@ -23,7 +24,7 @@ cd VividCode
 .\install-command.ps1
 ```
 
-安装后共享程序位于 `%LOCALAPPDATA%/vividcode/runtime`，所有项目共用其中的 Qt/Python/libclang；语义缓存集中按项目保存。进入真实项目执行 `vividcode -g`，双击 `.vividcode/vividcode-viewer.exe` 小启动器打开该项目。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
+安装后共享程序位于 `%LOCALAPPDATA%/vividcode/runtime`，所有项目共用其中的 Qt/Python/libclang/Roslyn；语义缓存集中按项目保存。进入真实项目执行 `vividcode -g`，双击 `.vividcode/vividcode-viewer.exe` 小启动器打开该项目。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
 
 构建脚本含本机默认依赖路径，其他电脑需按实际安装位置配置；详细说明见 [源码使用指南](VividCode/README.md) 与 [构建环境与运行](Document/构建环境与运行.md)。干净机器上的完整构建与分发尚未验证。
 

@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $buildDir = Join-Path $PSScriptRoot 'build'
 & "$PSScriptRoot\prepare-analyzer.ps1"
+& "$PSScriptRoot\prepare-csharp-analyzer.ps1"
 if (!(Test-Path -LiteralPath "$QtRoot\bin\windeployqt.exe")) { throw "Qt MSVC kit missing: $QtRoot" }
 if (!(Test-Path -LiteralPath $CMake)) { throw "CMake missing: $CMake" }
 # Qt bundled CMake 3.30.5 crashed on cached configuration on this machine.

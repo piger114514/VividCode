@@ -38,12 +38,12 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>6.11.2_msvc2022_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;sql</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>6.11.2_msvc2022_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;sql</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound"
@@ -77,6 +77,10 @@
     <ClInclude Include="ProjectScanner.h" />
     <ClInclude Include="SharedRuntime.h" />
     <ClInclude Include="SmokeTest.h" />
+    <ClInclude Include="SourcePopup.h" />
+    <ClInclude Include="UiTestHelpers.h" />
+    <ClInclude Include="ProjectDetection.h" />
+    <ClInclude Include="UnifiedGraphStore.h" />
     <ClInclude Include="ProjectStore.h" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
@@ -116,6 +120,7 @@
     <QtMoc Include="VividCode.h"/>
     <QtMoc Include="SemanticPanel.h"/>
     <QtMoc Include="RelationGraph.h"/>
+    <ClInclude Include="CSharpSmokeTest.h"/>
     <ClInclude Include="SemanticSmokeTest.h"/>
     <ClInclude Include="RelationGraphTest.h"/>
     <ClCompile Include="RelationGraph.cpp"/>

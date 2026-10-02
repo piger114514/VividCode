@@ -17,6 +17,8 @@ Debug/
 Release/
 *.user
 *.suo
+bin/
+obj/
 
 # Python caches and local environments
 __pycache__/

@@ -117,7 +117,7 @@ QJsonObject loadManifest(const QString &directory)
     const auto manifest = readJson(directory + "/project.json");
     if (manifest.value("app") != "vividcode" || manifest.value("schema").toInt() != 1 ||
         !manifest.value("history").isArray() || !manifest.value("latest").isString())
-        fail(QStringLiteral(".vividcode 不是受支持的 vividcode 项目，未修改其内容。"));
+        fail(QStringLiteral(".vividcode 不是受支持的 vividcode 项目。"));
     QSet<QString> ids;
     for (const auto &value : manifest.value("history").toArray()) {
         const auto id = value.toString();
@@ -126,7 +126,7 @@ QJsonObject loadManifest(const QString &directory)
     }
     const QString latest = manifest.value("latest").toString();
     if ((!latest.isEmpty() && !ids.contains(latest)) || (latest.isEmpty() && !ids.isEmpty()))
-        fail(QStringLiteral("最新记录指针无效，未修改历史。"));
+        fail(QStringLiteral("最新记录指针无效。"));
     return manifest;
 }
 
@@ -143,13 +143,13 @@ QJsonObject loadRecord(const QString &directory, const QString &id)
 QString recordSnapshot(StoreAccess &store, QJsonObject manifest)
 {
     const ScanResult scan = scanProject(store.root);
-    if (scan.truncated) fail(QStringLiteral("扫描达到上限，未保存不完整记录。请选择更小的项目。"));
+    if (scan.truncated) fail(QStringLiteral("扫描达到上限。请选择更小的项目。"));
     QJsonArray files;
     for (const auto &relative : scan.files) {
         const QString path = QDir(store.root).filePath(relative);
         if (isLink(path)) fail(QStringLiteral("源码文件在扫描后变成链接：") + path);
         QFile file(path);
-        if (!file.open(QIODevice::ReadOnly)) fail(QStringLiteral("源码读取失败，未保存新记录：") + relative);
+        if (!file.open(QIODevice::ReadOnly)) fail(QStringLiteral("源码读取失败：") + relative);
         QCryptographicHash hash(QCryptographicHash::Sha256);
         const qint64 size = file.size();
         if (!hash.addData(&file) || file.error() != QFileDevice::NoError || file.size() != size)
@@ -161,7 +161,7 @@ QString recordSnapshot(StoreAccess &store, QJsonObject manifest)
         QJsonDocument(files).toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex());
     const QString latest = manifest.value("latest").toString();
     if (!latest.isEmpty() && loadRecord(store.directory, latest).value("fingerprint") == fingerprint)
-        return QStringLiteral("代码未变化，继续保留最新记录：") + latest;
+        return QStringLiteral("未检测到更改代码：") + latest;
 
     const QString id = "record-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
     const QString recordDirectory = store.directory + "/records/" + id;

@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         "在目标项目目录执行：\n"
         "  vividcode -g    生成/更新 .vividcode 启动器与 JSON 记录\n"
         "  vividcode -d    删除当前 .vividcode 及本项目共享索引\n"
-        "  vividcode -c    清理旧记录，仅保留最新成功保存的一份\n"
+        "  vividcode -c    清理旧记录\n"
         "  vividcode -help 显示帮助\n");
     if (args.size() == 1 || (args.size() == 2 && command == "-help")) { out << help; return 0; }
     if (args.size() != 2 || !QStringList{"-g", "-d", "-c"}.contains(command)) {

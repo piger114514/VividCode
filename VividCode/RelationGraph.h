@@ -9,6 +9,7 @@ class QGraphicsScene;
 class QGraphicsView;
 class QLabel;
 class QComboBox;
+class QMenu;
 
 struct RelationEdge {
     QString source, target, type, confidence;
@@ -43,9 +44,12 @@ public:
     void zoomBy(qreal factor);
     void setZoomLevel(qreal level);
     void fitGraph();
+    void showContextMenu(const QPoint &point);
 signals:
     void sourceRequested(const QString &path, int line, int column);
     void focusRequested(const QString &id);
+    void refreshRequested();
+    void contextMenuRequested(QMenu *menu);
 private:
     void inspectSelection();
     void renderMap();

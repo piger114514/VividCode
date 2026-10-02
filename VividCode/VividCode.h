@@ -9,6 +9,7 @@ class QPlainTextEdit;
 class QLineEdit;
 class QLabel;
 class SemanticPanel;
+class SourcePopup;
 
 class VividCodeWindow : public QMainWindow
 {
@@ -22,15 +23,14 @@ public:
 private:
     Ui::VividCodeWindow ui;
     void rebuildViews();
-    void showFile(const QString &relativePath);
+    void showFile(const QString &relativePath, int line = 1, int column = 1);
     QString rootPath;
     QString currentFile;
     QStringList files;
     QTreeWidget *tree;
-    QPlainTextEdit *code;
+    SourcePopup *sourcePopup;
     QLineEdit *filter;
     QLabel *projectLabel;
-    QLabel *fileLabel;
     SemanticPanel *semantic;
 };
 

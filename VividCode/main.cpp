@@ -3,6 +3,7 @@
 #include <QtWidgets/QStyleFactory>
 #include "SmokeTest.h"
 #include "SemanticSmokeTest.h"
+#include "CSharpSmokeTest.h"
 #include "SharedRuntime.h"
 #include <memory>
 
@@ -67,6 +68,7 @@ int main(int argc, char *argv[])
     }
     if (app.arguments().contains("--self-test")) return runSmokeTest(app);
     if (app.arguments().contains("--semantic-test")) return runSemanticSmokeTest(app);
+    if (app.arguments().contains("--csharp-test")) return runCSharpSmokeTest(app);
     const auto args = app.arguments();
     QString project;
     const int option = args.indexOf("--project");

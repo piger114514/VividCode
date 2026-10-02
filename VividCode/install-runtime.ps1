@@ -39,10 +39,14 @@ function Digest([string]$path) {
     try { [Convert]::ToBase64String($algorithm.ComputeHash($stream)) } finally { $stream.Dispose(); $algorithm.Dispose() }
 }
 $required = @('vividcode.exe','vividcode-viewer.exe','vividcode-launcher.exe','Qt6Core.dll','Qt6Gui.dll','Qt6Widgets.dll',
-    'platforms\qwindows.dll','analyzer\analyzer.py','analyzer\extractor.py','analyzer\clang_bridge.py',
+    'Qt6Sql.dll','sqldrivers\qsqlite.dll','platforms\qwindows.dll','analyzer\analyzer.py','analyzer\extractor.py','analyzer\clang_bridge.py',
     'analyzer\python\python.exe','analyzer\python\python313.dll','analyzer\python\python313.zip',
     'analyzer\python\python313._pth','analyzer\python\_sqlite3.pyd','analyzer\python\sqlite3.dll',
-    'analyzer\lib\libclang.dll','analyzer\lib\clang\23\include\stddef.h','analyzer\runtime.json')
+    'analyzer\lib\libclang.dll','analyzer\lib\clang\23\include\stddef.h','analyzer\runtime.json',
+    'csharp-analyzer\vividcode-csharp.exe','csharp-analyzer\vividcode-csharp.dll',
+    'csharp-analyzer\vividcode-csharp.runtimeconfig.json','csharp-analyzer\vividcode-csharp.deps.json',
+    'csharp-analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces.dll','csharp-analyzer\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll',
+    'csharp-analyzer\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll')
 AssertPlainParents $sharedHome
 foreach ($name in $required) {
     if (!(Test-Path -LiteralPath (Join-Path $source $name) -PathType Leaf)) { throw "Incomplete source runtime: $name" }
@@ -66,7 +70,7 @@ try {
     $files = @()
     foreach ($name in @('vividcode.exe','vividcode-viewer.exe','vividcode-launcher.exe')) { $files += Get-Item -LiteralPath (Join-Path $source $name) }
     $files += Get-ChildItem -LiteralPath $source -File -Filter '*.dll'
-    foreach ($name in @('analyzer','platforms','styles','imageformats','iconengines','networkinformation','tls','generic')) {
+    foreach ($name in @('analyzer','csharp-analyzer','platforms','sqldrivers','styles','imageformats','iconengines','networkinformation','tls','generic')) {
         $folder = Join-Path $source $name
         if (Test-Path -LiteralPath $folder) { AssertPlainTree $folder; $files += Get-ChildItem -LiteralPath $folder -Recurse -File -Force }
     }

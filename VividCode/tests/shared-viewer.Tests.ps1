@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$RuntimeDirectory)
+param([Parameter(Mandatory=$true)][string]$RuntimeDirectory, [switch]$CSharp)
 $ErrorActionPreference = 'Stop'
 $testBase = Join-Path (Split-Path $RuntimeDirectory) 'shared-viewer-test-work'
 $testRoot = Join-Path $testBase ([guid]::NewGuid().ToString('N'))
@@ -9,7 +9,7 @@ try {
     & (Join-Path $PSScriptRoot '../install-runtime.ps1') -RuntimeDirectory $RuntimeDirectory -HomeDirectory $env:VIVIDCODE_HOME
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = Join-Path $env:VIVIDCODE_HOME 'runtime\vividcode-viewer.exe'
-    $start.Arguments = '--semantic-test -platform offscreen'
+    $start.Arguments = if ($CSharp) { '--csharp-test -platform offscreen' } else { '--semantic-test -platform offscreen' }
     $start.UseShellExecute = $false; $start.CreateNoWindow = $true
     $start.RedirectStandardError = $true
     $process = [Diagnostics.Process]::Start($start)
@@ -18,6 +18,11 @@ try {
     $output = $outputTask.GetAwaiter().GetResult()
     if ($process.ExitCode -ne 0) { throw "Shared viewer failed: $output" }
     $process.Dispose()
+    if ($CSharp) {
+        foreach ($name in @('csharp-relation-preview.png','csharp-solution-preview.png','mixed-language-preview.png','source-popup-preview.png')) {
+            Copy-Item -LiteralPath (Join-Path $env:VIVIDCODE_HOME "runtime\$name") -Destination $RuntimeDirectory -Force
+        }
+    }
     Write-Output $output
     Write-Output 'PASS: shared runtime viewer, project cache and semantic UI'
 } finally {

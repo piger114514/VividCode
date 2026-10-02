@@ -1,6 +1,7 @@
 #pragma once
 #include "VividCode.h"
 #include "ProjectScanner.h"
+#include "UiTestHelpers.h"
 #include <QtWidgets>
 
 // 不依赖额外测试框架的端到端冒烟检查；只修改临时目录。
@@ -42,17 +43,25 @@ inline int runSmokeTest(QApplication &app)
         if ((*it)->data(0, Qt::UserRole).toString() == "src/main.cpp") source = *it;
     if (!require(source != nullptr, "nested file tree")) return 1;
     tree->setCurrentItem(source);
-    if (!require(viewer->toPlainText().contains("return 0"), "tree selection loads source")) return 1;
+    auto *popup = dynamic_cast<SourcePopup *>(window.findChild<QWidget *>("sourcePopup"));
+    if (!require(popup && !popup->isVisible() && window.findChild<QTabWidget *>("sidebarViews")->count() == 2 && !window.findChild<QComboBox *>("semanticFocus") && !window.findChild<QComboBox *>("semanticLanguage"), "sidebar and removed controls")) return 1;
+    if (!require(triggerFileSource(tree, source) && popup->isVisible() && viewer->toPlainText().contains("return 0"), "file context source popup")) return 1;
+    clickOutsidePopup(window);
+    if (!require(!popup->isVisible(), "outside click closes source popup")) return 1;
     if (!write("src/main.cpp", "int main() { return 7; }\n") || !write("new.h", "// added")) return 1;
     window.openProject(root.path());
-    if (!require(viewer->toPlainText().contains("return 7") && scanProject(root.path()).files.size() == 3, "refresh modified and added files")) return 1;
+    source = nullptr;
+    for (QTreeWidgetItemIterator it(tree); *it; ++it) if ((*it)->data(0, Qt::UserRole).toString() == "src/main.cpp") source = *it;
+    if (!require(source && triggerFileSource(tree, source) && viewer->toPlainText().contains("return 7") && scanProject(root.path()).files.size() == 3, "refresh modified and added files")) return 1;
+    window.findChild<QToolButton *>("sourcePopupClose")->click();
+    if (!require(!popup->isVisible(), "close button dismisses popup")) return 1;
     filter->setText("no-such-file");
     if (!require(tree->topLevelItemCount() == 0, "filter empty result")) return 1;
     filter->clear();
     const auto added = tree->findItems("new.h", Qt::MatchExactly | Qt::MatchRecursive);
     if (!require(!added.isEmpty(), "new file in tree")) return 1;
     tree->setCurrentItem(added.first());
-    if (!require(viewer->toPlainText() == "// added", "new file selection loads source")) return 1;
+    if (!require(triggerFileSource(tree, added.first()) && viewer->toPlainText() == "// added", "new file source popup")) return 1;
     QFile::remove(root.filePath("new.h"));
     window.openProject(root.path());
     if (!require(viewer->toPlainText().isEmpty() && scanProject(root.path()).files.size() == 2, "refresh deleted file")) return 1;
@@ -77,6 +86,6 @@ inline int runSmokeTest(QApplication &app)
     tree->setCurrentItem(matches.first());
     app.processEvents();
     if (!require(window.grab().save(QCoreApplication::applicationDirPath() + "/prototype-preview.png"), "render preview")) return 1;
-    qInfo() << "PASS: scan, exclusions, UTF-8 paths, tree selection, unconfigured graph, filter, refresh add/edit/delete, invalid/empty directories, JS/TS/Java scan, temporary project render";
+    qInfo() << "PASS: scan, exclusions, UTF-8 paths, sidebar tabs, removed selectors, file context source popup, outside/close dismissal, filter, refresh add/edit/delete, invalid/empty directories and file-only languages";
     return 0;
 }

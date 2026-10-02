@@ -1,5 +1,6 @@
 #pragma once
 #include "RelationGraph.h"
+#include "UiTestHelpers.h"
 #include <QtWidgets>
 
 inline bool runRelationGraphModelTest() {
@@ -25,7 +26,9 @@ inline bool runRelationGraphModelTest() {
     if (!require(possible.edges.size() == 1 && possible.edges.first().confidence == "possible" && possible.symbols.size() == 2, "uncertainty and type filtering")) return false;
     const auto capped = buildRelationNeighborhood(unit, "focus", {}, 2, 2);
     if (!require(capped.symbols.size() <= 2 && capped.edges.size() <= 2 && capped.displayedSites < capped.totalSites && capped.totalSites == 5, "honest display limits")) return false;
-    if (!require(buildRelationNeighborhood(unit, {}).symbols.isEmpty(), "no fabricated overview when no focus")) return false;
+    const auto all = buildRelationNeighborhood(unit, {});
+    if (!require(all.focusId.isEmpty() && all.symbols.size() == 4 && all.edges.size() == 5 && all.totalSites == 6,
+        "overview shows every indexed relationship without requiring a focus")) return false;
     const auto classSymbol = [](const QString &id, const QString &kind, const QString &parent = QString()) {
         return QJsonObject{{"id", id}, {"name", id}, {"kind", kind}, {"parent_id", parent}, {"decl_file", "classes.cpp"}};
     };
@@ -65,6 +68,8 @@ inline bool runRelationGraphModelTest() {
     if (!require(repeated, "repeated call evidence")) return false;
     repeated->setSelected(true);
     widget.findChild<QComboBox *>("relationGraphSites")->setCurrentIndex(1);
+    if (!require(requestedLines.isEmpty(), "selection does not open source")) return false;
+    if (!require(triggerGraphSource(&widget, repeated, 10) && triggerGraphSource(&widget, repeated, 20), "source context actions")) return false;
     if (!require(requestedLines == QList<int>{10, 20}, "every aggregated source site remains navigable")) return false;
     unit["relations"] = QJsonArray{call, relation("int", "focus", "calls", 11)};
     widget.setData(unit, "focus", {}, "test.cpp");

@@ -1,3 +1,27 @@
+2026-10-02：多语言共同展示（当前）
+
+现在打开项目后不再选语言。ProjectDetection.h 找 C# 根目录 .sln/.csproj 与 C++ compile_commands.json，按语言分组。SemanticPanel::setProject 选择各组入口，beginNextLanguage 依次启动 Roslyn 和 libclang。多解决方案弹窗是在 C# 组内选入口；混合目录不会把另一种语言排除。
+各分析器保留原来的增量缓存，但成功结果由 UnifiedGraphStore::saveLanguage 写入同项目 graph.db，再用 load 统一读取。数据库保存每种语言的状态和包含 symbols/relations 的 JSON 单元，尚未拆成逐符号的 SQL 表。失败不替换该语言上次成功的图数据，也不删除其它语言结果。
+SemanticPanel::render 给 ID、父 ID 和关系端点加语言前缀。RelationGraph::renderMap 把各语言送进相同的图模型，在一个 scene 中划分 C# / C++ 区域；没有证据就不画跨语言连线。
+VividCodeWindow 将 structureView 与文件树放进左侧 QTabWidget，analysisControls 放进顶部 QToolBar。旧 QAction 仍注册 Ctrl+O/F5，即使没有对应按钮也有用。手动语言和“选择符号”下拉框已去掉，结构树或图中的双击负责选焦点。
+showFile 限定路径、读取 UTF-8 后，等右键菜单关闭再用 SourcePopup 显示。SourcePopup 是无边框 Qt::Tool，只读代码和 ×；全局鼠标事件过滤器判断窗外点击，失焦延后检查并带显示代次，避免旧菜单失焦事件关掉刚打开的新代码。Esc、窗外点击、切换应用和刷新都会关闭。
+运行依赖新增 Qt6Sql.dll 和 sqldrivers/qsqlite.dll；原始 VS/CMake 和安装脚本已同步。完整当前行为、运行入口及最终验证见 Document/多语言分析与共享图数据库.md；后面的日期条目属于历史。
+
+2026-10-02：C# 自动发现与顶部工具栏调整（前一阶段）
+
+打开含 C# 源文件且无 C++ 配置的项目时，主窗口将 hasCSharpFiles 传给 SemanticPanel::setProject，自动选择 C#。setProject 用 QDir 只列出根目录第一层的普通 .sln 文件，不进入子目录；一个直接分析，多个由 selectCSharpSolution 创建 QDialog/QListWidget，点击文件名后导入。csharpEntry 记住本次项目会话的选择，F5 不重复弹窗；切换项目清除选择。取消不覆盖旧缓存，更新按钮可重新选择。没有 .sln 可继续手动导入 .csproj/.sln。
+原顶部五个按钮已移除。打开项目和刷新是挂在主窗口上的 QAction，通过 Ctrl+O、F5 触发，快捷键不需要放在工具栏里才生效。缩放继续由 RelationGraph 内的滚轮交互处理。
+CMake Release 编译与基础浏览、C++ 界面、C# 界面三项检查均通过；C# 使用真实 .sln/Roslyn 和鼠标事件验证列表选择，并检查取消重试、缓存入口切换及刷新沿用选择。两张截图已目视检查。用户普通终端共享版本需要在独立 PowerShell 更新，下方历史部署记录不表示本轮已经安装到普通终端。
+
+2026-10-02：C# 关系图已接通
+
+C# 的入口是 SemanticPanel::importCSharpProject。左上选择 C# 和配置，导入 .csproj/.sln，Qt 用 QProcess 启动共享 runtime/csharp-analyzer/vividcode-csharp.exe。
+C# 语法需要 Roslyn；已有 libclang 继续处理 C++。Program.cs 通过 MSBuildWorkspace 加载真实工程配置，Extractor.cs 通过 SemanticModel/符号提取类、重载、归属、调用和成员引用。
+同一套 JSON 符号与关系字段进入现有 RelationGraph。新手可把 parent_id 理解为“这个方法属于哪个类”，把 source_id/target_id 理解为“哪一个方法引用了哪一个成员”；file/line/col 保留发生依据。
+C# 缓存在 semantic/<项目哈希>/csharp/index.json，和 C++ SQLite 隔离；失败、取消保留旧结果。Store.cs 负责缓存归属、原子保存、操作锁和子进程退出。
+支持 .NET/WinForms/WPF 测试工程，接口/虚方法调用标成可能调用；不猜 dynamic/反射目标。点击图节点和连线定位源码已验证，源码文本中点击名字跳转尚未做。
+CMake 六组检查通过，最终两组 C# 再次通过；详细当前行为、真实项目验收边界及运行入口见 Document/C#语义索引.md。后方按日期标记的旧说明保留为历史。
+
 2026-10-02 清理：已删除不再参与构建/测试的 demo 源码及其旧嵌套运行包、工程改名时的旧构建/IDE/索引备份，以及八个已完成的一次性修改脚本，共 3,590 文件 / 2,767.39 MiB（约 2.70 GiB）。空 VividCode.qrc 与 CMake/VS/UI 引用、不存在的 VS 资源模板项已移除。保留实际分析源码、安装/构建入口、四组自动检查、旧项目迁移代码和当前编译数据库。正式命令为 -g/-c/-d/-help。
 
 清理和命令拼写修正后的最终验证：CMake、原始 VS Release x64 以及真实项目 Ninja 构建均成功；四组 CTest 4/4 通过（13.93 秒），CLI 生命周期检查主要使用 -g/-c/-d，并校验帮助显示单横线写法。build/semantic-validation/compile_commands.json 现为 10 个编译条目，不含 qrc。共享 runtime 已更新为本次通过验证的产物，安装后 -help 显示新版命令；本工程实际 -g 新增一份反映源码清理的 JSON，保留原有 4 份历史，当前 .vividcode 为 7 文件 / 151.35 KiB，仅 exe/JSON。从无关工作目录执行实际启动器验证返回 0。此次没有重新全量索引真实工程。
@@ -28,7 +52,7 @@ VividCode.ui 自动生成 ui_VividCode.h；该生成文件不手工改名或编�
 5. QGraphicsScene 保存图形项，QGraphicsView 控制显示和缩放；二者只负责呈现，不解析 C++。RelationGraph 的节点、容器、连线颜色与 main.cpp 的应用调色板共同组成深色界面。
 6. RelationGraph::sourceRequested 经 SemanticPanel 转发给主窗口，主窗口检查源码路径并用 QTextCursor 定位。双击符号通过 focusRequested 切换关系焦点。
 
-当前限制：按编译单元/配置展示局部图，默认最多 81 个节点、160 条合并连线，超出时提示；类框可包含内部及相关符号，邻接类仅展示当前相关部分。布局未持久化；C#、Python、JS/TS、Java 当前仍是文件浏览，变量读写细分及 AI 接口未实现。
+当前限制：按编译单元/配置展示局部图，默认最多 81 个节点、160 条合并连线，超出时提示；类框可包含内部及相关符号，邻接类仅展示当前相关部分。布局未持久化；C# 已接入 Roslyn，Python、JS/TS、Java 当前仍是文件浏览，变量读写细分及 AI 接口未实现。
 
 验证说明：最终 CMake Release x64 与原始 VS Release x64 已编译成功。此前基础关系图四组 CTest 及本工程 10 个真实编译单元验证通过，中间分层版本两组界面检查通过；最后交互调整按用户要求不再追加测试，不视为最终版本完整验收。
 SmokeTest.h 现在检查文件树和未配置索引的空图；SemanticSmokeTest.h、RelationGraphTest.h 包含真实解析导航、关系归组及分层交互检查代码，存在测试代码不代表最后版本已经执行全部检查。
