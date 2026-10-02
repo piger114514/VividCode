@@ -70,13 +70,13 @@ inline int runSmokeTest(QApplication &app)
         !write("multi/target/x.java", "skip")) return 1;
     const auto multiResult = scanProject(root.filePath("multi"));
     if (!require(multiResult.files.size() == 3 && multiResult.skippedDirectories == 3, "JS/TS/Java scan and exclusions")) return 1;
-    // 用真实演示源码渲染截图，供布局检查。
-    if (!require(window.openProject(QCoreApplication::applicationDirPath() + "/demo"), "bundled demo")) return 1;
-    const auto matches = tree->findItems("Greeter.h", Qt::MatchExactly | Qt::MatchRecursive);
-    if (!require(!matches.isEmpty(), "demo header")) return 1;
+    // 用临时项目渲染截图，不依赖随程序部署的演示目录。
+    if (!require(window.openProject(root.filePath("multi")), "temporary source project")) return 1;
+    const auto matches = tree->findItems("Greeter.js", Qt::MatchExactly | Qt::MatchRecursive);
+    if (!require(!matches.isEmpty(), "temporary project source")) return 1;
     tree->setCurrentItem(matches.first());
     app.processEvents();
     if (!require(window.grab().save(QCoreApplication::applicationDirPath() + "/prototype-preview.png"), "render preview")) return 1;
-    qInfo() << "PASS: scan, exclusions, UTF-8 paths, tree selection, unconfigured graph, filter, refresh add/edit/delete, invalid/empty directories, JS/TS/Java scan, demo render";
+    qInfo() << "PASS: scan, exclusions, UTF-8 paths, tree selection, unconfigured graph, filter, refresh add/edit/delete, invalid/empty directories, JS/TS/Java scan, temporary project render";
     return 0;
 }

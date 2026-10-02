@@ -1,5 +1,6 @@
 #include "SemanticPanel.h"
 #include "ProjectStore.h"
+#include "SharedRuntime.h"
 #include "RelationGraph.h"
 #include <QtWidgets>
 
@@ -143,13 +144,13 @@ void SemanticPanel::setProject(const QString &path) {
     symbols->clear(); relations->clear(); units->clear(); diagnostics->clear();
     { const QSignalBlocker blocker(focusSymbols); focusSymbols->clear(); }
     graph->setData({}, {}, {}, {});
-    if (QFileInfo::exists(root + "/.vividcode/semantic/config.json")) loadCache(true);
+    if (!root.isEmpty() && QFileInfo::exists(VividCode::semanticDirectory(root) + "/config.json")) loadCache(true);
     else status->setText(QStringLiteral("尚未配置 C++ 分析。请导入构建系统生成的 compile_commands.json；其他语言目前仅支持文件浏览。"));
 }
 void SemanticPanel::importDatabase(const QString &path) {
     if (root.isEmpty() || isBusy()) return;
     if (!QFileInfo::exists(root + "/.vividcode/project.json")) {
-        const auto result = VividCode::generate(root, QCoreApplication::applicationDirPath());
+        const auto result = VividCode::generate(root);
         if (!result.ok) { status->setText(result.message); return; }
     }
     compilation = path; refreshIndex();
@@ -162,7 +163,7 @@ void SemanticPanel::loadCache(bool refresh) { refreshAfterLoad = refresh; launch
 void SemanticPanel::launch(const QString &action, const QString &database) {
     if (isBusy()) return;
     command = action; output.clear();
-    const QString base = QCoreApplication::applicationDirPath() + "/analyzer";
+    const QString base = VividCode::sharedRuntime() + "/analyzer";
     QStringList args{base + "/analyzer.py", action, "--project", root};
     if (!database.isEmpty()) args << "--compile-commands" << database;
     process.setProgram(base + "/python/python.exe"); process.setArguments(args);

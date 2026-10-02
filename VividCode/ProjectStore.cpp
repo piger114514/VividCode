@@ -1,5 +1,6 @@
 #include "ProjectStore.h"
 #include "ProjectScanner.h"
+#include "SharedRuntime.h"
 #include <QtCore>
 #include <stdexcept>
 #ifdef Q_OS_WIN
@@ -136,8 +137,6 @@ QJsonObject loadRecord(const QString &directory, const QString &id)
     if (record.value("app") != "vividcode" || record.value("id") != id ||
         !record.value("files").isArray() || !record.value("fingerprint").isString())
         fail(QStringLiteral("记录内容无效：") + id);
-    if (!QFileInfo(directory + "/records/" + id + "/code.md").isFile())
-        fail(QStringLiteral("记录文档缺失：") + id);
     return record;
 }
 
@@ -146,8 +145,6 @@ QString recordSnapshot(StoreAccess &store, QJsonObject manifest)
     const ScanResult scan = scanProject(store.root);
     if (scan.truncated) fail(QStringLiteral("扫描达到上限，未保存不完整记录。请选择更小的项目。"));
     QJsonArray files;
-    QString markdown = QStringLiteral("# vividcode 代码文件概览\n\n这是文件级记录，不是类或函数语义分析，也不是源码备份。\n\n");
-    markdown += QStringLiteral("| 文件 | 字节数 | SHA-256 |\n| --- | ---: | --- |\n");
     for (const auto &relative : scan.files) {
         const QString path = QDir(store.root).filePath(relative);
         if (isLink(path)) fail(QStringLiteral("源码文件在扫描后变成链接：") + path);
@@ -159,9 +156,6 @@ QString recordSnapshot(StoreAccess &store, QJsonObject manifest)
             fail(QStringLiteral("源码读取失败或扫描期间发生变化，请重试：") + relative);
         const QString digest = QString::fromLatin1(hash.result().toHex());
         files.append(QJsonObject{{"path", relative}, {"bytes", size}, {"sha256", digest}});
-        QString escaped = relative.toHtmlEscaped();
-        escaped.replace('|', "&#124;").replace('\n', "&#10;").replace('\r', "&#13;").replace('`', "&#96;");
-        markdown += QStringLiteral("| %1 | %2 | %3 |\n").arg(escaped).arg(size).arg(digest);
     }
     const QString fingerprint = QString::fromLatin1(QCryptographicHash::hash(
         QJsonDocument(files).toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex());
@@ -175,9 +169,8 @@ QString recordSnapshot(StoreAccess &store, QJsonObject manifest)
     const QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
     const QJsonObject record{{"app", "vividcode"}, {"schema", 1}, {"id", id}, {"createdUtc", timestamp},
         {"fingerprint", fingerprint}, {"files", files}};
-    // 先完成两个记录文件，再原子更新 manifest。未提交的记录不会成为“最新”。
+    // 先完成 JSON 记录，再原子更新 manifest。未提交记录不会成为“最新”。
     saveJson(recordDirectory + "/index.json", record);
-    saveBytes(recordDirectory + "/code.md", (markdown + "\nUTC: " + timestamp + "\n").toUtf8());
     auto history = manifest.value("history").toArray();
     history.append(id);
     manifest["history"] = history;
@@ -207,6 +200,71 @@ void copyEntry(const QString &source, const QString &target)
     if (!output.commit()) fail(QStringLiteral("无法更新运行文件，请先关闭查看器：") + target);
 }
 
+
+void checkParents(const QString &path) {
+    QString current = QFileInfo(path).absoluteFilePath();
+    while (!current.isEmpty()) {
+        if (isLink(current)) fail(QStringLiteral("拒绝通过链接访问共享目录：") + current);
+        const QString parent = QFileInfo(current).absolutePath();
+        if (parent == current) break;
+        current = parent;
+    }
+}
+QString checkedCache(const QString &root, bool create) {
+    const QString cache = VividCode::semanticDirectory(root);
+    checkParents(cache);
+    checkTree(cache);
+    const QString ownerFile = cache + "/project.json";
+    if (QFileInfo::exists(cache)) {
+        const auto owner = readJson(ownerFile);
+        if (owner.value("app") != "vividcode" || owner.value("schema").toInt() != 1 || owner.value("projectRoot").toString().compare(root, Qt::CaseInsensitive))
+            fail(QStringLiteral("共享索引归属不匹配，未修改：") + cache);
+    } else if (create) {
+        if (!QDir().mkpath(cache)) fail(QStringLiteral("无法创建共享索引目录：") + cache);
+        saveJson(ownerFile, {{"app", "vividcode"}, {"schema", 1}, {"projectRoot", root}});
+    }
+    return cache;
+}
+QByteArray fileDigest(const QString &path) {
+    QFile file(path); QCryptographicHash hash(QCryptographicHash::Sha256);
+    if (!file.open(QIODevice::ReadOnly) || !hash.addData(&file) || file.error() != QFileDevice::NoError)
+        fail(QStringLiteral("无法校验迁移文件：") + path);
+    return hash.result();
+}
+void migrateSemantic(StoreAccess &store) {
+    const QString source = store.directory + "/semantic";
+    if (!QFileInfo::exists(source)) return;
+    const QString cache = checkedCache(store.root, true);
+    const auto entries = QDir(source).entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden);
+    const QSet<QString> allowed{"config.json", "index.db", "index.db-journal", "index.db-wal", "index.db-shm"};
+    // Preflight all files before copying, and never overwrite a different shared snapshot.
+    for (const auto &entry : entries) {
+        if (!entry.isFile() || !allowed.contains(entry.fileName()))
+            fail(QStringLiteral("旧语义目录含未知文件，已保留：") + entry.absoluteFilePath());
+        const QString target = cache + '/' + entry.fileName();
+        if (QFileInfo::exists(target) && fileDigest(target) != fileDigest(entry.absoluteFilePath()))
+            fail(QStringLiteral("旧索引与共享索引不同，已保留两份数据，请先解决冲突。"));
+    }
+    for (const auto &entry : entries) {
+        const QString target = cache + '/' + entry.fileName();
+        if (!QFileInfo::exists(target)) copyEntry(entry.absoluteFilePath(), target);
+        if (fileDigest(target) != fileDigest(entry.absoluteFilePath())) fail(QStringLiteral("索引迁移校验失败，旧文件已保留。"));
+    }
+    if (!QDir(source).removeRecursively()) fail(QStringLiteral("共享索引已校验，但旧索引清理失败，请重试。"));
+}
+void removeLegacyRuntime(StoreAccess &store, const QJsonObject &manifest) {
+    for (const QString &name : {"analyzer", "demo", "platforms", "styles", "imageformats", "iconengines", "networkinformation", "tls", "generic"}) {
+        const QString path = store.directory + '/' + name;
+        if (QFileInfo::exists(path) && !QDir(path).removeRecursively()) fail(QStringLiteral("无法清理旧运行目录：") + path);
+    }
+    for (const auto &dll : QDir(store.directory).entryInfoList({"*.dll"}, QDir::Files))
+        if (!QFile::remove(dll.absoluteFilePath())) fail(QStringLiteral("无法清理旧运行依赖：") + dll.fileName());
+    QStringList obsolete{store.directory + "/README.md"};
+    for (const auto &id : manifest.value("history").toArray()) obsolete << store.directory + "/records/" + id.toString() + "/code.md";
+    for (const QString &path : obsolete)
+        if (QFileInfo::exists(path) && !QFile::remove(path)) fail(QStringLiteral("无法清理旧文档：") + path);
+}
+
 template<class Function> VividCode::Result attempt(Function operation)
 {
     try { return {true, operation()}; }
@@ -215,37 +273,42 @@ template<class Function> VividCode::Result attempt(Function operation)
 }
 
 namespace VividCode {
-Result generate(const QString &projectRoot, const QString &runtimeDirectory)
+Result generate(const QString &projectRoot)
 {
     return attempt([&] {
         StoreAccess store(projectRoot);
         QLockFile viewer(checkedLockPath(store.root, ".vividcode-viewer.lock"));
         viewer.setStaleLockTime(0);
         if (!viewer.tryLock()) fail(QStringLiteral("请先关闭此项目的 vividcode 查看器，再生成或更新程序文件。"));
-        const QDir runtime(runtimeDirectory);
-        const QStringList required = {"vividcode-viewer.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "platforms/qwindows.dll",
+        const QDir runtime(sharedRuntime());
+        checkParents(runtime.absolutePath());
+        RuntimeReadLock runtimeLock(sharedHome());
+        if (!runtimeLock.valid()) fail(QStringLiteral("共享运行环境未安装或正在更新，请先运行 install-command.ps1。"));
+        const QStringList required = {"vividcode-launcher.exe", "vividcode-viewer.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "platforms/qwindows.dll",
             "analyzer/analyzer.py", "analyzer/extractor.py", "analyzer/clang_bridge.py", "analyzer/python/python.exe", "analyzer/python/python313.dll",
-            "analyzer/python/python313.zip", "analyzer/python/python313._pth", "analyzer/python/_sqlite3.pyd", "analyzer/python/sqlite3.dll", "analyzer/lib/libclang.dll", "analyzer/lib/clang/23/include/stddef.h", "analyzer/runtime.json"};
+            "analyzer/python/python313.zip", "analyzer/python/python313._pth", "analyzer/python/_sqlite3.pyd", "analyzer/python/sqlite3.dll", "analyzer/lib/libclang.dll", "analyzer/lib/clang/23/include/stddef.h", "analyzer/runtime.json", "installation.json"};
         for (const auto &name : required)
-            if (!QFileInfo(runtime.filePath(name)).isFile()) fail(QStringLiteral("运行包不完整，请先执行 build.ps1：") + name);
+            if (!QFileInfo(runtime.filePath(name)).isFile()) fail(QStringLiteral("共享运行包不完整，请重新运行 install-command.ps1：") + name);
+        checkTree(runtime.absolutePath());
+        const auto installation = readJson(runtime.filePath("installation.json"));
+        if (installation.value("app") != "vividcode" || installation.value("schema").toInt() != 1)
+            fail(QStringLiteral("共享安装信息无效，请重新安装。"));
         QJsonObject manifest;
         if (QFileInfo::exists(store.directory)) manifest = loadManifest(store.directory);
         else {
             if (!QDir().mkpath(store.directory)) fail(QStringLiteral("无法创建 .vividcode。"));
             manifest = {{"app", "vividcode"}, {"schema", 1}, {"projectRoot", ".."}, {"latest", ""}, {"history", QJsonArray{}}};
-            saveJson(store.directory + "/project.json", manifest);
         }
-        copyEntry(runtime.filePath("vividcode-viewer.exe"), store.directory + "/vividcode-viewer.exe");
-        for (const auto &dll : runtime.entryInfoList({"*.dll"}, QDir::Files))
-            copyEntry(dll.absoluteFilePath(), store.directory + '/' + dll.fileName());
-        for (const QString &name : {"platforms", "styles", "imageformats", "iconengines", "networkinformation", "tls", "generic", "demo", "analyzer"})
-            if (QFileInfo(runtime.filePath(name)).isDir()) copyEntry(runtime.filePath(name), store.directory + '/' + name);
+        for (const auto &id : manifest.value("history").toArray()) loadRecord(store.directory, id.toString());
         const QString result = recordSnapshot(store, manifest);
-        saveBytes(store.directory + "/README.md", QStringLiteral(
-            "# vividcode\n\n双击 vividcode-viewer.exe 查看上一级项目；启动或 F5 刷新会检查代码变化并保存新记录。\n\n"
-            "project.json 的 latest 指向 records/<记录ID>/code.md 和 index.json。\n\n"
-            "在项目根目录运行 vividcode --c 清理旧记录；vividcode --d 删除整个 .vividcode。\n").toUtf8());
-        return result + QStringLiteral("\n程序已生成：") + QDir::toNativeSeparators(store.directory + "/vividcode-viewer.exe");
+        manifest = loadManifest(store.directory);
+        migrateSemantic(store);
+        copyEntry(runtime.filePath("vividcode-launcher.exe"), store.directory + "/vividcode-viewer.exe");
+        removeLegacyRuntime(store, manifest);
+        manifest["deployment"] = "shared";
+        manifest["cacheKey"] = projectCacheKey(store.root);
+        saveJson(store.directory + "/project.json", manifest);
+        return result + QStringLiteral("\n项目启动器已生成：") + QDir::toNativeSeparators(store.directory + "/vividcode-viewer.exe");
     });
 }
 
@@ -253,13 +316,14 @@ Result removeGenerated(const QString &projectRoot)
 {
     return attempt([&] {
         StoreAccess store(projectRoot);
-        if (!QFileInfo::exists(store.directory)) return QStringLiteral("当前目录没有 .vividcode。");
         QLockFile viewer(checkedLockPath(store.root, ".vividcode-viewer.lock"));
         viewer.setStaleLockTime(0);
         if (!viewer.tryLock()) fail(QStringLiteral("请先关闭此项目的 vividcode 查看器。"));
-        // directory 由规范化后的项目根目录加固定子目录名构成，且整棵树已拒绝链接。
-        if (!QDir(store.directory).removeRecursively()) fail(QStringLiteral("删除未完成：文件可能被占用或不可写，请关闭查看器后重试。"));
-        return QStringLiteral("已清除 .vividcode。");
+        const QString cache = checkedCache(store.root, false);
+        if (QFileInfo::exists(cache) && !QDir(cache).removeRecursively()) fail(QStringLiteral("共享索引清理失败，请关闭分析进程后重试。"));
+        // Fixed project directory and cache hash; never use arbitrary manifest paths for deletion.
+        if (QFileInfo::exists(store.directory) && !QDir(store.directory).removeRecursively()) fail(QStringLiteral("删除未完成：文件可能被占用或不可写，请关闭查看器后重试。"));
+        return QStringLiteral("已清除项目 .vividcode 和对应共享索引；共享程序保留。");
     });
 }
 
@@ -267,10 +331,10 @@ Result cleanHistory(const QString &projectRoot)
 {
     return attempt([&] {
         StoreAccess store(projectRoot);
-        if (!QFileInfo::exists(store.directory)) fail(QStringLiteral("当前目录尚未初始化，请先运行 vividcode --g。"));
+        if (!QFileInfo::exists(store.directory)) fail(QStringLiteral("当前目录尚未初始化，请先运行 vividcode -g。"));
         auto manifest = loadManifest(store.directory);
         const QString latest = manifest.value("latest").toString();
-        if (latest.isEmpty()) fail(QStringLiteral("没有完整的最新记录，请先运行 vividcode --g。"));
+        if (latest.isEmpty()) fail(QStringLiteral("没有完整的最新记录，请先运行 vividcode -g。"));
         loadRecord(store.directory, latest); // 最新记录不完整时，保留所有历史。
         auto history = manifest.value("history").toArray();
         int removed = 0;

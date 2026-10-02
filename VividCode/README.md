@@ -6,25 +6,25 @@
 
 打开项目后在顶部导入构建系统生成的 `compile_commands.json`。后台完成后选择编译单元/配置及符号，在“真实关系图”查看关系，也可切换到“C++ 结构与关系列表”。点击节点或关系定位源码；点击“更新 C++ 索引”或 F5 检查修改。已有配置下次打开时自动检查。缺数据库需先从构建系统导出，程序不猜测编译参数。
 
-本项目可使用 `build/semantic-validation/compile_commands.json`；已完成本项目索引。`--g` 部署 `analyzer/` 下的独立 Python、libclang 和内置头文件，语义缓存位于 `.vividcode/semantic/`。项目自身 SDK/Qt/第三方头文件仍须可访问。`build.ps1` 首次准备分析运行包需联网，默认读取本机 `D:/LLVM`；运行查看器不会下载依赖。
+本项目可使用 `build/semantic-validation/compile_commands.json`；已完成本项目索引。共享 runtime/analyzer 保存独立 Python、libclang 和内置头文件，语义缓存位于 `%LOCALAPPDATA%/vividcode/semantic/<项目路径哈希>/`；`-g` 不复制这些依赖。项目自身 SDK/Qt/第三方头文件仍须可访问。`build.ps1` 首次准备分析运行包需联网，默认读取本机 `D:/LLVM`；运行查看器不会下载依赖。
 
 ## 控制台使用
 
-本机已将 `build/Release` 注册到当前用户 PATH。在新终端中切换到目标项目目录后运行：
+先构建，再执行 `./install-command.ps1`，将共享程序安装到 `%LOCALAPPDATA%/vividcode/runtime` 并注册当前用户 PATH。在新终端中切换到目标项目目录后运行：
 
 ```powershell
-vividcode --g
+vividcode -g
 ```
 
-它会生成当前目录的 `.vividcode`，里面有 `vividcode-viewer.exe`、Qt 运行依赖、`project.json` 和 `records/`。双击生成的查看器即可打开这个项目。代码有变化时，重新 `--g` 或在查看器中按 F5 会保存新的文件级记录；无变化不重复创建记录。
+它会生成当前目录的 `.vividcode`，里面只有 `vividcode-viewer.exe` 小启动器、`project.json` 和 `records/` 中的 JSON。双击生成的查看器即可打开这个项目。无需附带演示源码；更新旧部署时会清除其中的 demo 及嵌套运行包，保留 JSON 历史，将旧语义缓存校验迁移到共享根目录的 semantic 中。代码有变化时，重新 `-g` 或在查看器中按 F5 会保存新的文件级记录；无变化不重复创建记录。
 
 ```powershell
-vividcode --c     # 清理旧记录，只保留最新成功保存的一份
-vividcode --d     # 删除当前目录的整个 .vividcode（先关闭查看器）
-vividcode --help  # 查看帮助
+vividcode -c     # 清理旧记录，只保留最新成功保存的一份
+vividcode -d     # 删除当前 .vividcode 及本项目集中索引（先关闭查看器）
+vividcode -help  # 查看帮助
 ```
 
-`--c` 不会改动源码或人工维护的 `Document` 文档。当前记录为文件路径、大小、SHA-256 和 Markdown 概览，不是完整源码备份，也不是类/函数语义文档。最新记录位置由 `.vividcode/project.json` 中的 `latest` 指定，对应 `records/<记录ID>/code.md`。
+`-c` 不会改动源码或人工维护的 `Document` 文档。当前记录为文件路径、大小、SHA-256 和 JSON 快照，不是完整源码备份，也不是类/函数语义文档。最新记录位置由 `.vividcode/project.json` 中的 `latest` 指定，对应 `records/<记录ID>/index.json`。
 
 如果旧终端找不到命令，请重开终端，必要时重启其宿主 IDE；也可以在本目录运行 `./install-command.ps1`，使当前 PowerShell 立即获得命令路径。工作区移动后需要重新注册路径。
 
@@ -32,16 +32,14 @@ vividcode --help  # 查看帮助
 
 ## 先运行，再阅读代码
 
-1. 双击 `build/Release/vividcode-viewer.exe`。
-2. 点击工具栏的“打开演示”，程序会打开附带示例源码：三份 C++ 文件，以及 `Greeter.cs`（C#）、`Greeter.py`（Python）、`Greeter.js`（JavaScript）、`Greeter.java`（Java）各一份。
-3. 点击左侧 `Greeter.h`，查看类的声明；点击 `Greeter.cpp`，查看函数实现；点击 `Greeter.cs`、`Greeter.py`、`Greeter.js`、`Greeter.java` 查看其它语言的源码。
-4. 导入 C++ 编译数据库并完成索引后，选择编译单元和符号查看关系图。滚轮放大到 90% 后展开类中的函数、成员及关系，缩小到 75% 以下收起；双击类也能展开，点击节点或关系位置查看对应源码。未配置索引时仍可浏览文件树。
-5. 点击“打开项目…”选择自己的源码目录；输入文件名或部分路径进行筛选。
-6. 用 Visual Studio 修改源码并保存，再返回查看器按 F5。新增、修改、删除会反映到当前视图中。
+1. 在目标项目目录执行 `vividcode -g`，双击 `.vividcode/vividcode-viewer.exe`，它会直接打开该项目。开发版也可点击“打开项目…”选择源码目录。
+2. 点击左侧文件查看源码；输入文件名或部分路径进行筛选。
+3. 导入 C++ 编译数据库并完成索引后，选择编译单元和符号查看关系图。滚轮放大到 90% 后展开类中的函数、成员及关系，缩小到 75% 以下收起；双击类也能展开，点击节点或关系位置查看对应源码。未配置索引时仍可浏览文件树。
+4. 用 Visual Studio 修改源码并保存，再返回查看器按 F5。新增、修改、删除会反映到当前视图中。
 
 源码区域只读。分隔线可以拖动改变区域大小；工具栏支持放大、缩小和适应画布；按住画布空白位置可拖动画布。
 
-`build/Release` 中的 DLL、platforms 文件夹和 demo 文件夹应与 exe 放在一起，不能只复制 exe。此目录已在本机部署 Qt 运行依赖，未在另一台干净 Windows 电脑验证；另一台机器可能需要安装 Microsoft Visual C++ 2015–2022 x64 运行库。
+共享 runtime 中的 DLL、Qt 插件和 analyzer 供所有项目调用；项目内的小启动器不需要旁边放 DLL。此目录已在本机部署 Qt 运行依赖，未在另一台干净 Windows 电脑验证；另一台机器可能需要安装 Microsoft Visual C++ 2015–2022 x64 运行库。
 
 也可以将项目目录作为唯一命令行参数传入查看器，例如：
 
@@ -67,18 +65,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 脚本依次配置、编译 Release、部署 Qt DLL/插件、运行自动检查。Qt 安装位置不同时，使用 `-QtRoot` 参数；CMake 位置不同时，使用 `-CMake` 参数。本机 Qt 自带 CMake 曾在读取缓存时崩溃，脚本采用 `--fresh` 重新配置以避开该问题。
 
-原始 `VividCode.sln` 现包含 `vividcode-viewer` 和独立控制台项目 `vividcode`，依赖 Qt VS Tools 提供的 QtMsBuild。重新加载解决方案后，在 `vividcode → Source Files` 下可找到 `cli_main.cpp`。选择 **Release / x64** 生成解决方案，输出在 `x64/Release`；此构建及产物的 CLI 生命周期、GUI 冒烟检查已通过，Debug 尚未验证。调试窗口时将 vividcode-viewer 设为启动项目；调试控制台时选择 vividcode，默认参数为 --help。
+原始 `VividCode.sln` 现包含 `vividcode-viewer`、独立控制台项目 `vividcode` 和原生启动器 `vividcode-launcher`，依赖 Qt VS Tools 提供的 QtMsBuild。重新加载解决方案后，在 `vividcode → Source Files` 下可找到 `cli_main.cpp`。选择 **Release / x64** 生成解决方案，输出在 `x64/Release`；此构建及产物的 CLI 生命周期、GUI 冒烟检查已通过，Debug 尚未验证。调试窗口时将 vividcode-viewer 设为启动项目；调试控制台时选择 vividcode，默认参数为 -help。
 
-CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcode.sln`，输出在 `build/Release`。不要编辑 CMake 生成的工程文件。现有用户 PATH 仍指向这套 CMake 输出；验证原始 VS 新产物时使用 `x64/Release` 中 exe 的完整路径。
+CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcode.sln`，输出在 `build/Release`。不要编辑 CMake 生成的工程文件。安装后当前用户 PATH 指向共享 runtime；验证原始 VS 新产物时使用 `x64/Release` 中 exe 的完整路径。
 
-首次构建后可运行 `./install-command.ps1` 将 Release 目录注册到当前用户 PATH。本机已执行完成。
+构建后运行 `./install-command.ps1` 安装或更新一份共享环境，并注册共享 CLI 到当前用户 PATH。本机已于 2026-10-02 完成共享安装与 PATH 迁移。
 
 ## 应该从哪里学起
 
 | 文件 | 先理解什么 |
 | --- | --- |
 | `main.cpp` | 创建 QApplication、创建窗口、进入事件循环 |
-| `cli_main.cpp` | 控制台参数解析，分派 --g/--d/--c |
+| `SharedRuntime.h` | 共享安装位置、项目缓存键和安装/运行锁 |
+| `ProjectLauncher.cpp` | 项目启动器调用共享 Qt 查看器 |
+| `cli_main.cpp` | 控制台参数解析，分派 -g/-d/-c |
 | `ProjectStore.h/.cpp` | 项目运行文件生成、记录保存、历史清理和限定目录删除 |
 | `VividCode.h` | 主窗口有哪些控件和状态，以及对外提供的打开项目函数 |
 | `VividCode.cpp` | 组装布局，使用 connect 连接按钮、文件选择与处理逻辑 |

@@ -7,7 +7,7 @@
 - 浏览 C/C++、C#、Python、JavaScript/TypeScript 和 Java 源文件。
 - 导入 C++ 编译数据库，查看类、成员、函数、继承、直接调用和成员引用。
 - 在关系图中缩放展开类成员，点击符号或关系位置定位源码。
-- 使用 `vividcode --g` 初始化项目运行目录、`--c` 清理旧记录、`--d` 删除生成目录。
+- 使用 `vividcode -g` 生成项目启动器和 JSON 历史、`-c` 清理旧记录、`-d` 删除当前项目记录及集中缓存。
 
 其它语言目前仅支持文件浏览。C++ 关系图按编译单元和配置展示局部关系；全项目关系图、其它语言语义分析及 AI 修改功能尚未实现。
 
@@ -20,9 +20,10 @@
 ```powershell
 cd VividCode
 .\build.ps1
+.\install-command.ps1
 ```
 
-构建后运行 `VividCode/build/Release/vividcode-viewer.exe`。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
+安装后共享程序位于 `%LOCALAPPDATA%/vividcode/runtime`，所有项目共用其中的 Qt/Python/libclang；语义缓存集中按项目保存。进入真实项目执行 `vividcode -g`，双击 `.vividcode/vividcode-viewer.exe` 小启动器打开该项目。本仓库不包含预编译程序、Qt DLL、Python 运行包或本机索引。
 
 构建脚本含本机默认依赖路径，其他电脑需按实际安装位置配置；详细说明见 [源码使用指南](VividCode/README.md) 与 [构建环境与运行](Document/构建环境与运行.md)。干净机器上的完整构建与分发尚未验证。
 
@@ -30,7 +31,7 @@ cd VividCode
 
 | 路径 | 用途 |
 | --- | --- |
-| `VividCode/` | 已有源码工程、分析器、测试、演示与构建脚本 |
+| `VividCode/` | 已有源码工程、分析器、测试与构建脚本 |
 | `Document/` | 功能说明、验证记录与开发交接 |
 | `PROJECT_BRIEF.md` | 项目背景、范围与阶段状态 |
 | `AGENTS.md` | AI 协作规则 |

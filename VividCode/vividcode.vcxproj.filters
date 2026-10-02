@@ -10,4 +10,5 @@
     <ClInclude Include="ProjectStore.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="ProjectScanner.h"><Filter>Header Files</Filter></ClInclude>
   </ItemGroup>
+  <ItemGroup><ClInclude Include="SharedRuntime.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
 </Project>

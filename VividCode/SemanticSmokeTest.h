@@ -1,10 +1,12 @@
 #pragma once
 #include "VividCode.h"
 #include "SemanticPanel.h"
+#include "SharedRuntime.h"
+#include "ProjectStore.h"
 #include "RelationGraphTest.h"
 #include <QtWidgets>
 
-// 可选真实工程验收：显式指定项目与它的真实编译数据库，索引写入项目 .vividcode。
+// 可选真实工程验收：显式指定项目与它的真实编译数据库，索引写入该项目的集中语义缓存。
 inline int runRealGraphValidation(QApplication &app, const QString &project, const QString &database) {
     VividCodeWindow window; window.show();
     if (!window.openProject(project)) return 1;
@@ -168,7 +170,7 @@ inline int runSemanticSmokeTest(QApplication &app) {
     focus->setCurrentIndex(focus->findData(mainId));
     app.processEvents();
     if (!window.grab().save(QCoreApplication::applicationDirPath() + "/relation-preview.png")) return 1;
-    QFile db(dir.filePath(".vividcode/semantic/index.db")); if (!db.open(QIODevice::ReadOnly)) return 1;
+    QFile db(VividCode::semanticDirectory(dir.path()) + "/index.db"); if (!db.open(QIODevice::ReadOnly)) return 1;
     const QByteArray before = db.readAll(); db.close();
     write("test.cpp", "#include \"missing.hpp\"\n");
     panel->setProject(dir.path()); if (!wait()) return 1;
@@ -181,6 +183,7 @@ inline int runSemanticSmokeTest(QApplication &app) {
     QTemporaryDir empty;
     window.openProject(empty.path()); app.processEvents();
     if (panel->isBusy() || symbols->topLevelItemCount() || relations->topLevelItemCount() || !scene->items().isEmpty()) return 1;
+    if (!VividCode::removeGenerated(dir.path()).ok) return 1;
     qInfo() << "PASS: graph model, real backend graph, nodes/edges source position, focus, filter, failed-refresh preservation, project switch";
     return 0;
 }

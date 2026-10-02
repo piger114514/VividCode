@@ -15,7 +15,10 @@ import analyzer
 class IndexTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='vividcode 中文 ')
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name) / 'project'
+        self.root.mkdir()
+        self.old_home = os.environ.get('VIVIDCODE_HOME')
+        os.environ['VIVIDCODE_HOME'] = str(Path(self.temp.name) / 'shared home')
         (self.root / '.vividcode').mkdir()
         (self.root / '.vividcode/project.json').write_text(json.dumps({'app': 'vividcode', 'schema': 1}))
         (self.root / 'api.hpp').write_text('''#pragma once
@@ -36,6 +39,10 @@ int caller(Child &c) { return twice(3) + c.value(); }
         self.save_commands()
 
     def tearDown(self):
+        if self.old_home is None:
+            os.environ.pop('VIVIDCODE_HOME', None)
+        else:
+            os.environ['VIVIDCODE_HOME'] = self.old_home
         self.temp.cleanup()
 
     def save_commands(self):
@@ -137,6 +144,28 @@ int caller(Child &c) { return twice(3) + c.value(); }
         self.assertEqual(self.run_index(), 0)
         self.assertEqual(self.exported()['state']['indexed'], 1)
         self.assertTrue(any(s['name'] == 'First' for s in self.exported()['units'][0]['symbols']))
+
+    def test_shared_cache_isolated_by_project(self):
+        self.assertEqual(self.run_index(), 0)
+        before = self.exported()['units']
+        other = self.root.parent / 'second project'
+        other.mkdir()
+        (other / '.vividcode').mkdir()
+        (other / '.vividcode/project.json').write_text(json.dumps({'app':'vividcode','schema':1}))
+        (other / 'second.cpp').write_text('struct AnotherProject {};')
+        commands = other / 'compile_commands.json'
+        commands.write_text(json.dumps([{'directory':str(other),'file':'second.cpp','arguments':['clang++','second.cpp']}]))
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(analyzer.index_project(other, commands), 0)
+        self.assertNotEqual(analyzer.semantic_directory(other), analyzer.semantic_directory(self.root))
+        self.assertEqual(self.exported()['units'], before)
+        self.assertTrue(any(s['name']=='AnotherProject' for u in analyzer.export_project(other)['units'] for s in u['symbols']))
+        self.assertFalse((self.root / '.vividcode/semantic').exists())
+        self.assertFalse((other / '.vividcode/semantic').exists())
+        owner = analyzer.semantic_directory(self.root) / 'project.json'
+        owner.write_text(json.dumps({'app':'vividcode','projectRoot':str(other)}))
+        with self.assertRaises(ValueError):
+            self.exported()
 
 
 if __name__ == '__main__':

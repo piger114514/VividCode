@@ -44,11 +44,27 @@ def reject_links(path):
             raise ValueError('拒绝 reparse point：' + str(part))
 
 
+def shared_home():
+    configured = os.environ.get('VIVIDCODE_HOME')
+    home = Path(configured) if configured else Path(os.environ['LOCALAPPDATA']) / 'vividcode'
+    if not home.is_absolute():
+        raise ValueError('共享目录必须是绝对路径。')
+    return home
+
+
+def semantic_directory(project):
+    # Same canonical lower-case UTF-8 path hash as SharedRuntime.h.
+    root = Path(project).resolve()
+    key = digest(root.as_posix().lower().encode('utf-8'))
+    return shared_home() / 'semantic' / key
+
+
 def layout(project):
     root = Path(os.path.abspath(project))
     reject_links(root / '.vividcode')
     if not root.is_dir() or root.name.lower() == '.vividcode':
         raise ValueError('请选择项目根目录。')
+    root = root.resolve()
     manifest = root / '.vividcode/project.json'
     reject_links(manifest)
     if not manifest.is_file():
@@ -56,12 +72,15 @@ def layout(project):
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     if data.get('app') != 'vividcode' or data.get('schema') != 1:
         raise ValueError('不支持的 project.json。')
-    sem = root / '.vividcode/semantic'
+    sem = semantic_directory(root)
     reject_links(sem)
     if sem.exists():
         for path in sem.iterdir():
             reject_links(path)
-    return root.resolve(), sem
+        owner = json.loads((sem / 'project.json').read_text(encoding='utf-8-sig'))
+        if owner.get('app') != 'vividcode' or owner.get('schema') != 1 or Path(owner.get('projectRoot', '')).as_posix().lower() != root.as_posix().lower():
+            raise ValueError('共享索引归属不匹配。')
+    return root, sem
 
 
 @contextlib.contextmanager
@@ -256,7 +275,8 @@ def index_project(project, compilation):
     with lifecycle_lock(root):
         # Revalidate after acquiring the lifecycle lock; --d may have just finished.
         root, sem = layout(root)
-        sem.mkdir(exist_ok=True)
+        sem.mkdir(parents=True, exist_ok=True)
+        atomic_json(sem / 'project.json', {'app': 'vividcode', 'schema': 1, 'projectRoot': root.as_posix()})
         compilation = str(Path(compilation).resolve())
         state = {'compile_commands': compilation, 'last_status': 'running', 'schema': SCHEMA, 'language': 'c++'}
         atomic_json(sem / 'config.json', state)

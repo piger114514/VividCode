@@ -1,3 +1,13 @@
+2026-10-02 清理：已删除不再参与构建/测试的 demo 源码及其旧嵌套运行包、工程改名时的旧构建/IDE/索引备份，以及八个已完成的一次性修改脚本，共 3,590 文件 / 2,767.39 MiB（约 2.70 GiB）。空 VividCode.qrc 与 CMake/VS/UI 引用、不存在的 VS 资源模板项已移除。保留实际分析源码、安装/构建入口、四组自动检查、旧项目迁移代码和当前编译数据库。正式命令为 -g/-c/-d/-help。
+
+清理和命令拼写修正后的最终验证：CMake、原始 VS Release x64 以及真实项目 Ninja 构建均成功；四组 CTest 4/4 通过（13.93 秒），CLI 生命周期检查主要使用 -g/-c/-d，并校验帮助显示单横线写法。build/semantic-validation/compile_commands.json 现为 10 个编译条目，不含 qrc。共享 runtime 已更新为本次通过验证的产物，安装后 -help 显示新版命令；本工程实际 -g 新增一份反映源码清理的 JSON，保留原有 4 份历史，当前 .vividcode 为 7 文件 / 151.35 KiB，仅 exe/JSON。从无关工作目录执行实际启动器验证返回 0。此次没有重新全量索引真实工程。
+
+2026-10-02 验证完成：CMake/原始 VS Release 构建通过，CMake 四组 CTest 通过；当前用户共享安装与 PATH 已迁移，本工程 .vividcode 仅 6 文件 / 147.58 KiB，启动器 128.5 KiB。旧 JSON 历史和语义数据库摘要不变，共享后端可导出 10 个旧 TU，实际项目启动器验证通过；未重新全量索引真实工程。
+
+2026-10-02 当前部署方式：项目 .vividcode 只有小启动器 exe、project.json 和 records 中的 index.json。ProjectLauncher.cpp 用 Win32 启动共享 Qt 查看器；SharedRuntime.h 计算 %LOCALAPPDATA%/vividcode/runtime 与 semantic/项目路径哈希。install-command.ps1 安装和注册共享 CLI。generate 不再复制 Qt/Python/libclang；旧语义索引校验迁移，旧 Markdown/依赖清除。analyzer.py 的 layout 改读集中项目缓存，-d 清除此项目缓存并保留共享程序。下面关于复制运行包、code.md 与项目内 semantic 的早期说明属于历史，不作当前实现依据；当前入口和验证见 Document/控制台与记录管理.md。
+
+2026-09-30 部署修正：取消打开演示按钮及 demo 打包。-g 仅部署分析当前项目所需的程序和依赖，并清理旧 .vividcode/demo 及其中嵌套的运行包。项目 records 和 semantic 保留。SmokeTest.h 用临时项目渲染，cli.Tests.ps1 验证旧嵌套目录不会被复制且能被清除；CMake Release 构建与两组相关检查通过。详情见 Document/控制台与记录管理.md。
+
 2026-09-30 工程命名更新：源码目录 VividCode/，原始 VS 解决方案 VividCode.sln。
 查看器工程 VividCode-viewer.vcxproj 使用 main.cpp，控制台工程 vividcode.vcxproj 使用 cli_main.cpp。
 VividCode.ui 自动生成 ui_VividCode.h；该生成文件不手工改名或编辑。
@@ -38,7 +48,7 @@ analyzer/clang_bridge.py 用 ctypes 调用真实 libclang；extractor.py 遍历 
 由 compile_commands.json 提供。相同文件的不同编译参数分开保存和展示。
 语义索引放 .vividcode/semantic，文件级历史仍放 records，两者用途不同。
 一轮解析失败会保留旧完整快照；点击关系列表通过 sourceRequested 信号定位源码。
-prepare-analyzer.ps1 准备独立 Python、libclang 和内置头文件，--g 统一复制，--d 删除。
+prepare-analyzer.ps1 准备独立 Python、libclang 和内置头文件，-g 统一复制，-d 删除。
 Release 与四组测试通过，包含本项目 9 个真实 TU 验证；完整限制见 C++语义索引.md。
 以下早期章节中的“未实现语义解析”属于历史说明，以本段和功能文档为准。
 ============================================================
@@ -51,7 +61,7 @@ VividCode 同时是记录管理的命名空间，因此窗口类使用 VividCode
 
 本次开发中，AI 在原有 Qt 空白工程上编写了：
   1. 文件扫描、目录树、真实关系图和只读源码界面。
-  2. vividcode --g、--d、--c 三个控制台命令。
+  2. vividcode -g、-d、-c 三个控制台命令。
   3. Qt 运行文件部署、文件级记录保存和历史清理。
   4. 构建脚本、命令路径注册脚本和自动检查。
 
@@ -81,9 +91,9 @@ AI 开发时使用 CodeGraph 帮助阅读代码，与 vividcode 运行时使用�
 可以把代码之间的关系读成下面这样：
 
   cli_main.cpp
-      ├─ --g → VividCode::generate()
-      ├─ --d → VividCode::removeGenerated()
-      └─ --c → VividCode::cleanHistory()
+      ├─ -g → VividCode::generate()
+      ├─ -d → VividCode::removeGenerated()
+      └─ -c → VividCode::cleanHistory()
 
   main.cpp
       └─ VividCodeWindow 窗口
@@ -99,7 +109,7 @@ AI 开发时使用 CodeGraph 帮助阅读代码，与 vividcode 运行时使用�
 为什么有两个 main()，却不会报重复定义？
   因为 CMakeLists.txt 把它们分别编译进两个不同的 exe。
   不同程序可以各有一个 main()。
-  demo/main.cpp 还有一个入口，那只是演示源码，不会编进查看器。
+  ProjectLauncher.cpp 另有 WinMain 入口，单独编译为原生启动器；演示源码已删除。
 
 共享静态库 vividcode_store 是什么？
   构建时先把 ProjectStore.cpp 编译成可复用代码，再链接进两个 exe。
@@ -109,7 +119,7 @@ AI 开发时使用 CodeGraph 帮助阅读代码，与 vividcode 运行时使用�
 ============================================================
 
 假设你在 E:\MyProject 中输入：
-  vividcode --g
+  vividcode -g
 
 Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main()。
 
@@ -119,18 +129,18 @@ Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main
      当前 CLI 执行完任务就返回，不需要调用 app.exec() 等待窗口事件。
 
   2. 用 app.arguments() 获取参数列表。
-     列表第 0 项是程序名，第 1 项才是 --g。
+     列表第 0 项是程序名，第 1 项才是 -g。
      所以“一条命令”对应 args.size() == 2。
 
   3. 检查参数。
-     没参数或 --help：输出帮助。
+     没参数或 -help：输出帮助。
      多个操作一起输入、未知参数：报参数错误，返回 2。
 
   4. 用 QDir::currentPath() 取得当前工作目录。
      这里得到的是 E:\MyProject，不是 exe 的安装目录。
 
   5. 根据参数调用 ProjectStore 中的函数。
-     --g 还会传入 QCoreApplication::applicationDirPath()，
+     -g 还会传入 QCoreApplication::applicationDirPath()，
      告诉 generate() 从哪里复制已经编译好的查看器和 Qt DLL。
 
   6. 输出结果并退出。
@@ -140,7 +150,7 @@ Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main
   currentPath()        = 用户在哪个目录执行命令，决定处理哪个项目。
   applicationDirPath() = vividcode.exe 在哪，决定从哪里复制运行文件。
 
-四、--g：生成命令到底做了什么
+四、-g：生成命令到底做了什么
 ============================================================
 
 入口是 ProjectStore.cpp 中的 VividCode::generate()。
@@ -156,20 +166,20 @@ Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main
 步骤 3：检查运行包。
   必须有 vividcode-viewer.exe、Qt6Core.dll、Qt6Gui.dll、
   Qt6Widgets.dll 和 platforms/qwindows.dll 等必要文件。
-  --g 不会在每个目标项目重新编译一遍程序，而是复制已有运行文件。
+  -g 不会在每个目标项目重新编译一遍程序，而是复制已有运行文件。
 
 步骤 4：处理 .vividcode/project.json。
   .vividcode 不存在：创建目录，写入初始 manifest。
   .vividcode 已存在：读取并验证其 project.json。
   已有目录但没有有效 manifest：拒绝覆盖，防止把不属于当前格式的数据当成项目。
 
-步骤 5：复制查看器、Qt DLL、插件以及 demo。
-  copyEntry() 负责复制文件或目录，写单个文件使用 QSaveFile。
+步骤 5：将旧项目内的语义缓存校验迁移到共享 semantic，复制小启动器，清除旧运行附件。
+  真实 Qt 查看器和分析器由 install-runtime.ps1 安装到共享 runtime，-g 不复制它们。
 
 步骤 6：调用 recordSnapshot() 保存代码文件记录。
   无变化时复用最新记录；有变化时才新增历史。
 
-步骤 7：写生成目录里的 README.md，输出查看器所在位置。
+步骤 7：提交 project.json 并输出启动器位置；不再生成 README.md。
 
 生成示例：
   E:\MyProject\
@@ -177,15 +187,12 @@ Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main
       MyClass.h
       .vividcode\
           vividcode-viewer.exe
-          Qt6Core.dll 等运行依赖
-          platforms\
           project.json
           records\
               record-某个UUID\
                   index.json
-                  code.md
 
---g 不会自动弹出查看器，生成完成后可以双击它。
+-g 不会自动弹出查看器，生成完成后可以双击它。
 原始源码仍留在项目原来的位置。
 
 五、ProjectScanner.h：程序怎么找到源码文件
@@ -213,7 +220,7 @@ Windows 先通过 PATH 找到 vividcode.exe，然后执行 cli_main.cpp 的 main
 以及 JS/TS 的 dist、node_modules、.next、.nuxt 和 Java 的 target、.gradle 等。
 
 为什么必须排除 .vividcode？
-  因为生成目录里有 demo 代码，若再扫描它，就会把工具自己的演示文件
+  因为生成目录里有分析器源码和缓存，若再扫描它，就会把工具自身文件
   混进用户项目的记录，下一次生成还可能持续产生不必要的数据。
 
 为什么用相对路径？
@@ -248,7 +255,7 @@ UUID 是用于区分记录的标识，不是记录的时间顺序。
 
 每次新增记录包含：
   index.json：给程序读取的结构化数据。
-  code.md：给人阅读的 Markdown 文件概览。
+  旧版 code.md 概览已取消，新版只有 JSON；旧 JSON 历史继续保留。
 
 project.json 可以这样理解（下面是简化示意，不是可直接替换的真实文件）：
   latest = B
@@ -257,21 +264,21 @@ project.json 可以这样理解（下面是简化示意，不是可直接替换�
 意思是：已经登记过 A、B 两份记录，当前最新记录是 B。
 
 保存顺序很重要：
-  先保存新目录中的 index.json 和 code.md；
+  先原子保存新目录中的 index.json；
   再把记录 ID 加入 history；
   最后把 latest 指向新记录并提交 project.json。
 
 如果新文档写到一半失败，原来的 latest 不会提前指向半份记录。
 QSaveFile 用临时写入再提交的方式减少单文件被写坏的风险。
-但整个运行包的复制不是一次整体事务，失败后仍可能需要重试 --g。
+但整个运行包的复制不是一次整体事务，失败后仍可能需要重试 -g。
 
 特别注意：当前记录不包含完整源码内容。
-因此 --c 是清理旧文件概览，不是“保留最后一份源码备份”。
+因此 -c 是清理旧文件概览，不是“保留最后一份源码备份”。
 
-七、--c 和 --d：两个删除动作的区别
+七、-c 和 -d：两个删除动作的区别
 ============================================================
 
---c 对应 cleanHistory()：
+-c 对应 cleanHistory()：
   1. 读取 project.json。
   2. 验证 latest 指向的记录存在且格式可读。
   3. 遍历 history，保留 latest，删除其余已登记的记录目录。
@@ -283,16 +290,16 @@ QSaveFile 用临时写入再提交的方式减少单文件被写坏的风险。
 
 不会根据哪个文件的修改日期最大来猜测“最新”。
 若最新记录损坏，会拒绝清理，避免把还能参考的旧记录也删掉。
-用户手动放入的未知文件、没有登记的中断记录，不属于 --c 自动清理范围。
+用户手动放入的未知文件、没有登记的中断记录，不属于 -c 自动清理范围。
 
---d 对应 removeGenerated()：
+-d 对应 removeGenerated()：
   1. 计算当前项目下固定的 .vividcode 路径。
   2. 检查目标目录和运行锁。
   3. 删除整个 .vividcode。
   4. 目录原本不存在时，返回“无需删除”。
 
-你的需求就是：--g 创建，--d 完整清理创建出来的目录。
-生成的查看器、Qt 依赖、最新记录和旧记录都在 --d 的删除范围内。
+你的需求就是：-g 创建，-d 完整清理创建出来的目录。
+生成的查看器、Qt 依赖、最新记录和旧记录都在 -d 的删除范围内。
 将来若把分析索引纳入生成流程，索引也应一起删除。
 程序不会删除 .vividcode 外的源码和人工维护的 Document 文档。
 
@@ -316,7 +323,7 @@ setBackgroundBrush 设置画布底色，setBrush 设置卡片文字和填充颜�
 
 如果 exe 位于某项目的 .vividcode 目录：
   程序向上找一级，得到项目根目录；
-  持有运行锁，防止 --g 和 --d 操作正在使用的运行文件；
+  持有运行锁，防止 -g 和 -d 操作正在使用的运行文件；
   创建窗口；
   调用 window.openProject()；
   调用 window.show()；
@@ -327,7 +334,7 @@ app.exec() 是事件循环：
   不是一直重复扫描项目；只有打开或手动刷新等动作才触发相应扫描。
 
 从普通 build/Release 目录双击查看器时，没有所属项目可自动定位。
-此时可以点击“打开项目”或“打开演示”，也可以传入项目目录参数。
+此时可以点击“打开项目”，也可以传入项目目录参数；部署版自动打开上一级项目。
 
 九、VividCode.h/.cpp：窗口是怎么工作的
 ============================================================
@@ -441,7 +448,7 @@ QLockFile 保护什么？
 
 CMakeLists.txt
   告诉构建工具有哪些源码、生成哪些目标、链接哪些 Qt 模块。
-  AUTOMOC 处理 Qt 元对象相关代码；AUTOUIC 处理 .ui；AUTORCC 处理 .qrc。
+  AUTOMOC 处理 Qt 元对象相关代码；AUTOUIC 处理 .ui。空 .qrc 和 AUTORCC 已删除。
   普通源码不应直接修改 build 目录里自动生成的文件。
 
 build.ps1
@@ -449,14 +456,14 @@ build.ps1
   默认使用本机 C:\Qt 下的 MSVC 套件，产物位于 build/Release。
 
 install-command.ps1
-  把 build/Release 的路径加入当前用户 PATH，便于直接输入 vividcode。
+  安装到 %LOCALAPPDATA%/vividcode/runtime，并将该共享路径加入当前用户 PATH。
   它不是把 vividcode.exe 编译出来的步骤；需要先完成构建。
 
 SmokeTest.h
   检查扫描、树和卡片选中、筛选、刷新等基本行为，并渲染离屏截图。
 
 tests/cli.Tests.ps1
-  在临时目录测试 --g、--c、--d。
+  在临时目录测试 -g、-c、-d。
   还检查无变化去重、查看器自动记录、中文路径、损坏记录、运行锁和目录联接。
 
 此前里程碑已完成 Release 构建，CTest 2/2 通过。
@@ -503,14 +510,14 @@ PowerShell 的临时设置写法是：
 十四、为什么查到能改，还不能直接把当前文件夹改名
 ============================================================
 
-不是因为要保留索引不让 --d 删除；你已经明确要求生成和删除成对。
+不是因为要保留索引不让 -d 删除；你已经明确要求生成和删除成对。
 真正需要衔接的是两个程序对同一个目录的使用流程。
 
 当前代码的实际情况：
-  1. vividcode --g 不会启动 CodeGraph，不会生成 codegraph.db。
-  2. vividcode --d 只检查自己的运行锁，不会停止 CodeGraph 的 daemon。
+  1. vividcode -g 不会启动 CodeGraph，不会生成 codegraph.db。
+  2. vividcode -d 只检查自己的运行锁，不会停止 CodeGraph 的 daemon。
   3. 把纯 .codegraph 目录直接改名后，它还没有 vividcode 的 project.json。
-     现有 --g 会把它视为未知的已有目录，拒绝覆盖。
+     现有 -g 会把它视为未知的已有目录，拒绝覆盖。
   4. 当前 CodeGraph 索引由正在运行的服务管理，有数据库及 WAL/SHM 文件。
      迁移必须让数据库干净关闭后处理，不能只搬动一个 db 文件就认为完成。
 
@@ -546,9 +553,9 @@ vividcode 的 .vividcode 仍然只管理 vividcode 自己生成的文件。
 适合动手的小练习：
   改窗口标题文字，然后构建运行。
   在临时演示项目里新增一个 .hpp 或 .py，刷新后观察文件树和关系图。
-  --g 两次，观察 history 是否仍然只有一条。
+  -g 两次，观察 history 是否仍然只有一条。
   修改一句源码，再刷新，观察最新记录是否变化。
-  --c 后确认记录只剩最新一份；--d 后确认源码仍然保留。
+  -c 后确认记录只剩最新一份；-d 后确认源码仍然保留。
 
 这些练习应在独立的小型演示目录做，不要为了练习手动修改真实 manifest。
 
@@ -565,10 +572,10 @@ Source Files 是 VS 的逻辑分组，由 .vcxproj.filters 配置；不是磁盘
 cli_main.cpp 和 main.cpp 各有一个 main()，因此分别编译到控制台和查看器两个程序。
 
 使用 Release / x64 生成整个解决方案，产物位于 VividCode/x64/Release。
-控制台项目会先构建查看器，再部署 Qt 依赖和 demo。
-此输出已通过 --help、CLI 生命周期和 GUI 冒烟检查；Debug 尚未验证。
-CMake 输出仍在 build/Release，当前用户 PATH 指向这套输出。
-运行 --g/--c/--d 时，当前工作目录应是要处理的目标项目。
+控制台项目会先构建查看器，再部署 Qt 和分析依赖；不再部署 demo。
+此输出已通过 -help、CLI 生命周期和 GUI 冒烟检查；Debug 尚未验证。
+CMake 输出仍在 build/Release，用作构建/安装来源；当前用户 PATH 指向共享 runtime。
+运行 -g/-c/-d 时，当前工作目录应是要处理的目标项目。
 
 十七、语法检查为什么会提到 LLVM
 ============================================================

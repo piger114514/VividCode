@@ -15,7 +15,6 @@ VividCodeWindow::VividCodeWindow(QWidget *parent) : QMainWindow(parent)
     toolbar->setMovable(false);
     auto *open = toolbar->addAction(QStringLiteral("打开项目…"));
     open->setShortcut(QKeySequence::Open);
-    auto *demo = toolbar->addAction(QStringLiteral("打开演示"));
     auto *refresh = toolbar->addAction(QStringLiteral("刷新文件"));
     refresh->setShortcut(QKeySequence::Refresh);
     toolbar->addSeparator();
@@ -28,7 +27,7 @@ VividCodeWindow::VividCodeWindow(QWidget *parent) : QMainWindow(parent)
     auto *body = new QWidget;
     auto *layout = new QVBoxLayout(body);
     layout->setContentsMargins(16, 12, 16, 12);
-    projectLabel = new QLabel(QStringLiteral("从“打开演示”开始，或选择一个包含源码文件的文件夹（C/C++、C#、Python、JavaScript/TypeScript、Java）。"));
+    projectLabel = new QLabel(QStringLiteral("选择包含源码文件的项目文件夹（C/C++、C#、Python、JavaScript/TypeScript、Java）。"));
     projectLabel->setTextFormat(Qt::PlainText);
     projectLabel->setWordWrap(true);
     layout->addWidget(projectLabel);
@@ -91,10 +90,6 @@ VividCodeWindow::VividCodeWindow(QWidget *parent) : QMainWindow(parent)
     connect(open, &QAction::triggered, this, [this] {
         const QString directory = QFileDialog::getExistingDirectory(this, QStringLiteral("选择项目目录"), rootPath);
         if (!directory.isEmpty()) openProject(directory);
-    });
-    connect(demo, &QAction::triggered, this, [this] {
-        const QString path = QCoreApplication::applicationDirPath() + "/demo";
-        if (!openProject(path)) QMessageBox::warning(this, QStringLiteral("未找到演示"), QStringLiteral("请运行 build.ps1，将演示文件复制到程序旁边。"));
     });
     connect(refresh, &QAction::triggered, this, [this] {
         if (rootPath.isEmpty()) return;

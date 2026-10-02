@@ -3,13 +3,12 @@
 #include <QtWidgets/QStyleFactory>
 #include "SmokeTest.h"
 #include "SemanticSmokeTest.h"
-#include "SemanticSmokeTest.h"
+#include "SharedRuntime.h"
 #include <memory>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    // 固定控件样式并同时指定背景、文字，避免与 Windows 深浅主题混用。
     app.setStyle(QStyleFactory::create("Fusion"));
     QPalette palette;
     palette.setColor(QPalette::Window, QColor("#101010"));
@@ -61,31 +60,39 @@ int main(int argc, char *argv[])
         QToolTip { background:#282828; color:#f0f0f0; border:1px solid #484848; }
     )");
     QCoreApplication::setApplicationName("vividcode");
+    std::unique_ptr<VividCode::RuntimeReadLock> sharedLock;
+    if (QFileInfo::exists(VividCode::sharedRuntime() + "/installation.json")) {
+        sharedLock = std::make_unique<VividCode::RuntimeReadLock>(VividCode::sharedHome());
+        if (!sharedLock->valid()) return 1;
+    }
     if (app.arguments().contains("--self-test")) return runSmokeTest(app);
     if (app.arguments().contains("--semantic-test")) return runSemanticSmokeTest(app);
-    if (app.arguments().contains("--semantic-test")) return runSemanticSmokeTest(app);
-    // 生成的查看器位于 <项目>/.vividcode，双击即可定位上一级项目。
-    QDir applicationDirectory(QCoreApplication::applicationDirPath());
-    QString generatedProject;
-    std::unique_ptr<QLockFile> runtimeLock;
-    if (applicationDirectory.dirName().compare(".vividcode", Qt::CaseInsensitive) == 0) {
-        applicationDirectory.cdUp();
-        generatedProject = applicationDirectory.canonicalPath();
-        const QString lockPath = applicationDirectory.filePath(".vividcode-viewer.lock");
+    const auto args = app.arguments();
+    QString project;
+    const int option = args.indexOf("--project");
+    if (option >= 0 && option + 1 < args.size()) project = args.at(option + 1);
+    else if (args.size() == 2) project = args.at(1);
+    // Old deployed viewers are supported during migration.
+    if (project.isEmpty()) {
+        QDir directory(QCoreApplication::applicationDirPath());
+        if (directory.dirName().compare(".vividcode", Qt::CaseInsensitive) == 0) {
+            directory.cdUp(); project = directory.canonicalPath();
+        }
+    }
+    std::unique_ptr<QLockFile> projectLock;
+    if (!project.isEmpty() && QFileInfo::exists(QDir(project).filePath(".vividcode/project.json"))) {
+        const QString lockPath = QDir(project).filePath(".vividcode-viewer.lock");
         if (QFileInfo(lockPath).isSymLink() || QFileInfo(lockPath).isJunction()) return 1;
-        runtimeLock = std::make_unique<QLockFile>(lockPath);
-        runtimeLock->setStaleLockTime(0);
-        if (!runtimeLock->tryLock()) {
-            QMessageBox::warning(nullptr, "vividcode", QStringLiteral("此项目的查看器已经打开，或正在更新/删除运行文件。"));
+        projectLock = std::make_unique<QLockFile>(lockPath);
+        projectLock->setStaleLockTime(0);
+        if (!projectLock->tryLock()) {
+            if (!args.contains("--verify-startup")) QMessageBox::warning(nullptr, "vividcode", QStringLiteral("此项目已经打开，或正在更新/删除。"));
             return 1;
         }
     }
     VividCodeWindow window;
-    // 可把项目目录作为参数传入；每次打开都重新扫描磁盘。
-    if (app.arguments().contains("--verify-startup"))
-        return !generatedProject.isEmpty() && window.openProject(generatedProject) ? 0 : 1;
-    if (app.arguments().size() == 2) window.openProject(app.arguments().at(1));
-    else if (!generatedProject.isEmpty()) window.openProject(generatedProject);
+    if (args.contains("--verify-startup")) return !project.isEmpty() && window.openProject(project) ? 0 : 1;
+    if (!project.isEmpty() && !window.openProject(project)) return 1;
     window.show();
     return app.exec();
 }

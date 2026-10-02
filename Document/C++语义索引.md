@@ -1,21 +1,21 @@
 # C++ 语义索引
 
-更新日期：2026-09-30。
+更新日期：2026-10-02。
 
 ## 用户已确认的范围
 
 - 独立 Python 进程调用 LLVM/libclang，C++ / Qt 查看器展示结构与关系列表并定位源码。
 - 提取类、成员、函数、声明与定义位置、继承、直接调用和成员引用，SQLite 存储；符号使用独立 ID，关系携带发生位置。
 - 导入现有 `compile_commands.json`；缺失时提示配置，不自行猜测参数。
-- Python 与 libclang 随运行包部署，纳入 `.vividcode` 的 `--g/--d` 生命周期。
+- Python 与 libclang 随运行包部署，纳入 `.vividcode` 的 `-g/-d` 生命周期。
 - 语义索引首轮只做列表；用户随后明确先实现真实关系图，直接替换原“文件概览”，并确认地图式类/成员层级：缩小时看类，放大后显示类里的函数、成员及关系。范围仍限定在当前编译单元/配置与选中焦点；其他语言仅支持文件浏览。
 
 ## 当前实现与操作
 
 已实现独立 Python/libclang C++ 分析器，Qt 默认显示“真实关系图”，另保留“C++ 结构与关系列表”。支持命名空间、类/结构体、成员、函数/方法、声明定义位置，以及继承、直接调用、成员引用、普通引用和覆写；虚方法调用保守标记为“可能调用”，成员引用暂不细分读写。其它语言仍为文件浏览。
 
-1. 在项目目录执行 `vividcode --g`，打开生成的 `.vividcode/vividcode-viewer.exe`；也可用开发版查看器打开项目。
-2. 点击“导入编译数据库”，选择构建系统导出的 `compile_commands.json`。未初始化项目会先复用生成流程创建 `.vividcode`。
+1. 在项目目录执行 `vividcode -g`，打开生成的 `.vividcode/vividcode-viewer.exe`；也可用开发版查看器打开项目。
+2. 点击“导入编译数据库”，选择构建系统导出的 `compile_commands.json`。未初始化项目会先复用生成流程创建仅含启动器/JSON 的 `.vividcode`；需先安装共享运行环境。
 3. 后台分析完成后，选择编译单元/配置，在“选择符号”下拉框中搜索并选择类、函数或成员，即可显示其邻域。也可在“C++ 结构与关系列表”中选中结构；列表优先定位定义，右键可定位声明；点击关系定位发生位置。
 4. 再次打开已配置项目或 F5 刷新，先读取已有结果并后台检查；也可点击更新或取消。失败/取消时显示旧结果及明确状态。
 
@@ -37,12 +37,12 @@
 
 ## 缓存与部署
 
-- `.vividcode/analyzer/`：Python 3.13.7 embeddable x64、分析器源码、libclang 23.1.2、Clang 23 内置头文件、许可证和摘要。不需另装 Python/LLVM；项目自己的 SDK、Qt 和第三方头文件仍须可访问。
-- `.vividcode/semantic/config.json`：编译数据库绝对路径、状态、诊断、解析与复用数量；项目移动后需重新导入有效数据库。
-- `.vividcode/semantic/index.db`：SQLite schema 2，`units` 表按编译命令哈希保存命令、依赖哈希及符号/关系 JSON；`meta` 表记录解析器版本。符号采用 `c++:` + USR，同文件多配置独立保存并在界面分别选择。
+- `%LOCALAPPDATA%/vividcode/runtime/analyzer/`：Python 3.13.7 embeddable x64、分析器源码、libclang 23.1.2、Clang 23 内置头文件、许可证和摘要。不需另装 Python/LLVM；项目自己的 SDK、Qt 和第三方头文件仍须可访问。
+- `%LOCALAPPDATA%/vividcode/semantic/<项目路径哈希>/config.json`：编译数据库绝对路径、状态、诊断、解析与复用数量；项目移动后需重新导入有效数据库。
+- `%LOCALAPPDATA%/vividcode/semantic/<项目路径哈希>/index.db`：SQLite schema 2，`units` 表按编译命令哈希保存命令、依赖哈希及符号/关系 JSON；`meta` 表记录解析器版本。符号采用 `c++:` + USR，同文件多配置独立保存并在界面分别选择。
 - 根据 TU 的依赖内容 SHA-256、参数、分析器/DLL 版本、项目与显式包含目录文件清单及相关环境变量决定复用。头文件变化重解析受影响 TU；新增文件保守失效缓存，删除命令清除其结果。
 - 一轮全部成功后通过 SQLite 单事务提交；语法错误、缺头文件、非法数据库或取消不替换上次完整快照。取消时 config 可保留 running，界面将其视为未完成/旧结果，下次可恢复运行。schema 不兼容时拒绝，无自动迁移。
-- 分析/导出与 ProjectStore 共用根目录 `.vividcode-semantic.lock` 的 Windows 独占句柄，退出自动释放并删除锁文件。`--g/--d` 不与活动分析并发；`--d` 删除所有运行文件与索引，`--c` 只清理文件级历史。
+- 分析/导出与 ProjectStore 共用根目录 `.vividcode-semantic.lock` 的 Windows 独占句柄，退出自动释放并删除锁文件。`-g/-d` 不与活动分析并发；`-d` 删除所有运行文件与索引，`-c` 只清理文件级历史。
 
 ## 源码入口和运行
 
@@ -54,20 +54,22 @@
 | SemanticPanel.h/.cpp | QProcess 异步调用、TU/符号/类型选择、关系图与列表同步、状态、诊断及取消 |
 | RelationGraph.h/.cpp | buildRelationMap 构建类/成员层模型；证据合并、箭头、容器、缩放阈值、拖动及源码联动 |
 | VividCode.cpp | 页签与项目内源码定位 |
-| ProjectStore.cpp | 分析运行包部署与生命周期互斥 |
+| ProjectStore.cpp | 共享路径/旧索引迁移与生命周期互斥 |
 | prepare-analyzer.ps1 | 下载固定 Python 包并校验固定 SHA-256，复制本机 LLVM DLL/内置头文件及许可证 |
 | tests/test_analyzer.py、SemanticSmokeTest.h、RelationGraphTest.h | 后端真实解析、关系模型与界面端到端测试；可选真实项目验收 |
 
 后端命令（GUI 已封装）：
 
 ```powershell
-& .\build\Release\analyzer\python\python.exe .\build\Release\analyzer\analyzer.py index --project '项目根目录' --compile-commands '数据库路径'
-& .\build\Release\analyzer\python\python.exe .\build\Release\analyzer\analyzer.py export --project '项目根目录'
+& "$env:LOCALAPPDATA/vividcode/runtime/analyzer/python/python.exe" "$env:LOCALAPPDATA/vividcode/runtime/analyzer/analyzer.py" index --project '项目根目录' --compile-commands '数据库路径'
+& "$env:LOCALAPPDATA/vividcode/runtime/analyzer/python/python.exe" "$env:LOCALAPPDATA/vividcode/runtime/analyzer/analyzer.py" export --project '项目根目录'
 ```
 
-index 输出 JSONL 协议 1（progress/diagnostic/result），失败退出非零；export 输出各 TU 配置与快照的单个 JSON。开发测试可显式设置 VIVIDCODE_LIBCLANG；GUI 清除此覆盖，使用随包 DLL。
+index 输出 JSONL 协议 1（progress/diagnostic/result），失败退出非零；export 输出各 TU 配置与快照的单个 JSON。开发测试可显式设置 VIVIDCODE_LIBCLANG；GUI 清除此覆盖，使用共享安装中的 DLL。
 
 ## 已验证
+
+2026-10-02 共享部署：SemanticPanel 从共享运行包启动分析器，缓存以规范项目路径哈希隔离，project.json 校验归属。旧项目 -g 先逐文件校验迁移旧 SQLite/配置，再移除项目内 analyzer/semantic；两份索引冲突时保留并报错。项目移动后的新路径使用新缓存，旧路径缓存暂不自动回收。CMake Release 构建与四组 CTest 通过；七项真实后端检查含两个项目分别索引与归属错误拒绝访问。当前用户共享安装已完成，本工程旧语义数据库迁移前后摘要一致，10 个 TU 可从共享后端导出；本轮不将缓存读取当作新的真实工程全量索引验收。部署细节见 [控制台与记录管理](控制台与记录管理.md)。
 
 2026-09-30 命名迁移：主窗口为 VividCodeWindow，源码为 VividCode.cpp/.h。本次 CMake 四组 CTest 全部通过，原始 VS 产物的语义界面测试通过；新路径的 Ninja 编译数据库已实际编译验证。旧 .vividcode/semantic 备份后重新生成，新索引 10 个 TU 全部成功，真实关系图中 VividCodeWindow::openProject → scanProject 的调用处和头文件定义定位通过。旧编译数据库与旧索引不再作为当前数据使用。
 

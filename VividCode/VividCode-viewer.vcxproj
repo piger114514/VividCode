@@ -75,6 +75,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ProjectScanner.h" />
+    <ClInclude Include="SharedRuntime.h" />
     <ClInclude Include="SmokeTest.h" />
     <ClInclude Include="ProjectStore.h" />
   </ItemGroup>
@@ -111,7 +112,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <QtRcc Include="VividCode.qrc"/>
     <QtUic Include="VividCode.ui"/>
     <QtMoc Include="VividCode.h"/>
     <QtMoc Include="SemanticPanel.h"/>

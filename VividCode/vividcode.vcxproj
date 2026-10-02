@@ -36,7 +36,7 @@
     <OutDir>$(MSBuildProjectDirectory)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(MSBuildProjectDirectory)\$(Platform)\$(Configuration)\vividcode-cli\</IntDir>
     <LocalDebuggerEnvironment>PATH=$(QtToolsPath);%PATH%</LocalDebuggerEnvironment>
-    <LocalDebuggerCommandArguments>--help</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-help</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -56,9 +56,13 @@
     <ClCompile Include="ProjectStore.cpp" />
     <ClInclude Include="ProjectStore.h" />
     <ClInclude Include="ProjectScanner.h" />
+    <ClInclude Include="SharedRuntime.h" />
   </ItemGroup>
   <ItemGroup>
     <!-- Generation needs the viewer next to the CLI; build it first without linking its executable. -->
+    <ProjectReference Include="vividcode-launcher.vcxproj">
+      <Project>{67A55C31-19DE-4CD8-A326-E7E878D47017}</Project><ReferenceOutputAssembly>false</ReferenceOutputAssembly><LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
     <ProjectReference Include="VividCode-viewer.vcxproj">
       <Project>{63FCAE82-3852-43AB-8F3E-15BCD0F7E073}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -71,7 +75,5 @@
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\prepare-analyzer.ps1&quot; -Destination &quot;$(OutDir)analyzer&quot;" />
     <Exec Command="&quot;$(QtToolsPath)\windeployqt.exe&quot; --release --no-translations --no-opengl-sw --no-system-d3d-compiler &quot;$(OutDir)vividcode-viewer.exe&quot;" />
     <Copy SourceFiles="$(QtInstallDir)\plugins\platforms\qoffscreen.dll" DestinationFolder="$(OutDir)platforms" />
-    <ItemGroup><VividCodeDemo Include="$(MSBuildProjectDirectory)\demo\**\*" /></ItemGroup>
-    <Copy SourceFiles="@(VividCodeDemo)" DestinationFiles="@(VividCodeDemo->'$(OutDir)demo\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 </Project>
