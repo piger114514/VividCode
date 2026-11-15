@@ -4,7 +4,7 @@ vividcode is a Windows x64 desktop tool for exploring source files, symbols and 
 
 ## Install and open a project
 
-1. Run `vividcode-Setup-0.1.4-x64.exe` and select the installation folder.
+1. Run `vividcode-Setup-0.1.5-x64.exe` and select the installation folder.
 2. Open a new PowerShell window in your source project and run `vividcode -g`.
 3. Open `.vividcode/vividcode-viewer.exe` in that project. You can also launch `runtime/vividcode-viewer.exe` from the installation folder and click **Open Project...**.
 

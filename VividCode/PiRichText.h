@@ -33,14 +33,14 @@ public:
     void setThinking(bool value){waiting=value;refreshMessages();}
     void refreshMessages(){
         auto display=messages;if(waiting)display.append(QJsonObject{{"role","assistant"},{"text",UiLanguage::text("Thinking...")}});
-        auto encode=[&display]{return QString::fromUtf8(QJsonDocument(QJsonObject{{"messages",display}}).toJson(QJsonDocument::Compact));};
+        auto encode=[&display]{return QString::fromUtf8(QJsonDocument(QJsonObject{{"messages",display},{"language",qApp->property("vividcode.uiLanguage").toString()}}).toJson(QJsonDocument::Compact));};
         source=encode();while(source.toUtf8().size()>1500*1024 && messages.size()>1){messages.removeAt(0);display.removeAt(0);source=encode();}
         ++version;
         QString html="<table width='100%' cellspacing='0' cellpadding='12' border='0'>";
         for(int i=0;i<display.size();++i){const auto message=display[i].toObject();
-            const QString name=message.value("role")=="user"?UiLanguage::text("You"):QStringLiteral("pi");
+            const QString name=message.value("role")=="user"?UiLanguage::text("User"):QStringLiteral("pi");
             const QString color=message.value("role")=="user"?"#2d2d2d":"#181818";
-            html+=QString("<tr bgcolor='%1'><td width='52' valign='top'><span style='font-size:14pt;font-weight:700;color:#ffffff'>%2</span></td><td valign='top'>%3</td></tr>").arg(color,name,message.value("text").toString().toHtmlEscaped().replace("\n","<br>"));
+            html+=QString("<tr bgcolor='%1'><td width='64' valign='top' style='white-space:nowrap'><span style='font-size:9pt;font-weight:600;color:#ffffff'>%2</span></td><td valign='top'>%3</td></tr>").arg(color,name,message.value("text").toString().toHtmlEscaped().replace("\n","<br>"));
         }
         const bool bottom=verticalScrollBar()->value()>=verticalScrollBar()->maximum()-4; const int scroll=verticalScrollBar()->value();
         setHtml(html+"</table>");verticalScrollBar()->setValue(bottom?verticalScrollBar()->maximum():scroll);delay.start(80);

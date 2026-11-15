@@ -22,8 +22,7 @@ const QMap<QString, FileLanguageStyle> &fileLanguagePalette() {
         {"typescript", {"TypeScript", QColor("#61cadd")}}, {"java", {"Java", QColor("#f0a16a")}}};
     return palette;
 }
-FileLanguageStyle fileLanguageStyle(const QJsonObject &symbol) {
-    if (symbol.value("kind") != "FileScope" && symbol.value("kind") != "RelatedFile") return {};
+FileLanguageStyle sourceLanguageStyle(const QJsonObject &symbol) {
     QString file = symbol.value("scope_file").toString();
     if (file.isEmpty()) file = symbol.value("def_file").toString();
     if (file.isEmpty()) file = symbol.value("decl_file").toString();
@@ -38,6 +37,10 @@ FileLanguageStyle fileLanguageStyle(const QJsonObject &symbol) {
         else if (QSet<QString>{"c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "inl", "ipp"}.contains(extension)) language = "c++";
     }
     return fileLanguagePalette().value(language);
+}
+FileLanguageStyle fileLanguageStyle(const QJsonObject &symbol) {
+    if (symbol.value("kind") != "FileScope" && symbol.value("kind") != "RelatedFile") return {};
+    return sourceLanguageStyle(symbol);
 }
 QColor fileBackground(const QColor &accent, bool focused = false) {
     const qreal amount = focused ? 0.28 : 0.15;
@@ -658,7 +661,8 @@ void RelationGraph::renderMap(bool fit, bool centerFocus) {
         .arg(neighborhood.symbols.size()).arg(neighborhood.edges.size()));
     QSet<QString> visibleLanguages;
     const auto collectLanguage = [&visibleLanguages](const QJsonObject &symbol) {
-        const auto style = fileLanguageStyle(symbol);
+        // Classes and enums also carry source language, even without a file node.
+        const auto style = sourceLanguageStyle(symbol);
         if (style.color.isValid()) visibleLanguages.insert(style.name);
     };
     for (auto it = neighborhood.symbols.begin(); it != neighborhood.symbols.end(); ++it) {
@@ -671,7 +675,7 @@ void RelationGraph::renderMap(bool fit, bool centerFocus) {
         if (visibleLanguages.contains(style.name))
             fileColors.append(QStringLiteral("<span style=\"color:%1\">■ %2</span>").arg(style.color.name(), style.name));
     fileLegend->setText(UiLanguage::text("Files<br>") + (fileColors.isEmpty()
-        ? UiLanguage::text("No language components in the current graph") : fileColors.join(QStringLiteral("<br>"))));
+        ? UiLanguage::text("No recognized source language in this view") : fileColors.join(QStringLiteral("<br>"))));
     static_cast<GraphView *>(view)->positionLegend();
     if (neighborhood.symbols.isEmpty()) return;
     const auto focus = neighborhood.focusId;

@@ -32,8 +32,8 @@ process.stdin.on('end',()=>{
  let payload;try{payload=JSON.parse(input)}catch{}
  const html=payload && Array.isArray(payload.messages)
   ? '<table width="100%" cellspacing="0" cellpadding="12" border="0">'+payload.messages.map((message,i)=>{
-      const name=message.role==='user'?'You':'pi'; const color=message.role==='user'?'#2d2d2d':'#181818';
-      return '<tr bgcolor="'+color+'"><td width="52" valign="top"><span style="font-size:14pt;font-weight:700;color:#ffffff">'+name+'</span></td><td valign="top">'+md.render(String(message.text||''))+'</td></tr>';
+      const name=message.role==='user'?(payload.language==='zh'?'用户':'User'):'pi'; const color=message.role==='user'?'#2d2d2d':'#181818';
+      return '<tr bgcolor="'+color+'"><td width="64" valign="top" style="white-space:nowrap"><span style="font-size:9pt;font-weight:600;color:#ffffff">'+name+'</span></td><td valign="top">'+md.render(String(message.text||''))+'</td></tr>';
     }).join('')+'</table>'
   : md.render(input);
  process.stdout.write(JSON.stringify({html,images}));

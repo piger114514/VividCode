@@ -165,7 +165,7 @@ process.stdin.on('end',()=>process.exit(0));
         {
             VividCodeWindow window; check(window.openProject(root), "open integration project"); window.show();
             auto *panel = window.findChild<PiAgentPanel *>(); auto *tabs = window.findChild<QTabWidget *>("workspaceTabs");
-            check(tabs && tabs->count() == 2 && tabs->tabText(0) == QStringLiteral("Relations") && tabs->tabText(1) == QStringLiteral("pi"), "bottom switchable panels");
+            check(tabs && tabs->count() == 2 && tabs->tabText(0) == UiLanguage::text("Relations") && tabs->tabText(1) == QStringLiteral("pi"), "bottom switchable panels");
             tabs->setCurrentWidget(panel->outputView()); check(window.findChild<QCheckBox *>("piAutoRefresh")->isChecked(), "update preference persisted");
             auto *send = panel->findChild<QPushButton *>("piSend"); waitFor([&] { return send->isEnabled(); });
             panel->findChild<QPlainTextEdit *>("piInput")->setPlainText("normal"); send->click();

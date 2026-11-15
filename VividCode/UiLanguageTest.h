@@ -78,6 +78,15 @@ inline int runUiLanguageTest(QApplication &app) {
             check(fileLegend && fileLegend->text().startsWith(language == "zh" ? QStringLiteral("文件<br>") : QStringLiteral("Files<br>")), "file color legend heading translated");
             for (const auto &name : {"C/C++", "C#", "Python", "JavaScript", "TypeScript", "Java"})
                 check(fileLegend->text().contains(name), "all six language colors present in legend");
+            for (const QString &kind : {"ClassDecl", "EnumDecl", "CXXMethod"}) {
+                graph->setData({{"symbols", QJsonArray{QJsonObject{{"id", "sample"}, {"name", "Sample"}, {"kind", kind}, {"language", "c#"}, {"def_file", "Sample.cs"}}}}}, {}, {}, {});
+                check(fileLegend->text().contains("C#"), "class enum and method views retain source language legend");
+            }
+            graph->setData({{"symbols", QJsonArray{QJsonObject{{"id", "fallback"}, {"name", "Sample"}, {"kind", "ClassDecl"}, {"def_file", "Sample.cs"}}}}}, {}, {}, {});
+            check(fileLegend->text().contains("C#"), "source extension fallback without language metadata");
+            graph->setData({}, {}, {}, {});
+            check(!fileLegend->text().contains("C#") && fileLegend->text().contains(UiLanguage::text("No recognized source language in this view")), "empty view clears previous legend without implying missing components");
+            graph->setData({{"symbols", examples}, {"relations", QJsonArray()}}, {}, {}, {});
             auto *legendCard = graph->findChild<QWidget *>("graphLegendCard");
             QString legendText; for (auto *label : legendCard->findChildren<QLabel *>()) legendText += label->text();
             check(language == "zh" ? legendText.contains(QStringLiteral("直接调用")) :
