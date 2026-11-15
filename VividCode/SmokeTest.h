@@ -79,6 +79,36 @@ inline int runSmokeTest(QApplication &app)
         !write("multi/target/x.java", "skip")) return 1;
     const auto multiResult = scanProject(root.filePath("multi"));
     if (!require(multiResult.files.size() == 3 && multiResult.skippedDirectories == 3, "JS/TS/Java scan and exclusions")) return 1;
+    root.mkpath("unity/Assets/Library"); root.mkpath("unity/ProjectSettings"); root.mkpath("unity/Library"); root.mkpath("unity/Temp"); root.mkpath("unity/Logs"); root.mkpath("unity/UserSettings");
+    if (!write("unity/ProjectSettings/ProjectVersion.txt", "m_EditorVersion: fixture\n") ||
+        !write("unity/Assets/Player.cs", "class Player { }\n") || !write("unity/Assets/Library/Kept.cs", "class Kept { }\n") ||
+        !write("unity/Library/Generated.cs", "skip") || !write("unity/Temp/Generated.cs", "skip") ||
+        !write("unity/Logs/Generated.cs", "skip") || !write("unity/UserSettings/Generated.cs", "skip")) return 1;
+    const auto unityResult = scanProject(root.filePath("unity"));
+    if (!require(unityResult.files.size() == 2 && unityResult.skippedDirectories == 4, "Unity root generated directories excluded, Assets/Library retained")) return 1;
+    // 真实文件数量跨越旧的 5,000 上限，并核对 20,000 边界及超额提示。
+    root.mkpath("scan-limit");
+    for (int index = 0; index < 20000; ++index)
+        if (!write("scan-limit/" + QString::number(index) + ".cpp", {})) return 1;
+    const auto fullScan = scanProject(root.filePath("scan-limit"));
+    if (!require(fullScan.files.size() == 20000 && !fullScan.truncated, "exactly 20000 source files scanned completely")) return 1;
+    if (!write("scan-limit/extra.cpp", {})) return 1;
+    const auto limitedScan = scanProject(root.filePath("scan-limit"));
+    if (!require(limitedScan.files.size() == 20000 && limitedScan.truncated, "source files beyond 20000 report truncation")) return 1;
+    VividCode::ReadPolicy forced; forced.force = true;
+    const auto forcedScan = scanProject(root.filePath("scan-limit"), forced);
+    if (!require(forcedScan.files.size() == 20001 && !forcedScan.truncated, "forced scan exceeds normal file limit")) return 1;
+    // 真实菜单读取超过 2 MiB 的文件：普通模式拒绝，强制项目读取完整内容。
+    root.mkpath("force-preview");
+    const QByteArray bigSource = "// " + QByteArray(2 * 1024 * 1024 + 1, 'x') + "\n// END";
+    if (!write("force-preview/big.cpp", bigSource) || !window.openProject(root.filePath("force-preview"))) return 1;
+    auto bigItems = tree->findItems("big.cpp", Qt::MatchExactly | Qt::MatchRecursive);
+    if (!require(bigItems.size() == 1 && triggerFileSource(tree, bigItems.first()) && !popup->isVisible(), "normal preview rejects oversized file")) return 1;
+    root.mkpath("force-preview/.vividcode");
+    if (!write("force-preview/.vividcode/project.json", "{\"app\":\"vividcode\",\"schema\":1,\"latest\":\"\",\"history\":[],\"forceRead\":true}") || !window.openProject(root.filePath("force-preview"))) return 1;
+    bigItems = tree->findItems("big.cpp", Qt::MatchExactly | Qt::MatchRecursive);
+    if (!require(bigItems.size() == 1 && triggerFileSource(tree, bigItems.first()) && popup->isVisible() && viewer->toPlainText().endsWith("// END"), "forced preview reads complete oversized source")) return 1;
+    popup->close();
     // 用临时项目渲染截图，不依赖随程序部署的演示目录。
     if (!require(window.openProject(root.filePath("multi")), "temporary source project")) return 1;
     const auto matches = tree->findItems("Greeter.js", Qt::MatchExactly | Qt::MatchRecursive);

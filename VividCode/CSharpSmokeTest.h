@@ -6,6 +6,7 @@
 #include "SharedRuntime.h"
 #include "UnifiedGraphStore.h"
 #include "UiTestHelpers.h"
+#include "ProjectScanner.h"
 #include <QtWidgets>
 
 inline int runCSharpSmokeTest(QApplication &app) {
@@ -60,7 +61,7 @@ inline int runCSharpSmokeTest(QApplication &app) {
         if (s.value("qualified_name") == "Sample.Use.Run") runId = s.value("id").toString();
     }
     if (runId.isEmpty()) { qCritical().noquote() << window.findChild<QLabel *>("semanticStatus")->text(); return fail(__LINE__); }
-    panel->focusSymbol(runId); graph->setZoomLevel(1.0);
+    panel->focusSymbol(runId); graph->setZoomLevel(1.0); if (!showGraphDetails(graph)) return fail(__LINE__);
     QGraphicsItem *edge = nullptr, *method = nullptr;
     for (auto *item : scene->items()) {
         if (item->data(0).toString() == "symbol" && item->data(1).toJsonObject().value("qualified_name") == "Sample.Worker.Pick") method = item;
@@ -140,8 +141,10 @@ inline int runCSharpSmokeTest(QApplication &app) {
     for (auto *item : scene->items()) if (item->data(0) == "languagePartition") partitions[item->data(1).toString()] = item->sceneBoundingRect();
     if (partitions.size() != 2 || partitions.value("c#").intersects(partitions.value("c++"))) return fail(__LINE__);
     if (!window.grab().save(QCoreApplication::applicationDirPath() + "/mixed-language-preview.png")) return fail(__LINE__);
-    // Both language trees share the sidebar; changing a C# configuration refreshes automatically.
-    if (symbols->topLevelItemCount() != 2) return fail(__LINE__);
+    // Source files from both languages share the sidebar.
+    QSet<QString> sidebarFiles;
+    for (int i = 0; i < symbols->topLevelItemCount(); ++i) sidebarFiles.insert(symbols->topLevelItem(i)->text(0));
+    if (!sidebarFiles.contains("Worker.cs") || !sidebarFiles.contains("Use.cs") || !sidebarFiles.contains("native.cpp")) return fail(__LINE__);
     window.findChild<QComboBox *>("csharpConfiguration")->setCurrentText("Release");
     if (!wait()) return fail(__LINE__);
     {
@@ -160,5 +163,55 @@ inline int runCSharpSmokeTest(QApplication &app) {
     if (panel->isBusy() || symbols->topLevelItemCount() || !scene->items().isEmpty()) return fail(__LINE__);
     if (!VividCode::removeGenerated(dir.path()).ok || QFileInfo::exists(cachedPath) || QFileInfo::exists(VividCode::semanticDirectory(dir.path()) + "/graph.db")) return fail(__LINE__);
     qInfo() << "PASS: automatic root solution discovery, multiple-entry mouse selection, cancel/retry, refresh, context source popup/outside dismissal, mixed C++ and C# real analysis, shared SQLite snapshots, separate graph partitions, auto configuration update, failure preservation and cache lifecycle";
+    return 0;
+}
+
+// Explicit real-project acceptance entry; caller supplies a Unity root.
+inline int runUnitySmokeTest(QApplication &app, const QString &root) {
+    const auto fail = [](int line) { qCritical() << "FAIL: Unity UI check at CSharpSmokeTest.h line" << line; return 1; };
+    QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR", "C:/Windows") + "/Fonts/msyh.ttc");
+    app.setFont(QFont("Microsoft YaHei", 10));
+    const auto scan = scanProject(root);
+    if (scan.truncated || scan.files.isEmpty()) return fail(__LINE__);
+    for (const auto &file : scan.files) if (file.startsWith("Library/", Qt::CaseInsensitive) || file.startsWith("Temp/", Qt::CaseInsensitive)) return fail(__LINE__);
+    VividCodeWindow window; window.show();
+    auto *panel = window.findChild<SemanticPanel *>();
+    QEventLoop loop; QTimer timer; timer.setSingleShot(true);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(panel, &SemanticPanel::settled, &loop, &QEventLoop::quit);
+    if (!window.openProject(root)) return fail(__LINE__);
+    timer.start(90000); loop.exec();
+    if (!timer.isActive() || panel->isBusy()) return fail(__LINE__);
+    UnifiedGraphStore store(root); const auto snapshot = store.load().value("c#");
+    if (snapshot.value("state").toObject().value("last_status") != "ok" || snapshot.value("state").toObject().value("project_kind") != "unity") {
+        qCritical().noquote() << window.findChild<QPlainTextEdit *>("semanticDiagnostics")->toPlainText(); return fail(__LINE__);
+    }
+    auto *symbols = window.findChild<QTreeWidget *>("semanticSymbols");
+    QMap<QString,QJsonObject> byId;
+    for (QTreeWidgetItemIterator it(symbols); *it; ++it) { const auto s = (*it)->data(0, Qt::UserRole).toJsonObject(); if (!s.value("id").toString().isEmpty()) byId[s.value("id").toString()] = s; }
+    QJsonObject chosen;
+    auto *relations = window.findChild<QTreeWidget *>("semanticRelations");
+    for (QTreeWidgetItemIterator it(relations); *it; ++it) {
+        const auto r = (*it)->data(0, Qt::UserRole).toJsonObject();
+        if (r.value("type") != "calls" || !byId.contains(r.value("source_id").toString()) || !byId.contains(r.value("target_id").toString())) continue;
+        if (chosen.isEmpty() || byId.value(r.value("source_id").toString()).value("qualified_name") == "PlayerController.Update") chosen = r;
+    }
+    if (chosen.isEmpty()) return fail(__LINE__);
+    auto *graph = window.findChild<RelationGraph *>(); auto *scene = graph->findChild<QGraphicsScene *>("relationGraphScene");
+    if (!window.grab().save(QCoreApplication::applicationDirPath() + "/unity-overview-preview.png")) return fail(__LINE__);
+    panel->focusSymbol(chosen.value("source_id").toString()); graph->setZoomLevel(1.0); if (!showGraphDetails(graph)) return fail(__LINE__);
+    QGraphicsItem *edge = nullptr, *method = nullptr;
+    for (auto *item : scene->items()) {
+        if (item->data(0) == "symbol" && item->data(1).toJsonObject().value("id") == chosen.value("target_id")) method = item;
+        if (item->data(0) == "relation") for (const auto &r : item->data(1).toJsonArray()) if (r.toObject() == chosen) edge = item;
+    }
+    auto *source = window.findChild<QPlainTextEdit *>("sourceViewer");
+    if (!edge || !method || !triggerGraphSource(graph, edge) || source->textCursor().blockNumber() != chosen.value("line").toInt() - 1) return fail(__LINE__);
+    const auto target = byId.value(chosen.value("target_id").toString()); const auto prefix = target.value("def_file").toString().isEmpty() ? "decl_" : "def_";
+    if (!triggerGraphSource(graph, method) || source->textCursor().blockNumber() != target.value(QString(prefix) + "line").toInt() - 1) return fail(__LINE__);
+    clickOutsidePopup(window); app.processEvents();
+    if (!window.grab().save(QCoreApplication::applicationDirPath() + "/unity-relation-preview.png")) return fail(__LINE__);
+    qInfo().noquote() << "PASS: Unity project" << root << "files" << scan.files.size() << "source" << byId.value(chosen.value("source_id").toString()).value("qualified_name").toString()
+        << "calls" << target.value("qualified_name").toString() << "at" << chosen.value("file").toString() << chosen.value("line").toInt() << "; graph.db, graph edge and definition/source navigation verified";
     return 0;
 }

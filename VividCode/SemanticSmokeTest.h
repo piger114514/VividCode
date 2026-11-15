@@ -44,7 +44,7 @@ inline int runRealGraphValidation(QApplication &app, const QString &project, con
     graph->fitGraph();
     app.processEvents();
     if (!window.grab().save(QCoreApplication::applicationDirPath() + "/relation-real-project-overview.png")) return semanticTestFailure(__LINE__);
-    graph->setZoomLevel(1.0);
+    graph->setZoomLevel(1.0); if (!showGraphDetails(graph)) return semanticTestFailure(__LINE__);
     auto *scene = graph->findChild<QGraphicsScene *>("relationGraphScene");
     QGraphicsItem *scanNode = nullptr, *scanEdge = nullptr;
     for (auto *item : scene->items()) {
@@ -120,7 +120,7 @@ inline int runSemanticSmokeTest(QApplication &app) {
     if (!mainSymbol) return semanticTestFailure(__LINE__);
     const auto mainId = mainSymbol->data(0, Qt::UserRole).toJsonObject().value("id").toString();
     panel->focusSymbol(mainId);
-    graph->setZoomLevel(1.0);
+    graph->setZoomLevel(1.0); if (!showGraphDetails(graph)) return semanticTestFailure(__LINE__);
     window.findChild<QTabWidget *>("sidebarViews")->setCurrentIndex(0);
     QGraphicsItem *callEdge = nullptr, *getNode = nullptr;
     for (auto *item : scene->items()) {
@@ -144,7 +144,8 @@ inline int runSemanticSmokeTest(QApplication &app) {
     if (panel->focusedSymbol() != getId) return semanticTestFailure(__LINE__);
     auto *types = window.findChild<QComboBox *>("semanticRelationType");
     types->setCurrentIndex(types->findData("inherits"));
-    if (!graph->findChild<QLabel *>("relationGraphDetails")->text().contains(QStringLiteral("没有索引关系"))) return semanticTestFailure(__LINE__);
+    // 精简后的详情栏不再输出关系计数说明，直接检查筛选后的真实连线。
+    for (auto *item : scene->items()) if (item->data(0) == "relation") return semanticTestFailure(__LINE__);
     types->setCurrentIndex(0);
     QString derivedId;
     for (QTreeWidgetItemIterator it(symbols); *it; ++it) {
@@ -153,6 +154,7 @@ inline int runSemanticSmokeTest(QApplication &app) {
     }
     if (derivedId.isEmpty()) return semanticTestFailure(__LINE__);
     panel->focusSymbol(derivedId); graph->setZoomLevel(0.7);
+    if (!showGraphDetails(graph, false)) return semanticTestFailure(__LINE__);
     QGraphicsItem *classNode = nullptr;
     for (auto *item : scene->items()) {
         if (item->data(0).toString() != "symbol") continue;

@@ -14,8 +14,14 @@ inline QString sharedHome() {
     const QString configured = qEnvironmentVariable("VIVIDCODE_HOME");
     if (configured.isEmpty() && qEnvironmentVariable("LOCALAPPDATA").isEmpty())
         throw std::runtime_error("LOCALAPPDATA is unavailable");
-    const QString home = configured.isEmpty()
-        ? qEnvironmentVariable("LOCALAPPDATA") + "/vividcode" : configured;
+    QString home = configured;
+#ifdef Q_OS_WIN
+    if (home.isEmpty()) {
+        QSettings registration("HKEY_CURRENT_USER\\Software\\vividcode", QSettings::NativeFormat);
+        home = registration.value("InstallHome").toString();
+    }
+#endif
+    if (home.isEmpty()) home = qEnvironmentVariable("LOCALAPPDATA") + "/vividcode";
     if (!QFileInfo(home).isAbsolute()) throw std::runtime_error("vividcode shared home must be absolute");
     return QDir::cleanPath(QDir::fromNativeSeparators(home));
 }

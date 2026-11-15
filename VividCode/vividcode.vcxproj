@@ -52,11 +52,16 @@
     <Link><SubSystem>Console</SubSystem></Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cli_main.cpp" />
+    <ClCompile Include="cli_main.cpp" /><ClInclude Include="ConsoleOutput.h" />
+    <ClCompile Include="JavaScriptIndexer.cpp" />
+    <ClCompile Include="JavaIndexer.cpp" />
+    <ClInclude Include="JavaIndexer.h" />
+    <ClInclude Include="JavaScriptIndexer.h" />
+    <ClInclude Include="AnalysisEnvironment.h" />
     <ClCompile Include="ProjectStore.cpp" />
     <ClInclude Include="ProjectStore.h" />
     <ClInclude Include="ProjectScanner.h" />
-    <ClInclude Include="SharedRuntime.h" />
+    <ClInclude Include="SharedRuntime.h" /><ClInclude Include="ReadPolicy.h" /><ClInclude Include="GenerationControl.h" />
   </ItemGroup>
   <ItemGroup>
     <!-- Generation needs the viewer next to the CLI; build it first without linking its executable. -->
@@ -72,8 +77,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(QtMsBuild)\qt.targets" />
   <Target Name="DeployVividCodeRelease" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\prepare-analyzer.ps1&quot; -Destination &quot;$(OutDir)analyzer&quot;" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\prepare-csharp-analyzer.ps1&quot; -Destination &quot;$(OutDir)csharp-analyzer&quot;" />
     <Exec Command="&quot;$(QtToolsPath)\windeployqt.exe&quot; --release --no-translations --no-opengl-sw --no-system-d3d-compiler &quot;$(OutDir)vividcode-viewer.exe&quot;" />
     <Copy SourceFiles="$(QtInstallDir)\plugins\platforms\qoffscreen.dll" DestinationFolder="$(OutDir)platforms" />
   </Target>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -13,31 +13,34 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>qrc;rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Form Files">
-      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
-      <Extensions>ui</Extensions>
-    </Filter>
     <Filter Include="Translation Files">
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="VividCode.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
     <QtMoc Include="VividCode.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="PiRichText.h" />
+    <QtMoc Include="PiAgent.h"><Filter>Header Files</Filter></QtMoc>
+    <ClCompile Include="PiAgent.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClInclude Include="PiAgentSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
     <QtMoc Include="SemanticPanel.h"><Filter>Header Files</Filter></QtMoc>
-    <QtMoc Include="RelationGraph.h"><Filter>Header Files</Filter></QtMoc>
+    <QtMoc Include="RelationGraph.h"><Filter>Header Files</Filter></QtMoc><QtMoc Include="AiExplanation.h"><Filter>Header Files</Filter></QtMoc><ClCompile Include="AiExplanation.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClInclude Include="CSharpSmokeTest.h"/>
+    <ClInclude Include="PythonSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="JavaSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="JavaScriptSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="EnvironmentSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="AnalysisEnvironment.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="UiTestHelpers.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="SourcePopup.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="ProjectDetection.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="UnifiedGraphStore.h"><Filter>Header Files</Filter></ClInclude>
-    <ClInclude Include="SemanticSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="SemanticSmokeTest.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="AiSmokeTest.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="RelationGraphTest.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="RelationLayout.h"><Filter>Header Files</Filter></ClInclude>
     <ClCompile Include="RelationGraph.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="SemanticPanel.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="VividCode.cpp">
@@ -52,4 +55,4 @@
 
   </ItemGroup>
   <ItemGroup><ClInclude Include="SharedRuntime.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
-</Project>
+<ItemGroup><ClInclude Include="ReadPolicy.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="GenerationControl.h"><Filter>Header Files</Filter></ClInclude></ItemGroup></Project>

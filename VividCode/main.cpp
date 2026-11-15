@@ -4,12 +4,22 @@
 #include "SmokeTest.h"
 #include "SemanticSmokeTest.h"
 #include "CSharpSmokeTest.h"
+#include "PythonSmokeTest.h"
+#include "JavaSmokeTest.h"
+#include "JavaScriptSmokeTest.h"
+#include "EnvironmentSmokeTest.h"
+#include "EnvironmentSmokeTest.h"
+#include "EnvironmentSmokeTest.h"
+#include "JavaScriptSmokeTest.h"
 #include "SharedRuntime.h"
+#include "AiSmokeTest.h"
+#include "PiAgentSmokeTest.h"
 #include <memory>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    if (qEnvironmentVariableIsEmpty("VIVIDCODE_HOME")) qputenv("VIVIDCODE_HOME", VividCode::sharedHome().toUtf8());
     app.setStyle(QStyleFactory::create("Fusion"));
     QPalette palette;
     palette.setColor(QPalette::Window, QColor("#101010"));
@@ -61,6 +71,8 @@ int main(int argc, char *argv[])
         QToolTip { background:#282828; color:#f0f0f0; border:1px solid #484848; }
     )");
     QCoreApplication::setApplicationName("vividcode");
+    if (app.arguments().contains("--ai-test")) return runAiSmokeTest(app);
+    if (app.arguments().contains("--pi-test")) return runPiAgentSmokeTest(app);
     std::unique_ptr<VividCode::RuntimeReadLock> sharedLock;
     if (QFileInfo::exists(VividCode::sharedRuntime() + "/installation.json")) {
         sharedLock = std::make_unique<VividCode::RuntimeReadLock>(VividCode::sharedHome());
@@ -69,6 +81,13 @@ int main(int argc, char *argv[])
     if (app.arguments().contains("--self-test")) return runSmokeTest(app);
     if (app.arguments().contains("--semantic-test")) return runSemanticSmokeTest(app);
     if (app.arguments().contains("--csharp-test")) return runCSharpSmokeTest(app);
+    if (app.arguments().contains("--python-test")) return runPythonSmokeTest(app);
+    if (app.arguments().contains("--java-test")) return runJavaSmokeTest(app);
+    if (app.arguments().contains("--javascript-test")) return runJavaScriptSmokeTest(app);
+    if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
+    if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
+    if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
+    if (app.arguments().contains("--javascript-test")) return runJavaScriptSmokeTest(app);
     const auto args = app.arguments();
     QString project;
     const int option = args.indexOf("--project");
@@ -92,6 +111,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
+    if (args.contains("--unity-test")) return project.isEmpty() ? 1 : runUnitySmokeTest(app, project);
     VividCodeWindow window;
     if (args.contains("--verify-startup")) return !project.isEmpty() && window.openProject(project) ? 0 : 1;
     if (!project.isEmpty() && !window.openProject(project)) return 1;

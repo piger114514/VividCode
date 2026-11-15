@@ -7,8 +7,15 @@
   <ItemGroup>
     <ClCompile Include="cli_main.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="ProjectStore.cpp"><Filter>Source Files</Filter></ClCompile>
-    <ClInclude Include="ProjectStore.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ConsoleOutput.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="ProjectStore.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="ProjectScanner.h"><Filter>Header Files</Filter></ClInclude>
   </ItemGroup>
   <ItemGroup><ClInclude Include="SharedRuntime.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
-</Project>
+  <ItemGroup>
+    <ClCompile Include="JavaScriptIndexer.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="JavaIndexer.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClInclude Include="JavaIndexer.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="JavaScriptIndexer.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="AnalysisEnvironment.h"><Filter>Header Files</Filter></ClInclude>
+  </ItemGroup>
+<ItemGroup><ClInclude Include="ReadPolicy.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="GenerationControl.h"><Filter>Header Files</Filter></ClInclude></ItemGroup></Project>

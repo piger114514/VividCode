@@ -75,6 +75,20 @@ public class Use {
     def export(self):
         return json.loads(self.run_command([str(EXE), 'export', '--project', str(self.root)]).stdout)
 
+    def test_parameters_locals_shadowing_and_member_references(self):
+        self.write('App/Variables.cs', 'namespace Sample; class Variables { static int shared=1; static int First(int x){int value=x; {int other=value; shared+=other;} return value+shared;} static int Second(int x){int value=x; return value+shared;} }')
+        self.index()
+        symbols = {s['id']:s for s in self.export()['units'][0]['symbols']}
+        values = [s for s in symbols.values() if s['name']=='value']
+        params = [s for s in symbols.values() if s['name']=='x' and s['kind']=='ParmDecl' and s.get('decl_file','').endswith('Variables.cs')]
+        self.assertEqual(len(values), 2)
+        self.assertEqual(len(params), 2)
+        self.assertEqual(len({s['id'] for s in values+params}), 4)
+        sites = self.export()['units'][0]['relations']
+        for s in values+params:
+            self.assertIn(s['parent_id'], symbols)
+            self.assertTrue(any(r['target_id']==s['id'] for r in sites), s)
+
     def test_semantic_graph_and_dependency_incremental(self):
         self.index()
         data = self.export()
@@ -166,6 +180,142 @@ public class Use {
         self.assertEqual(before, (self.cache / 'index.json').read_bytes())
         self.index()
         self.assertEqual(self.export()['state']['last_status'], 'ok')
+
+
+class UnityTests(unittest.TestCase):
+    write = CSharpTests.write
+    run_command = CSharpTests.run_command
+    export = CSharpTests.export
+
+    def setUp(self):
+        base = BASE / 'build/csharp-test-work'
+        base.mkdir(parents=True, exist_ok=True)
+        self.temp = tempfile.TemporaryDirectory(prefix='Unity 中文-', dir=base)
+        self.root = Path(self.temp.name) / 'project'
+        self.root.mkdir()
+        self.env = dict(os.environ, VIVIDCODE_HOME=str(Path(self.temp.name) / 'shared'))
+        self.write('.vividcode/project.json', json.dumps({'app': 'vividcode', 'schema': 1}))
+        self.write('ProjectSettings/ProjectVersion.txt', 'm_EditorVersion: test-fixture\n')
+        self.write('Engine/Engine.csproj', '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net9.0</TargetFramework></PropertyGroup></Project>')
+        self.write('Engine/Engine.cs', 'namespace UnityEngine { public class MonoBehaviour { } }')
+        project = str(self.root / 'Engine/Engine.csproj')
+        self.run_command(['dotnet', 'build', project, '--ignore-failed-sources'])
+        refs = json.loads(self.run_command(['dotnet', 'msbuild', project, '-target:ResolveReferences', '-getItem:ReferencePath', '-verbosity:quiet']).stdout)
+        self.references = [r['FullPath'] for r in refs['Items']['ReferencePath']]
+        self.references.append(str(self.root / 'Engine/bin/Debug/net9.0/Engine.dll'))
+        self.write('Assets/Game.cs', '''using UnityEngine;
+public class Player : MonoBehaviour {
+    public int Count;
+    public int Run() => Pick(Count);
+    public int Pick(int x) => x;
+    public string Pick(string x) => x;
+#if UNITY_EDITOR
+    public int EditorOnly() => 1;
+#endif
+}
+''')
+        self.write('Assets/Editor/Tool.cs', 'public class Tool { public int Run(Player p) => p.Pick(p.Count); }')
+        self.write_project('Assembly-CSharp', 'Assets/Game.cs')
+        self.write_project('Assembly-CSharp-Editor', 'Assets/Editor/Tool.cs', 'Assembly-CSharp.csproj')
+        self.write('Unity.sln', '\n'.join([
+            'Microsoft Visual Studio Solution File, Format Version 12.00',
+            'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game", "Assembly-CSharp.csproj", "{11111111-1111-1111-1111-111111111111}"', 'EndProject',
+            'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Editor", "Assembly-CSharp-Editor.csproj", "{22222222-2222-2222-2222-222222222222}"', 'EndProject', 'Global', 'EndGlobal']))
+        self.cache = Path(self.env['VIVIDCODE_HOME']) / 'semantic' / hashlib.sha256(self.root.resolve().as_posix().lower().encode()).hexdigest() / 'csharp'
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def write_project(self, name, source, reference=''):
+        from xml.sax.saxutils import escape
+        refs = ''.join(f'<Reference Include="{escape(Path(p).stem)}"><HintPath>{escape(p)}</HintPath></Reference>' for p in self.references)
+        dep = f'<ProjectReference Include="{reference}" />' if reference else ''
+        self.write(name + '.csproj', f'''<Project ToolsVersion="Current">
+<PropertyGroup><UnityVersion>test-fixture</UnityVersion><AssemblyName>{name}</AssemblyName><NoStdLib>true</NoStdLib><LangVersion>9.0</LangVersion></PropertyGroup>
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'"><DefineConstants>UNITY_EDITOR</DefineConstants></PropertyGroup>
+<ItemGroup><Compile Include="{source}" />{refs}{dep}</ItemGroup></Project>''')
+
+    def index(self, config='Debug', ok=True):
+        return self.run_command([str(EXE), 'index', '--project', str(self.root), '--project-file', str(self.root / 'Unity.sln'), '--configuration', config], ok)
+
+    def test_unity_semantics_configuration_and_incremental(self):
+        self.index()
+        data = self.export()
+        self.assertEqual(data['state']['project_kind'], 'unity')
+        unit = data['units'][0]
+        symbols = {s['id']: s for s in unit['symbols']}
+        self.assertTrue({'inherits', 'calls', 'member_ref'} <= {r['type'] for r in unit['relations']})
+        call = next(r for r in unit['relations'] if r['type'] == 'calls' and r['file'].endswith('/Assets/Editor/Tool.cs') and symbols[r['target_id']]['qualified_name'] == 'Player.Pick')
+        self.assertIn('int', symbols[call['target_id']]['signature'])
+        self.assertTrue(symbols[call['target_id']]['def_file'].endswith('/Assets/Game.cs'))
+        self.assertEqual(symbols[call['target_id']]['def_line'], 5)
+        self.index()
+        self.assertEqual(self.export()['state']['reused'], 2)
+        with (self.root / 'Assets/Editor/Tool.cs').open('a', encoding='utf-8') as f:
+            f.write('// editor-only change\n')
+        self.index()
+        self.assertEqual(self.export()['state']['indexed'], 1)
+        self.assertEqual(self.export()['state']['reused'], 1)
+        with (self.root / 'Assets/Game.cs').open('a', encoding='utf-8') as f:
+            f.write('// runtime dependency change\n')
+        self.index()
+        self.assertEqual(self.export()['state']['indexed'], 2)
+        self.index('Release')
+        self.assertFalse(any(s['qualified_name'] == 'Player.EditorOnly' for s in self.export()['units'][0]['symbols']))
+        self.index()
+        self.assertTrue(any(s['qualified_name'] == 'Player.EditorOnly' for s in self.export()['units'][0]['symbols']))
+
+    def test_unity_missing_input_and_compilation_preserve_snapshot(self):
+        self.index()
+        before = (self.cache / 'index.json').read_bytes()
+        original = (self.root / 'Assets/Game.cs').read_text(encoding='utf-8')
+        self.write('Assets/Game.cs', 'invalid C#;')
+        self.index(ok=False)
+        self.assertEqual(before, (self.cache / 'index.json').read_bytes())
+        self.write('Assets/Game.cs', original)
+        (self.root / 'Assets/Editor/Tool.cs').unlink()
+        result = self.index(ok=False)
+        self.assertIn('Unity', result.stdout)
+        self.assertEqual(before, (self.cache / 'index.json').read_bytes())
+        self.write('Assets/Editor/Tool.cs', 'public class Tool { }')
+        (self.root / 'Engine/bin/Debug/net9.0/Engine.dll').unlink()
+        self.index(ok=False)
+        self.assertEqual(before, (self.cache / 'index.json').read_bytes())
+
+    def test_unity_source_generator_and_evaluated_import(self):
+        from xml.sax.saxutils import escape
+        roslyn = EXE.parent
+        refs = ''.join(f'<Reference Include="{name}"><HintPath>{escape(str(roslyn / (name + ".dll")))}</HintPath></Reference>' for name in ['Microsoft.CodeAnalysis', 'Microsoft.CodeAnalysis.CSharp'])
+        self.write('Generator/Generator.csproj', '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup>' + refs + '</ItemGroup></Project>')
+        self.write('Generator/Gen.cs', '''using Microsoft.CodeAnalysis;
+[Generator] public class Gen : ISourceGenerator {
+    public void Initialize(GeneratorInitializationContext context) { }
+    public void Execute(GeneratorExecutionContext context) {
+        context.AddSource("Generated.g.cs", "public static class Generated { public static int Read() => 42; }");
+    }
+}''')
+        self.run_command(['dotnet', 'build', str(self.root / 'Generator/Generator.csproj'), '--ignore-failed-sources'])
+        generator = self.root / 'Generator/bin/Debug/net8.0/Generator.dll'
+        project = (self.root / 'Assembly-CSharp.csproj').read_text(encoding='utf-8').replace('</Project>', f'<Import Project="options.props" /><ItemGroup><Analyzer Include="{escape(str(generator))}" /></ItemGroup></Project>')
+        self.write('Assembly-CSharp.csproj', project)
+        self.write('options.props', '<Project><PropertyGroup><DefineConstants>$(DefineConstants);EXTRA_FEATURE</DefineConstants></PropertyGroup></Project>')
+        with (self.root / 'Assets/Game.cs').open('a', encoding='utf-8') as f:
+            f.write('\n#if EXTRA_FEATURE\npublic class Extra { public int Run() => Generated.Read(); }\n#endif\n')
+        self.index()
+        unit = self.export()['units'][0]
+        names = {s['id']: s['qualified_name'] for s in unit['symbols']}
+        self.assertTrue(any(r['type'] == 'calls' and names[r['target_id']] == 'Generated.Read' for r in unit['relations']))
+        self.index()
+        self.assertEqual(self.export()['state']['reused'], 2)
+        self.write('options.props', '<Project />')
+        self.index()
+        self.assertFalse(any(s['qualified_name'] == 'Extra' for s in self.export()['units'][0]['symbols']))
+        before = (self.cache / 'index.json').read_bytes()
+        code = (self.root / 'Generator/Gen.cs').read_text(encoding='utf-8')
+        self.write('Generator/Gen.cs', code.replace('context.AddSource("Generated.g.cs", "public static class Generated { public static int Read() => 42; }");', 'throw new System.Exception("generator failed");'))
+        self.run_command(['dotnet', 'build', str(self.root / 'Generator/Generator.csproj'), '--no-restore'])
+        self.index(ok=False)
+        self.assertEqual(before, (self.cache / 'index.json').read_bytes())
 
 
 if __name__ == '__main__':

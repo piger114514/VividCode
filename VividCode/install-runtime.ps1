@@ -1,8 +1,12 @@
 param(
     [Parameter(Mandatory=$true)][string]$RuntimeDirectory,
-    [string]$HomeDirectory = $(if ($env:VIVIDCODE_HOME) { $env:VIVIDCODE_HOME } else { Join-Path $env:LOCALAPPDATA 'vividcode' })
+    [string]$HomeDirectory,
+    [ValidateSet('cpp','csharp','python','javascript','java')][string[]]$Languages = @()
 )
 $ErrorActionPreference = 'Stop'
+if (!$HomeDirectory) { $HomeDirectory = $env:VIVIDCODE_HOME }
+if (!$HomeDirectory) { $HomeDirectory = (Get-ItemProperty 'HKCU:\Software\vividcode' -ErrorAction SilentlyContinue).InstallHome }
+if (!$HomeDirectory) { $HomeDirectory = Join-Path $env:LOCALAPPDATA 'vividcode' }
 $source = [IO.Path]::GetFullPath($RuntimeDirectory)
 $sharedHome = [IO.Path]::GetFullPath($HomeDirectory)
 $destination = Join-Path $sharedHome 'runtime'
@@ -39,14 +43,17 @@ function Digest([string]$path) {
     try { [Convert]::ToBase64String($algorithm.ComputeHash($stream)) } finally { $stream.Dispose(); $algorithm.Dispose() }
 }
 $required = @('vividcode.exe','vividcode-viewer.exe','vividcode-launcher.exe','Qt6Core.dll','Qt6Gui.dll','Qt6Widgets.dll',
-    'Qt6Sql.dll','sqldrivers\qsqlite.dll','platforms\qwindows.dll','analyzer\analyzer.py','analyzer\extractor.py','analyzer\clang_bridge.py',
-    'analyzer\python\python.exe','analyzer\python\python313.dll','analyzer\python\python313.zip',
-    'analyzer\python\python313._pth','analyzer\python\_sqlite3.pyd','analyzer\python\sqlite3.dll',
-    'analyzer\lib\libclang.dll','analyzer\lib\clang\23\include\stddef.h','analyzer\runtime.json',
-    'csharp-analyzer\vividcode-csharp.exe','csharp-analyzer\vividcode-csharp.dll',
+    'Qt6Sql.dll','Qt6Network.dll','sqldrivers\qsqlite.dll','platforms\qwindows.dll','tls\qschannelbackend.dll','Qt6Svg.dll','imageformats\qsvg.dll','pi-renderer\render.cjs','pi-renderer\node_modules\mathjax-full\package.json','pi-renderer\node_modules\markdown-it\package.json')
+if ($Languages -contains 'python') { $required += @('analyzer\python_indexer.py','analyzer\analyzer.py') }
+if ($Languages -contains 'java') { $required += @('java-analyzer\VividCodeJava.java') }
+if ($Languages -contains 'cpp') { $required += @('analyzer\analyzer.py','analyzer\extractor.py','analyzer\clang_bridge.py') }
+if ($Languages -contains 'csharp') { $required += @('csharp-analyzer\vividcode-csharp.dll',
     'csharp-analyzer\vividcode-csharp.runtimeconfig.json','csharp-analyzer\vividcode-csharp.deps.json',
     'csharp-analyzer\Microsoft.CodeAnalysis.CSharp.Workspaces.dll','csharp-analyzer\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll',
-    'csharp-analyzer\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll')
+    'csharp-analyzer\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll') }
+if ($Languages -contains 'javascript') { $required += @('javascript-analyzer\indexer.cjs','javascript-analyzer\runtime.json',
+    'javascript-analyzer\typescript\LICENSE.txt','javascript-analyzer\typescript\lib\typescript.js','javascript-analyzer\typescript\lib\lib.d.ts') }
+$required = @($required | Select-Object -Unique)
 AssertPlainParents $sharedHome
 foreach ($name in $required) {
     if (!(Test-Path -LiteralPath (Join-Path $source $name) -PathType Leaf)) { throw "Incomplete source runtime: $name" }
@@ -70,9 +77,25 @@ try {
     $files = @()
     foreach ($name in @('vividcode.exe','vividcode-viewer.exe','vividcode-launcher.exe')) { $files += Get-Item -LiteralPath (Join-Path $source $name) }
     $files += Get-ChildItem -LiteralPath $source -File -Filter '*.dll'
-    foreach ($name in @('analyzer','csharp-analyzer','platforms','sqldrivers','styles','imageformats','iconengines','networkinformation','tls','generic')) {
+    foreach ($name in @('platforms','sqldrivers','styles','imageformats','iconengines','networkinformation','tls','generic')) {
         $folder = Join-Path $source $name
         if (Test-Path -LiteralPath $folder) { AssertPlainTree $folder; $files += Get-ChildItem -LiteralPath $folder -Recurse -File -Force }
+    }
+    # Analyzer sources are selected by language. Never sweep old build runtime
+    # directories: that would silently reinstall Node/Python/libclang leftovers.
+    $renderer = Join-Path $source 'pi-renderer'; AssertPlainTree $renderer
+    $files += Get-ChildItem -LiteralPath $renderer -Recurse -File
+    foreach ($name in @($required | Where-Object { $_ -like 'analyzer\*' })) { $files += Get-Item -LiteralPath (Join-Path $source $name) }
+    if ($Languages -contains 'java') { $files += Get-Item -LiteralPath (Join-Path $source 'java-analyzer\VividCodeJava.java') }
+    if ($Languages -contains 'javascript') {
+        $files += Get-Item -LiteralPath (Join-Path $source 'javascript-analyzer\indexer.cjs')
+        $files += Get-Item -LiteralPath (Join-Path $source 'javascript-analyzer\runtime.json')
+        $compiler = Join-Path $source 'javascript-analyzer\typescript'; AssertPlainTree $compiler
+        $files += Get-ChildItem -LiteralPath $compiler -Recurse -File -Force
+    }
+    if ($Languages -contains 'csharp') {
+        $component = Join-Path $source 'csharp-analyzer'; AssertPlainTree $component
+        $files += Get-ChildItem -LiteralPath $component -Recurse -File -Force | Where-Object { $_.Extension -in @('.exe','.dll','.json','.config','.md','.txt') }
     }
     foreach ($file in $files) {
         $relative = $file.FullName.Substring($source.TrimEnd('\').Length).TrimStart('\')
@@ -83,7 +106,7 @@ try {
         Copy-Item -LiteralPath $file.FullName -Destination $target
         if ((Digest $file.FullName) -ne (Digest $target)) { throw "Installed file hash mismatch: $relative" }
     }
-    $metadata = @{app='vividcode';schema=1;source=$source;installedUtc=[DateTime]::UtcNow.ToString('o')}
+    $metadata = @{app='vividcode';schema=1;source=$source;languages=@($Languages | Select-Object -Unique);localEnvironments=$true;installedUtc=[DateTime]::UtcNow.ToString('o')}
     [IO.File]::WriteAllText((Join-Path $stage 'installation.json'),($metadata | ConvertTo-Json),[Text.UTF8Encoding]::new($false))
     foreach ($name in $required) { if (!(Test-Path -LiteralPath (Join-Path $stage $name))) { throw "Incomplete staged runtime: $name" } }
     if (Test-Path -LiteralPath $destination) { Move-Item -LiteralPath $destination -Destination $previous }

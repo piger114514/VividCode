@@ -106,8 +106,12 @@ internal static class Program
         workspace.WorkspaceFailed += (_, e) => { lock (workspaceFailures) { if (e.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure) workspaceFailures.Add(e.Diagnostic.Message); } Store.Emit(new { protocol = 1, type = "diagnostic", message = e.Diagnostic.Message }); };
         Store.Emit(new { protocol = 1, type = "progress", current = 0, total = 0, file = "加载 C# 工程及真实编译配置…" });
         var inputs = new Inputs(); inputs.Capture(input);
+        using var unity = new UnityProjectLoader();
+        var isUnity = UnityProjectLoader.IsUnity(root, input);
+        state["project_kind"] = isUnity ? "unity" : "dotnet";
         Solution solution;
-        if (Path.GetExtension(input).Equals(".sln", StringComparison.OrdinalIgnoreCase)) solution = await workspace.OpenSolutionAsync(input);
+        if (isUnity) solution = await unity.Load(root, input, state["configuration"]!.GetValue<string>(), framework, msbuild, inputs.Capture);
+        else if (Path.GetExtension(input).Equals(".sln", StringComparison.OrdinalIgnoreCase)) solution = await workspace.OpenSolutionAsync(input);
         else { await workspace.OpenProjectAsync(input); solution = workspace.CurrentSolution; }
         if (workspaceFailures.Count > 0) throw new InvalidDataException(string.Join('\n', workspaceFailures.Take(15)) + "\n请确认项目 SDK、工作负载和 NuGet 依赖可用；必要时在项目中执行 dotnet restore。");
         var projects = solution.Projects.Where(p => p.Language == LanguageNames.CSharp).OrderBy(p => p.FilePath, StringComparer.Ordinal).ToArray();
@@ -120,13 +124,15 @@ internal static class Program
         global["version"] = Store.Version + "|" + inputs.Capture(typeof(Program).Assembly.Location) + "|" + typeof(Compilation).Assembly.FullName + "|" + msbuild + "|" + inputs.Capture(input);
         // Solution-wide build configuration changes invalidate projects conservatively.
         foreach (var path in BuildFiles(root)) global[path] = inputs.Capture(path);
+        if (isUnity) global["unity-version"] = inputs.Capture(Path.Combine(root, "ProjectSettings", "ProjectVersion.txt"));
         foreach (var project in projects)
         {
             var signature = new List<string> { keys[project.Id], inputs.Capture(project.FilePath!) };
             foreach (var path in AncestorFiles(Path.GetDirectoryName(project.FilePath!)!)) { signature.Add(path + inputs.Capture(path)); if (HasImports(path)) force.Add(project.Id); }
             // An arbitrary MSBuild Import can use property expansion and external paths.
             // Until evaluated-import tracking exists, these projects never reuse stale data.
-            if (HasImports(project.FilePath!)) force.Add(project.Id);
+            if (isUnity) signature.Add(unity.Evaluations[project.FilePath!]);
+            else if (HasImports(project.FilePath!)) force.Add(project.Id);
             foreach (var document in project.Documents.Concat(project.AdditionalDocuments).Concat(project.AnalyzerConfigDocuments).OrderBy(d => d.FilePath))
             {
                 if (document.FilePath != null && File.Exists(document.FilePath)) signature.Add(document.FilePath + inputs.Capture(document.FilePath));
@@ -157,6 +163,23 @@ internal static class Program
         foreach (var project in projects)
         {
             var compilation = await project.GetCompilationAsync() ?? throw new InvalidDataException("无法创建编译：" + project.Name);
+            if (isUnity && project.AnalyzerReferences.Count > 0)
+            {
+                // Workspace's public compilation API does not expose generator
+                // failures. Rerun from the original trees to inspect driver errors;
+                // never publish a successful graph with silently missing output.
+                var generatedTrees = new List<SyntaxTree>();
+                foreach (var document in await project.GetSourceGeneratedDocumentsAsync())
+                    if (await document.GetSyntaxTreeAsync() is { } tree) generatedTrees.Add(tree);
+                compilation = compilation.RemoveSyntaxTrees(generatedTrees);
+                var generators = project.AnalyzerReferences.SelectMany(r => r.GetGenerators(LanguageNames.CSharp));
+                GeneratorDriver driver = CSharpGeneratorDriver.Create(generators, project.AnalyzerOptions.AdditionalFiles,
+                    (CSharpParseOptions)project.ParseOptions!, project.AnalyzerOptions.AnalyzerConfigOptionsProvider);
+                driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out compilation, out var generatorDiagnostics);
+                var failures = driver.GetRunResult().Results.Where(r => r.Exception != null).Select(r => r.Exception!.Message)
+                    .Concat(generatorDiagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Select(d => d.ToString())).ToArray();
+                if (failures.Length > 0) throw new InvalidDataException("Unity 源码生成器失败；保留上次完整索引：\n" + string.Join('\n', failures));
+            }
             compilations[project.Id] = compilation;
             if (!assemblies.TryAdd(compilation.Assembly.Identity.ToString(), keys[project.Id])) throw new InvalidDataException("不同项目拥有相同程序集标识，无法可靠区分符号：" + project.Name);
         }
@@ -173,7 +196,7 @@ internal static class Program
             if (errors.Length > 0) throw new InvalidDataException(string.Join('\n', errors.Select(d => d.ToString())) + "\nC# 编译诊断失败；保留上次完整索引。");
             var payload = new Extractor(assemblies, keys[project.Id]).Extract(compilation);
             payload["file"] = project.FilePath!.Replace('\\', '/'); payload["config_id"] = key; payload["fingerprint"] = fingerprints[project.Id]; payload["language"] = "c#";
-            payload["scope_name"] = project.Name + " · " + state["configuration"] + " · " + (framework.Length > 0 ? framework : "工程默认目标框架");
+            payload["scope_name"] = (isUnity ? "Unity · " : "") + project.Name + " · " + state["configuration"] + " · " + (framework.Length > 0 ? framework : "工程默认目标框架");
             units.Add(payload); indexed++;
         }
         if (workspaceFailures.Count > 0) throw new InvalidDataException(string.Join('\n', workspaceFailures));
@@ -202,7 +225,9 @@ internal static class Program
             foreach (var file in Directory.EnumerateFiles(dir))
                 if (Path.GetExtension(file).ToLowerInvariant() is ".props" or ".targets" || Path.GetFileName(file) is "global.json" or "NuGet.Config" or "nuget.config") yield return file;
             foreach (var child in Directory.EnumerateDirectories(dir))
-                if (!new[] { ".git", ".vs", ".codegraph", ".vividcode", ".work", "bin", "obj", "build", "node_modules" }.Contains(Path.GetFileName(child), StringComparer.OrdinalIgnoreCase) && (File.GetAttributes(child) & FileAttributes.ReparsePoint) == 0) dirs.Push(child);
+                if (!new[] { ".git", ".vs", ".codegraph", ".vividcode", ".work", "bin", "obj", "build", "node_modules" }.Contains(Path.GetFileName(child), StringComparer.OrdinalIgnoreCase) &&
+                    !(UnityProjectLoader.HasUnityRoot(root) && dir == root && new[] { "Library", "Temp", "Logs", "UserSettings" }.Contains(Path.GetFileName(child), StringComparer.OrdinalIgnoreCase)) &&
+                    (File.GetAttributes(child) & FileAttributes.ReparsePoint) == 0) dirs.Push(child);
         }
     }
 }

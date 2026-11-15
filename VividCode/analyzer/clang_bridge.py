@@ -1,4 +1,4 @@
-"""vividcode 语义索引后端 —— 最小但完整的 libclang ctypes 绑定。
+"""vividcode 语义索引后端 —— 面向当前分析需求的 libclang ctypes 绑定。
 
 本模块直接通过 ctypes 加载真实 libclang.dll，不依赖 PyPI 的 ``clang`` 包，
 也不关闭任何兼容性检查：所有入口都直接调用 libclang 的真实导出符号，符号
@@ -6,17 +6,17 @@
 读取并回传，供上层记录到解析器版本字段。
 
 加载顺序：
-1. 环境变量 ``VIVIDCODE_LIBCLANG``（可选，指向 libclang.dll）。
-2. 本包同级的 ``lib/libclang.dll``（prepare-analyzer.ps1 部署产物）。
+1. 环境变量 ``VIVIDCODE_LIBCLANG`` 或 ``LIBCLANG_PATH``（DLL 文件或所在目录）。
+2. PATH 中本机 clang 所在目录的 libclang.dll。
 
-这个模块只用 CPython 标准库，可随 Windows embeddable Python 一起分发。
+这个模块只用 CPython 标准库；Python 与 LLVM 由用户自行安装。
 """
 
 from __future__ import annotations
 
 import ctypes
 import os
-import sys
+import shutil
 from ctypes import (CFUNCTYPE, POINTER, Structure, byref, c_char_p, c_int,
                     c_uint, c_ulong, c_void_p)
 
@@ -46,7 +46,6 @@ class CXType(Structure):
 
 
 # 访问级别（Index.h: CX_CXXAccessSpecifier）
-ACCESS_INVALID = 0
 ACCESS_PUBLIC = 1
 ACCESS_PROTECTED = 2
 ACCESS_PRIVATE = 3
@@ -55,30 +54,29 @@ ACCESS_PRIVATE = 3
 CXTRANSLATIONUNIT_KEEP_GOING = 0x200
 
 # 诊断级别
-SEV_IGNORED = 0
-SEV_NOTE = 1
-SEV_WARNING = 2
 SEV_ERROR = 3
-SEV_FATAL = 4
 
 # 子节点访问返回值
-CHILD_BREAK = 0
 CHILD_CONTINUE = 1
-CHILD_RECURSE = 2
 
 
 def _find_library() -> str:
     candidates = []
     env = os.environ.get("VIVIDCODE_LIBCLANG") or os.environ.get("LIBCLANG_PATH")
     if env:
-        candidates.append(env)
-    here = os.path.dirname(os.path.abspath(__file__))
-    candidates.append(os.path.join(here, "lib", "libclang.dll"))
+        if os.path.isdir(env):
+            env = os.path.join(env, 'libclang.dll')
+        if not os.path.isfile(env):
+            raise RuntimeError('指定的本机 libclang.dll 不存在，请修正分析环境：' + env)
+        return env
+    clang = shutil.which('clang.exe') or shutil.which('clang')
+    if clang:
+        candidates.append(os.path.join(os.path.dirname(clang), 'libclang.dll'))
     for candidate in candidates:
         if candidate and os.path.isfile(candidate):
             return candidate
     raise RuntimeError(
-        "找不到 libclang.dll。请设置 VIVIDCODE_LIBCLANG，或先运行 prepare-analyzer.ps1 生成运行包。"
+        "找不到本机 libclang.dll。请自行安装 LLVM，再设置 VIVIDCODE_LIBCLANG 或在 vividcode 的分析环境中指定路径。"
     )
 
 
@@ -129,8 +127,6 @@ class LibClang:
         lib.clang_getCursorLocation.restype = CXSourceLocation
         lib.clang_getCursorSemanticParent.argtypes = [CXCursor]
         lib.clang_getCursorSemanticParent.restype = CXCursor
-        lib.clang_getCursorLexicalParent.argtypes = [CXCursor]
-        lib.clang_getCursorLexicalParent.restype = CXCursor
         lib.clang_getCursorReferenced.argtypes = [CXCursor]
         lib.clang_getCursorReferenced.restype = CXCursor
         lib.clang_getCursorDefinition.argtypes = [CXCursor]
@@ -139,8 +135,6 @@ class LibClang:
         lib.clang_equalCursors.restype = c_uint
         lib.clang_isCursorDefinition.argtypes = [CXCursor]
         lib.clang_isCursorDefinition.restype = c_uint
-        lib.clang_isDeclaration.argtypes = [c_int]
-        lib.clang_isDeclaration.restype = c_uint
         lib.clang_getCXXAccessSpecifier.argtypes = [CXCursor]
         lib.clang_getCXXAccessSpecifier.restype = c_int
         lib.clang_CXXMethod_isVirtual.argtypes = [CXCursor]
@@ -160,12 +154,6 @@ class LibClang:
         lib.clang_getCursorType.restype = CXType
         lib.clang_getTypeSpelling.argtypes = [CXType]
         lib.clang_getTypeSpelling.restype = CXString
-        lib.clang_getCanonicalType.argtypes = [CXType]
-        lib.clang_getCanonicalType.restype = CXType
-        lib.clang_getPointeeType.argtypes = [CXType]
-        lib.clang_getPointeeType.restype = CXType
-        lib.clang_getTypeKindSpelling.argtypes = [c_int]
-        lib.clang_getTypeKindSpelling.restype = CXString
 
         # -- 位置与文件 ------------------------------------------------
         lib.clang_getExpansionLocation.argtypes = [

@@ -14,10 +14,8 @@ import sqlite3
 import sys
 import time
 
-import clang_bridge
-from extractor import TuExtractor
 
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 SCHEMA = 2
 SOURCE_EXTS = {'.cc', '.cpp', '.cxx', '.c++'}
 
@@ -52,6 +50,21 @@ def shared_home():
     return home
 
 
+def read_policy(root):
+    settings = shared_home() / 'read-policy.json'
+    reject_links(settings)
+    data = json.loads(settings.read_text(encoding='utf-8')) if settings.exists() else {}
+    count = data.get('maxSourceFiles', 20000)
+    if data and (data.get('app') != 'vividcode' or data.get('schema') != 1):
+        raise ValueError('源码范围设置格式无效。')
+    if type(count) is not int or not 1 <= count <= 2147483647:
+        raise ValueError('源码文件数量上限无效。')
+    manifest = Path(root) / '.vividcode/project.json'
+    reject_links(manifest)
+    project = json.loads(manifest.read_text(encoding='utf-8-sig')) if manifest.exists() else {}
+    return dict(maxSourceFiles=count, maxEntries=max(50000, count * 5 // 2),
+                force=project.get('app') == 'vividcode' and project.get('schema') == 1 and project.get('forceRead') is True)
+
 def semantic_directory(project):
     # Same canonical lower-case UTF-8 path hash as SharedRuntime.h.
     root = Path(project).resolve()
@@ -68,7 +81,7 @@ def layout(project):
     manifest = root / '.vividcode/project.json'
     reject_links(manifest)
     if not manifest.is_file():
-        raise ValueError('项目尚未初始化，请先在项目根目录运行 vividcode --g。')
+        raise ValueError('项目尚未初始化，请先在项目根目录运行 vividcode -g。')
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     if data.get('app') != 'vividcode' or data.get('schema') != 1:
         raise ValueError('不支持的 project.json。')
@@ -231,31 +244,43 @@ def inventory(root, records):
     for search_root in sorted(roots):
         paths.append(search_root)
         for directory, dirs, files in os.walk(search_root, followlinks=False):
-            dirs[:] = sorted(d for d in dirs if d not in {'.vividcode', '.git', '.codegraph', '.vs', '.work', '__pycache__'} and not Path(directory, d).is_symlink() and not getattr(Path(directory, d).stat(), 'st_file_attributes', 0) & 0x400)
+            dirs[:] = sorted(d for d in dirs if d not in {'.vividcode', '.git', '.codegraph', '.vs', '.work', '__pycache__'} and not d.lower().startswith('.vividcode-') and not Path(directory, d).is_symlink() and not getattr(Path(directory, d).stat(), 'st_file_attributes', 0) & 0x400)
             paths.extend(str(Path(directory, f)) for f in sorted(files))
     # Environment include paths are part of the effective build configuration.
-    env = {k: os.environ.get(k, '') for k in ('INCLUDE', 'CPATH', 'CPLUS_INCLUDE_PATH', 'SDKROOT')}
+    env = {k: os.environ.get(k, '') for k in ('INCLUDE', 'CPATH', 'CPLUS_INCLUDE_PATH', 'SDKROOT', 'VIVIDCODE_CLANG_RESOURCE')}
     return digest(json.dumps([paths, env], sort_keys=True).encode())
 
 
 def parse_unit(root, record, lib):
+    import clang_bridge
+    from extractor import TuExtractor
     source = record['file']
     before = file_hash(source)
     started = time.time_ns()
     args = list(record['arguments'])
-    resource = Path(__file__).parent / 'lib/clang/23'
-    if resource.is_dir():
+    configured_resource = os.environ.get('VIVIDCODE_CLANG_RESOURCE')
+    if configured_resource:
+        resource = Path(configured_resource)
+        if not (resource / 'include/stddef.h').is_file():
+            raise ValueError('指定 Clang 内置头文件目录无效：' + str(resource))
+    else:
+        resource_root = Path(lib.path).resolve().parent.parent / 'lib/clang'
+        resources = [p for p in resource_root.iterdir() if (p / 'include/stddef.h').is_file()] if resource_root.is_dir() else []
+        version = __import__('re').search(r'(?:clang version|LLVM version)\s+(\d+)', lib.version())
+        resources = [p for p in resources if version and p.name.split('.')[0] == version.group(1)]
+        resource = sorted(resources)[-1] if resources else None
+    if resource is not None:
         args += ['-resource-dir', str(resource.resolve())]
     index = lib.lib.clang_createIndex(0, 0)
     tu = ctypes.c_void_p()
     try:
         encoded = (ctypes.c_char_p * len(args))(*(a.encode('utf-8') for a in args))
         with contextlib.chdir(record['directory']):
-            error = lib.lib.clang_parseTranslationUnit2(index, source.encode('utf-8'), encoded, len(args), None, 0, 0x200, ctypes.byref(tu))
+            error = lib.lib.clang_parseTranslationUnit2(index, source.encode('utf-8'), encoded, len(args), None, 0, clang_bridge.CXTRANSLATIONUNIT_KEEP_GOING, ctypes.byref(tu))
             if error or not tu.value:
                 raise ValueError(f'libclang 解析失败，错误码 {error}：{source}')
             diagnostics = lib.diagnostics(tu)
-            failures = [d for d in diagnostics if d['severity'] >= 3]
+            failures = [d for d in diagnostics if d['severity'] >= clang_bridge.SEV_ERROR]
             if failures:
                 raise ValueError('\n'.join(f"{d['file']}:{d['line']}:{d['column']}: {d['text']}" for d in failures[:30]))
             symbols, relations = TuExtractor(lib, str(root)).extract(tu)
@@ -273,7 +298,7 @@ def parse_unit(root, record, lib):
 def index_project(project, compilation):
     root, sem = layout(project)
     with lifecycle_lock(root):
-        # Revalidate after acquiring the lifecycle lock; --d may have just finished.
+        # Revalidate after acquiring the lifecycle lock; -d may have just finished.
         root, sem = layout(root)
         sem.mkdir(parents=True, exist_ok=True)
         atomic_json(sem / 'project.json', {'app': 'vividcode', 'schema': 1, 'projectRoot': root.as_posix()})
@@ -285,6 +310,7 @@ def index_project(project, compilation):
             records = commands(compilation)
             if not records:
                 raise ValueError('编译数据库中没有 C++ 源文件。')
+            import clang_bridge
             lib = clang_bridge.get_libclang()
             parser = lib.version()
             signature = digest((VERSION + parser + file_hash(lib.path) + inventory(root, records)).encode())

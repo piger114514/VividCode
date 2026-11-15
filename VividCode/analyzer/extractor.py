@@ -6,7 +6,7 @@ import clang_bridge
 LANGUAGE = "c++"
 ID_PREFIX = "c++:"
 TU_KIND = 350
-RECORD_KINDS = {"ClassDecl", "StructDecl", "UnionDecl", "EnumDecl", "EnumConstantDecl", "FieldDecl", "FunctionDecl", "CXXMethod", "Constructor", "Destructor", "Namespace", "TypedefDecl", "TypeAliasDecl", "VarDecl", "FunctionTemplate", "ClassTemplate"}
+RECORD_KINDS = {"ClassDecl", "StructDecl", "UnionDecl", "EnumDecl", "EnumConstantDecl", "FieldDecl", "FunctionDecl", "CXXMethod", "Constructor", "Destructor", "Namespace", "TypedefDecl", "TypeAliasDecl", "VarDecl", "ParmDecl", "FunctionTemplate", "ClassTemplate"}
 FUNCTION_LIKE_KINDS = {"FunctionDecl", "CXXMethod", "Constructor", "Destructor", "FunctionTemplate"}
 CALLABLE_KINDS = FUNCTION_LIKE_KINDS
 
@@ -86,6 +86,8 @@ def _qualified_name(lib, cursor) -> str:
 
 
 def _signature(lib, cursor, kind: str) -> str | None:
+    if kind in {"VarDecl", "ParmDecl", "FieldDecl"}:
+        return lib.type_spelling(cursor)
     if kind in FUNCTION_LIKE_KINDS | {"FunctionTemplate"}:
         disp = lib.display_name(cursor)
         if disp and "(" in disp and disp != lib.spelling(cursor):
@@ -192,9 +194,7 @@ class TuExtractor:
     def _ensure_external_symbol(self, cursor, kind: str) -> str | None:
         """关系终点可能在项目外；记录为外部符号以便关系端点有效。"""
         usr = self.lib.usr(cursor)
-        if not usr:
-            return None
-        sid = ID_PREFIX + usr
+        sid = self._symbol_id(cursor, usr)
         if sid in self.symbols:
             return sid
         path, line, col = self._loc(cursor)
@@ -263,7 +263,7 @@ class TuExtractor:
         elif kind == "DeclRefExpr":
             target = lib.lib.clang_getCursorReferenced(cursor)
             target_kind = lib.kind_name(lib.lib.clang_getCursorKind(target))
-            if target_kind in ("VarDecl", "EnumConstantDecl", "FieldDecl"):
+            if target_kind in ("VarDecl", "ParmDecl", "EnumConstantDecl", "FieldDecl"):
                 target_id = self._ensure_external_symbol(target, target_kind)
                 self._add_relation(self._relation_source(context), target_id, "references", cursor)
 

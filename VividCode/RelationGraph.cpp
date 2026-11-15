@@ -1,4 +1,5 @@
 #include "RelationGraph.h"
+#include "RelationLayout.h"
 #include <QtWidgets>
 #include <cmath>
 #include <functional>
@@ -12,6 +13,36 @@ QString relationDisplayName(const QString &type) {
 }
 
 namespace {
+struct FileLanguageStyle { QString name; QColor color; };
+const QMap<QString, FileLanguageStyle> &fileLanguagePalette() {
+    static const QMap<QString, FileLanguageStyle> palette{
+        {"c++", {"C/C++", QColor("#6fa8ff")}}, {"c#", {"C#", QColor("#bb91f5")}},
+        {"python", {"Python", QColor("#72c99a")}}, {"javascript", {"JavaScript", QColor("#e3c76b")}},
+        {"typescript", {"TypeScript", QColor("#61cadd")}}, {"java", {"Java", QColor("#f0a16a")}}};
+    return palette;
+}
+FileLanguageStyle fileLanguageStyle(const QJsonObject &symbol) {
+    if (symbol.value("kind") != "FileScope" && symbol.value("kind") != "RelatedFile") return {};
+    QString file = symbol.value("scope_file").toString();
+    if (file.isEmpty()) file = symbol.value("def_file").toString();
+    if (file.isEmpty()) file = symbol.value("decl_file").toString();
+    const QString extension = QFileInfo(file).suffix().toLower();
+    QString language = symbol.value("language").toString();
+    if (QSet<QString>{"ts", "tsx", "mts", "cts"}.contains(extension)) language = "typescript";
+    else if (QSet<QString>{"js", "jsx", "mjs", "cjs"}.contains(extension)) language = "javascript";
+    else if (language.isEmpty()) {
+        if (extension == "cs") language = "c#";
+        else if (extension == "java") language = "java";
+        else if (QSet<QString>{"py", "pyw", "pyi"}.contains(extension)) language = "python";
+        else if (QSet<QString>{"c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "inl", "ipp"}.contains(extension)) language = "c++";
+    }
+    return fileLanguagePalette().value(language);
+}
+QColor fileBackground(const QColor &accent, bool focused = false) {
+    const qreal amount = focused ? 0.28 : 0.15;
+    return QColor(qRound(24 * (1 - amount) + accent.red() * amount),
+        qRound(24 * (1 - amount) + accent.green() * amount), qRound(24 * (1 - amount) + accent.blue() * amount));
+}
 QString key(const QJsonArray &parts) { return QString::fromUtf8(QJsonDocument(parts).toJson(QJsonDocument::Compact)); }
 QString symbolName(const QJsonObject &symbol) {
     const auto name = symbol.value("qualified_name").toString();
@@ -26,10 +57,11 @@ QString kindName(const QString &kind) {
     static const QMap<QString, QString> names{{"ClassDecl", QStringLiteral("类")}, {"StructDecl", QStringLiteral("结构体")},
         {"FunctionDecl", QStringLiteral("函数")}, {"CXXMethod", QStringLiteral("方法")},
         {"Constructor", QStringLiteral("构造函数")}, {"Destructor", QStringLiteral("析构函数")},
-        {"FieldDecl", QStringLiteral("成员变量")}, {"VarDecl", QStringLiteral("变量")},
+        {"FieldDecl", QStringLiteral("成员变量")}, {"VarDecl", QStringLiteral("变量")}, {"ParmDecl", QStringLiteral("参数")}, {"RelatedFile", QStringLiteral("关联文件")},
         {"InterfaceDecl", QStringLiteral("接口")}, {"PropertyDecl", QStringLiteral("属性")},
         {"EventDecl", QStringLiteral("事件")}, {"EnumDecl", QStringLiteral("枚举")}, {"DelegateDecl", QStringLiteral("委托")},
-        {"Namespace", QStringLiteral("命名空间")}, {"FunctionTemplate", QStringLiteral("函数模板")}};
+        {"Namespace", QStringLiteral("命名空间")}, {"FunctionTemplate", QStringLiteral("函数模板")},
+        {"ModuleDecl", QStringLiteral("模块")}, {"UnresolvedCall", QStringLiteral("未解析目标")}};
     if (kind == "FileScope") return QStringLiteral("文件范围");
     if (kind == "ExternalScope") return QStringLiteral("外部符号分组");
     return names.value(kind, kind);
@@ -45,12 +77,67 @@ class GraphView : public QGraphicsView {
 public:
     using QGraphicsView::QGraphicsView;
     std::function<void(qreal)> changed;
+    QWidget *legendOverlay = nullptr;
+    void positionLegend() {
+        if (!legendOverlay) return;
+        legendOverlay->adjustSize();
+        const QRect area = viewport()->geometry();
+        legendOverlay->move(qMax(area.left(), area.right() - legendOverlay->width() - 11), area.top() + 12);
+        legendOverlay->raise();
+    }
+    bool rightPressed = false, rightDragged = false;
+    QPoint rightStart, rightLast;
+
     void zoom(qreal factor) {
         const qreal target = qBound(0.05, transform().m11() * factor, 3.0);
+        if (qFuzzyCompare(target, transform().m11())) return;
         scale(target / transform().m11(), target / transform().m11());
         if (changed) changed(target);
     }
 protected:
+    void resizeEvent(QResizeEvent *event) override {
+        QGraphicsView::resizeEvent(event); positionLegend();
+    }
+    void scrollContentsBy(int dx, int dy) override {
+        QGraphicsView::scrollContentsBy(dx, dy); positionLegend();
+    }
+    void mousePressEvent(QMouseEvent *event) override {
+        if (event->button() == Qt::RightButton) {
+            rightPressed = true; rightDragged = false;
+            rightStart = rightLast = event->position().toPoint(); event->accept(); return;
+        }
+        QGraphicsView::mousePressEvent(event);
+    }
+    void mouseMoveEvent(QMouseEvent *event) override {
+        if (rightPressed) {
+            const QPoint point = event->position().toPoint();
+            if (!rightDragged && (point - rightStart).manhattanLength() >= QApplication::startDragDistance()) {
+                rightDragged = true; viewport()->setCursor(Qt::ClosedHandCursor);
+            }
+            if (rightDragged) {
+                const QPoint delta = point - rightLast;
+                horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+                verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
+                rightLast = point;
+            }
+            event->accept(); return;
+        }
+        QGraphicsView::mouseMoveEvent(event);
+    }
+    void mouseReleaseEvent(QMouseEvent *event) override {
+        if (event->button() == Qt::RightButton && rightPressed) {
+            rightPressed = false; viewport()->unsetCursor();
+            if (!rightDragged) emit customContextMenuRequested(event->position().toPoint());
+            event->accept(); return;
+        }
+        QGraphicsView::mouseReleaseEvent(event);
+    }
+    bool viewportEvent(QEvent *event) override {
+        if (event->type() == QEvent::ContextMenu && static_cast<QContextMenuEvent *>(event)->reason() == QContextMenuEvent::Mouse) {
+            event->accept(); return true;
+        }
+        return QGraphicsView::viewportEvent(event);
+    }
     void wheelEvent(QWheelEvent *event) override {
         if (event->angleDelta().y() != 0) { zoom(event->angleDelta().y() > 0 ? 1.2 : 1 / 1.2); event->accept(); }
         else QGraphicsView::wheelEvent(event);
@@ -60,28 +147,36 @@ protected:
 class SymbolItem : public QGraphicsRectItem {
 public:
     std::function<void()> moved, focused;
-    SymbolItem(const QJsonObject &symbol, bool center) : QGraphicsRectItem(0, 0, 260, 92) {
+    SymbolItem(const QJsonObject &symbol, bool center, bool cyclic = false) : QGraphicsRectItem(0, 0, 260, 92) {
         setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
         setData(0, "symbol"); setData(1, symbol);
         setBrush(QColor(center ? "#25374a" : "#222222"));
         setPen(QPen(QColor(center ? "#62a0ff" : "#666666"), center ? 2.5 : 1.5));
+        const auto fileStyle = fileLanguageStyle(symbol);
+        if (fileStyle.color.isValid()) {
+            setBrush(fileBackground(fileStyle.color, center));
+            setPen(QPen(fileStyle.color, center ? 2.5 : 1.5));
+        }
         setZValue(1);
         QString label = kindName(symbol.value("kind").toString());
-        if (symbol.value("unresolved").toBool()) label = QStringLiteral("端点信息缺失");
+        if (symbol.value("unresolved").toBool()) label = QStringLiteral("未解析目标");
         else if (symbol.value("is_external").toBool()) label += QStringLiteral(" · 外部符号");
         else if (center) label += QStringLiteral(" · 当前焦点");
         const bool container = symbol.value("is_container").toBool();
-        if (container) label = QStringLiteral("%1 个相关符号 · 放大展开").arg(symbol.value("member_count").toInt());
+        if (container) label = QStringLiteral("%1 个相关符号").arg(symbol.value("member_count").toInt());
+        if (fileStyle.color.isValid()) label += " · " + fileStyle.name;
+        if (cyclic) label = QStringLiteral("循环依赖组 · ") + label;
         const QStringList lines{symbolName(symbol), container ? kindName(symbol.value("kind").toString()) : symbol.value("signature").toString(), label};
         int y = 8;
         for (int i = 0; i < lines.size(); ++i) {
             auto *text = new QGraphicsSimpleTextItem(this);
             text->setFont(QApplication::font());
             text->setText(QFontMetrics(text->font()).elidedText(lines[i], Qt::ElideMiddle, 240));
-            text->setBrush(QColor(i == 0 ? "#f0f0f0" : "#bbbbbb"));
+            text->setBrush(i == 0 && fileStyle.color.isValid() ? fileStyle.color : QColor(i == 0 ? "#f0f0f0" : "#bbbbbb"));
             text->setPos(10, y); text->setAcceptedMouseButtons(Qt::NoButton); y += 26;
         }
-        setToolTip(lines.join('\n') + '\n' + symbolPosition(symbol) + (container ? QStringLiteral("\n双击或放大，展开内部符号和关系") : QStringLiteral("\n右键查看源代码 · 双击查看关系 · 可拖动")));
+        setData(3, cyclic);
+        setToolTip(lines.join('\n') + '\n' + symbolPosition(symbol) + (cyclic ? QStringLiteral("\n当前可见关系中存在组间循环依赖，已排列在同一依赖层的紧凑区域；内部关系保留。") : QString()) + (symbol.value("kind") == "RelatedFile" ? QStringLiteral("\n右键查看此文件中该符号的定义、声明和引用位置 · 可拖动") : container ? QString() : QStringLiteral("\n右键查看源代码/切换显示状态 · 双击查看关系 · 可拖动")));
     }
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
@@ -102,8 +197,9 @@ public:
         setPen(QPen(color, 2, uncertain ? Qt::DashLine : Qt::SolidLine));
         setFlags(ItemIsSelectable); setZValue(-1);
         setData(0, "relation"); setData(1, edge.sites);
-        const QString name = relationDisplayName(edge.type) + (edge.aggregated ? QStringLiteral("（汇总）") : QString());
-        label = new QGraphicsSimpleTextItem(name + (edge.sites.size() > 1 ? QStringLiteral(" ×%1").arg(edge.sites.size()) : QString()), this);
+        setData(2, edge.target); setData(3, edge.source);
+        const QString name = relationDisplayName(edge.type);
+        label = new QGraphicsSimpleTextItem(name, this);
         label->setFont(QApplication::font()); label->setBrush(color); label->setAcceptedMouseButtons(Qt::NoButton);
         QStringList locations;
         for (const auto &site : edge.sites) {
@@ -117,21 +213,25 @@ public:
     void updatePath() {
         prepareGeometryChange();
         const auto a = from->sceneBoundingRect(), b = to->sceneBoundingRect();
+        const QPointF start(a.right(), a.center().y()), end(b.left(), b.center().y());
         QPainterPath curve;
-        if (from == to) {
-            curve.moveTo(a.topRight() - QPointF(45, 0));
-            curve.cubicTo(a.topRight() + QPointF(45, -85 - bend), a.topLeft() + QPointF(-45, -85 - bend), a.topLeft() + QPointF(45, 0));
+        curve.moveTo(start);
+        if (from == to || end.x() - start.x() < 60) {
+            // 反向摆放及自调用从上方绕回，仍然右侧出、左侧进。
+            const qreal clearance = 70 + qAbs(bend);
+            const qreal top = qMin(a.top(), b.top()) - clearance;
+            const QPointF middle((start.x() + end.x()) / 2, top);
+            curve.cubicTo(start + QPointF(clearance, 0), QPointF(start.x() + clearance, top), middle);
+            curve.cubicTo(QPointF(end.x() - clearance, top), end - QPointF(clearance, 0), end);
         } else {
-            const qreal direction = b.center().x() >= a.center().x() ? 1 : -1;
-            const QPointF start(direction > 0 ? a.right() : a.left(), a.center().y());
-            const QPointF end(direction > 0 ? b.left() : b.right(), b.center().y());
-            const qreal length = qMax(60.0, qAbs(end.x() - start.x()) / 2);
-            curve.moveTo(start); curve.cubicTo(start + QPointF(direction * length, bend), end - QPointF(direction * length, -bend), end);
+            const qreal length = qMax(30.0, (end.x() - start.x()) / 4);
+            const QPointF middle = (start + end) / 2 + QPointF(0, bend);
+            curve.cubicTo(start + QPointF(length, 0), middle - QPointF(length, 0), middle);
+            curve.cubicTo(middle + QPointF(length, 0), end - QPointF(length, 0), end);
         }
-        const QPointF tip = curve.pointAtPercent(1), before = curve.pointAtPercent(0.97);
-        const qreal angle = std::atan2(tip.y() - before.y(), tip.x() - before.x());
-        arrow = QPolygonF{tip, tip - QPointF(std::cos(angle - 0.5) * 13, std::sin(angle - 0.5) * 13),
-            tip - QPointF(std::cos(angle + 0.5) * 13, std::sin(angle + 0.5) * 13)};
+        // 终点切线固定向右，箭头准确指向引用者的左侧。
+        arrow = QPolygonF{end, end - QPointF(std::cos(0.5) * 13, -std::sin(0.5) * 13),
+            end - QPointF(std::cos(0.5) * 13, std::sin(0.5) * 13)};
         setPath(curve);
         const auto middle = curve.pointAtPercent(0.5);
         label->setPos(middle - QPointF(label->boundingRect().width() / 2, label->boundingRect().height() + 4));
@@ -155,13 +255,50 @@ private:
 };
 }
 
-RelationNeighborhood buildRelationNeighborhood(const QJsonObject &unit, const QString &focus,
-    const QString &type, int maxNodes, int maxEdges) {
-    return buildRelationMap(unit, focus, type, true, maxNodes, maxEdges);
+QJsonObject buildSymbolFileUnit(const QJsonObject &unit, const QString &symbolId, const QString &root, const QString &type) {
+    QJsonObject symbol;
+    for (const auto &value : unit.value("symbols").toArray()) if (value.toObject().value("id") == symbolId) { symbol = value.toObject(); break; }
+    const auto path = [&root](const QString &file) {
+        if (file.isEmpty()) return QString();
+        const auto relative = QDir::cleanPath(QDir::isAbsolutePath(file) ? QDir(root).relativeFilePath(file) : file);
+        return relative == ".." || relative.startsWith("../") || QDir::isAbsolutePath(relative) ? QString() : relative;
+    };
+    const QString definition = path(symbol.value("def_file").toString()).isEmpty() ? path(symbol.value("decl_file").toString()) : path(symbol.value("def_file").toString());
+    QMap<QString,QJsonArray> files; QJsonArray edges; QSet<QString> seen;
+    const auto fileId = [&symbolId](const QString &file) { return "vividcode:related-file:" + symbolId + ':' + file; };
+    const auto add = [&](QJsonObject site, const QString &role, bool edge) {
+        const QString file = path(site.value("file").toString()); if (file.isEmpty()) return;
+        site["file"] = file; site["role"] = role;
+        const QString identity = key({file, site.value("line"), site.value("col")});
+        if (seen.contains(identity)) return; seen.insert(identity); files[file].append(site);
+        if (edge && !definition.isEmpty()) {
+            site["source_id"] = fileId(file); site["target_id"] = fileId(definition);
+            site["language"] = symbol.value("language"); edges.append(site);
+        }
+    };
+    for (const QString prefix : {QString("def_"), QString("decl_")}) {
+        if (symbol.value(prefix + "file").toString().isEmpty()) continue;
+        const QString role = prefix == "def_" ? QStringLiteral("定义") : QStringLiteral("声明");
+        add({{"file", symbol.value(prefix + "file")}, {"line", symbol.value(prefix + "line")}, {"col", symbol.value(prefix + "col")}, {"type", "references"}, {"confidence", "static"}}, role, path(symbol.value(prefix + "file").toString()) != definition);
+    }
+    for (const auto &value : unit.value("relations").toArray()) {
+        const auto relation = value.toObject();
+        if (relation.value("target_id") != symbolId || (!type.isEmpty() && relation.value("type") != type)) continue;
+        add(relation, relationDisplayName(relation.value("type").toString()), true);
+    }
+    QJsonArray nodes;
+    for (auto it = files.begin(); it != files.end(); ++it) {
+        const auto first = it.value().first().toObject();
+        nodes.append(QJsonObject{{"id", fileId(it.key())}, {"kind", "RelatedFile"}, {"name", QFileInfo(it.key()).fileName()}, {"qualified_name", it.key()},
+            {"language", symbol.value("language")}, {"def_file", it.key()}, {"def_line", first.value("line")}, {"def_col", first.value("col")},
+            {"signature", QStringLiteral("%1 · %2 处已索引位置").arg(it.key() == definition ? QStringLiteral("定义文件") : QStringLiteral("关联文件")).arg(it.value().size())},
+            {"occurrence_sites", it.value()}, {"is_external", false}});
+    }
+    return {{"symbols", nodes}, {"relations", edges}, {"file", root}, {"config_id", "symbol-files:" + symbolId}, {"symbol_files", true}, {"symbol_name", symbolName(symbol)}};
 }
 
 RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &focus,
-    const QString &type, bool expanded, int maxNodes, int maxEdges) {
+    const QString &type, bool expanded, int maxNodes, int maxEdges, const QMap<QString, bool> &groupOverrides) {
     RelationNeighborhood result;
     if (maxNodes < 1 || maxEdges < 0) return result;
     QMap<QString, QJsonObject> symbols;
@@ -190,12 +327,13 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
     const auto groupFor = [&](const QString &id) {
         if (result.groups.contains(id)) return result.groups.value(id);
         const auto s = ensureSymbol(id);
+        if (s.value("kind") == "RelatedFile") { result.groups.insert(id, id); return id; }
         QString group = ownerClass(id);
         QJsonObject container;
         if (!group.isEmpty()) container = symbols.value(group);
         else if (s.value("is_external").toBool()) {
             group = "vividcode:external-scope:" + s.value("language").toString();
-            container = {{"id", group}, {"name", QStringLiteral("项目外依赖")}, {"kind", "ExternalScope"}, {"abstract", true}, {"is_external", true}, {"language", s.value("language")}};
+            container = {{"id", group}, {"name", s.value("language") == "python" || s.value("language") == "javascript" ? QStringLiteral("项目外依赖 / 未解析目标") : QStringLiteral("项目外依赖")}, {"kind", "ExternalScope"}, {"abstract", true}, {"is_external", true}, {"language", s.value("language")}};
         } else {
             const QString file = s.value("decl_file").toString().isEmpty() ? s.value("def_file").toString() : s.value("decl_file").toString();
             if (!file.isEmpty()) {
@@ -210,6 +348,8 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
         }
         result.groups.insert(id, group); return group;
     };
+    const auto isExpanded = [&](const QString &id) { return groupOverrides.value(groupFor(id), expanded); };
+    const auto displayId = [&](const QString &id) { return isExpanded(id) ? id : groupFor(id); };
     // 类焦点覆盖属于此类的成员关系；方法焦点保持一层邻域。
     QSet<QString> related;
     if (!focus.isEmpty()) related.insert(focus);
@@ -220,12 +360,12 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
     if (!focus.isEmpty()) rawNodes.insert(focus);
     else for (auto it = symbols.begin(); it != symbols.end(); ++it)
         if (!it.value().value("is_external").toBool()) { rawNodes.insert(it.key()); related.insert(it.key()); }
-    if (expanded && !focusClass.isEmpty()) {
+    if (isExpanded(focus) && !focusClass.isEmpty()) {
         rawNodes.insert(focusClass);
         for (auto i = symbols.begin(); i != symbols.end(); ++i)
             if (i.value().value("parent_id").toString() == focusClass) rawNodes.insert(i.key());
     }
-    result.focusId = focus.isEmpty() ? QString() : expanded ? focus : groupFor(focus);
+    result.focusId = focus.isEmpty() ? QString() : displayId(focus);
     QMap<QString, RelationEdge> grouped;
     QSet<QString> evidence;
     for (const auto &value : unit.value("relations").toArray()) {
@@ -236,18 +376,23 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
         if (evidence.contains(siteKey)) continue;
         evidence.insert(siteKey); ++result.totalSites;
         rawNodes.insert(a); rawNodes.insert(b);
-        const auto source = expanded ? a : groupFor(a), target = expanded ? b : groupFor(b);
-        if (!expanded && source == target && result.containers.contains(source)) { ++result.hiddenInternalSites; continue; }
+        const auto source = displayId(a), target = displayId(b);
+        if (!isExpanded(a) && source == target && result.containers.contains(source)) { ++result.hiddenInternalSites; continue; }
         const auto groupKey = key({source, target, kind, confidence});
         if (!grouped.contains(groupKey)) grouped.insert(groupKey, {source, target, kind, confidence, {}, source != a || target != b});
         grouped[groupKey].sites.append(r);
     }
     QMap<QString, QSet<QString>> members;
     for (const auto &id : rawNodes) members[groupFor(id)].insert(id);
-    result.totalNodes = expanded ? rawNodes.size() : members.size();
+    QSet<QString> displayedNodes;
+    for (const auto &id : rawNodes) {
+        displayedNodes.insert(displayId(id));
+        if (isExpanded(id)) result.expandedGroups.insert(groupFor(id));
+    }
+    result.totalNodes = displayedNodes.size();
     for (auto i = result.containers.begin(); i != result.containers.end(); ++i) i.value()["member_count"] = members.value(i.key()).size();
     const auto displayedSymbol = [&](const QString &id) {
-        return !expanded && result.containers.contains(id) ? result.containers.value(id) : ensureSymbol(id);
+        return !isExpanded(id) && result.containers.contains(id) ? result.containers.value(id) : ensureSymbol(id);
     };
     if (!result.focusId.isEmpty()) result.symbols.insert(result.focusId, displayedSymbol(result.focusId));
     for (const auto &edge : grouped) {
@@ -259,7 +404,7 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
         result.edges.append(edge); result.displayedSites += edge.sites.size();
     }
     // 展开时即使成员没有当前筛选类型的边，也保留真实声明，展示类内部结构。
-    if (expanded && !focusClass.isEmpty()) {
+    if (isExpanded(focus) && !focusClass.isEmpty()) {
         for (const auto &id : rawNodes) {
             if (result.symbols.size() >= maxNodes) break;
             if (id == focusClass || symbols.value(id).value("parent_id").toString() == focusClass)
@@ -269,33 +414,90 @@ RelationNeighborhood buildRelationMap(const QJsonObject &unit, const QString &fo
     if (focus.isEmpty()) {
         for (const auto &id : rawNodes) {
             if (result.symbols.size() >= maxNodes) break;
-            const QString displayId = expanded ? id : groupFor(id);
-            result.symbols.insert(displayId, displayedSymbol(displayId));
+            const QString visibleId = displayId(id);
+            result.symbols.insert(visibleId, displayedSymbol(visibleId));
         }
     }
     return result;
 }
 
+// A stable, selectable card; it does not grab the mouse from the graph.
+class AnalysisPopup : public QWidget {
+public:
+    explicit AnalysisPopup(QWidget *parent) : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint) {
+        setObjectName("aiAnalysisPopup"); setAttribute(Qt::WA_ShowWithoutActivating);
+        auto *layout = new QVBoxLayout(this); layout->setContentsMargins(10, 8, 10, 10);
+        body = new QTextBrowser; body->setObjectName("aiAnalysisContent"); body->setOpenLinks(false); body->setOpenExternalLinks(false);
+        body->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard); layout->addWidget(body);
+        qApp->installEventFilter(this);
+    }
+    void showContent(const QString &html, const QPoint &anchor) {
+        body->setHtml(html);
+        body->verticalScrollBar()->setValue(0);
+        const auto *screen = QGuiApplication::screenAt(anchor);
+        const QRect area = (screen ? screen : QGuiApplication::primaryScreen())->availableGeometry();
+        const int popupWidth = qMin(500, area.width() - 20);
+        body->document()->setTextWidth(popupWidth - 40);
+        const int popupHeight = qMin(qMin(360, area.height() - 20), qMax(90, qCeil(body->document()->size().height()) + 30));
+        resize(popupWidth, popupHeight);
+        move(qBound(area.left(), anchor.x(), area.right() - width() + 1), qBound(area.top(), anchor.y(), area.bottom() - height() + 1));
+        show(); raise();
+    }
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override {
+        if (isVisible()) {
+            if (event->type() == QEvent::MouseButtonPress) {
+                auto *mouse = static_cast<QMouseEvent *>(event);
+                if (!frameGeometry().contains(mouse->globalPosition().toPoint())) hide();
+            } else if (event->type() == QEvent::ApplicationDeactivate) hide();
+        }
+        return QWidget::eventFilter(object, event);
+    }
+private:
+    QTextBrowser *body;
+};
+
 RelationGraph::RelationGraph(QWidget *parent) : QWidget(parent) {
+    analysisPopup = new AnalysisPopup(this);
     auto *layout = new QVBoxLayout(this); layout->setContentsMargins(0, 0, 0, 0);
     summary = new QLabel; summary->setObjectName("relationGraphSummary"); summary->setWordWrap(true); summary->setTextFormat(Qt::PlainText);
     layout->addWidget(summary);
     scene = new QGraphicsScene(this); scene->setObjectName("relationGraphScene");
     auto *graphView = new GraphView(scene); view = graphView; view->setObjectName("relationGraphView");
     graphView->changed = [this](qreal level) { zoomChanged(level); };
-    view->setRenderHint(QPainter::Antialiasing); view->setDragMode(QGraphicsView::ScrollHandDrag);
+    view->setRenderHint(QPainter::Antialiasing); view->setDragMode(QGraphicsView::NoDrag);
     view->setTransformationAnchor(QGraphicsView::AnchorUnderMouse); view->setBackgroundBrush(palette().brush(QPalette::Window));
     view->setMinimumHeight(180);
-    layout->addWidget(view, 1);
-    auto *legend = new QLabel(QStringLiteral("箭头：起点 → 终点 · 蓝：继承/接口实现 · 橙：调用（虚线为可能调用） · 绿：成员引用 · 紫：覆写 · 灰：引用"));
-    legend->setWordWrap(true); layout->addWidget(legend);
-    details = new QLabel(QStringLiteral("滚轮缩放：缩小时看类，放大后看成员；右键查看源代码。"));
-    details->setObjectName("relationGraphDetails"); details->setWordWrap(true); details->setTextFormat(Qt::PlainText); layout->addWidget(details);
-    sites = new QComboBox; sites->setObjectName("relationGraphSites"); sites->setEnabled(false); sites->hide(); layout->addWidget(sites);
+    auto *splitter = new QSplitter(Qt::Vertical); splitter->setObjectName("graphBottomSplitter");
+    splitter->addWidget(view); layout->addWidget(splitter, 1);
+    panels = new QTabWidget; panels->setObjectName("graphBottomPanels");
+    auto *information = new QWidget; auto *infoLayout = new QVBoxLayout(information); infoLayout->setContentsMargins(6, 4, 6, 4);
+    panels->addTab(information, QStringLiteral("图谱信息")); splitter->addWidget(panels);
+    splitter->setStretchFactor(0, 3); splitter->setStretchFactor(1, 1); splitter->setSizes({560, 240});
+    auto *legendCard = new QWidget(view);
+    graphView->legendOverlay = legendCard;
+    legendCard->setObjectName("graphLegendCard");
+    legendCard->setAttribute(Qt::WA_TransparentForMouseEvents);
+    legendCard->setStyleSheet("#graphLegendCard { background: #202020; border: 1px solid #454545; border-radius: 6px; }");
+    auto *legendLayout = new QVBoxLayout(legendCard);
+    legendLayout->setContentsMargins(10, 8, 10, 8);
+    fileLegend = new QLabel; fileLegend->setObjectName("fileLanguageLegend");
+    fileLegend->setTextFormat(Qt::RichText); fileLegend->setWordWrap(true);
+    legendLayout->addWidget(fileLegend);
+    QStringList edgeColors;
+    for (const QString &type : {"inherits", "calls", "member_ref", "overrides", "references"})
+        edgeColors.append(QStringLiteral("<span style=\"color:%1\">━ %2</span>").arg(edgeColor(type).name(), relationDisplayName(type)));
+    auto *legend = new QLabel(QStringLiteral("连线<br>") + edgeColors.join(QStringLiteral("<br>")) + QStringLiteral("<br>┄ 可能调用<br>被引用 → 引用"));
+    legendLayout->addWidget(legend);
+    graphView->positionLegend();
+    details = new QLabel;
+    details->setObjectName("relationGraphDetails"); details->setWordWrap(true); details->setTextFormat(Qt::PlainText); infoLayout->addWidget(details);
+    sites = new QComboBox; sites->setObjectName("relationGraphSites"); sites->setEnabled(false); sites->hide(); infoLayout->addWidget(sites); infoLayout->addStretch();
     sites->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon); sites->setMinimumContentsLength(20);
     connect(scene, &QGraphicsScene::selectionChanged, this, &RelationGraph::inspectSelection);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(view, &QGraphicsView::customContextMenuRequested, this, &RelationGraph::showContextMenu);
+    view->viewport()->installEventFilter(this);
     connect(sites, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index < 0) return;
         const auto site = sites->itemData(index).toJsonObject();
@@ -304,40 +506,134 @@ RelationGraph::RelationGraph(QWidget *parent) : QWidget(parent) {
     setData({}, {}, {}, {});
 }
 
-void RelationGraph::setData(const QJsonObject &unit, const QString &focus, const QString &type, const QString &scope) {
-    if (focus.isEmpty() || currentUnit.value("config_id") != unit.value("config_id") || currentUnit.value("file") != unit.value("file")) {
-        expanded = false; zoomLevel = 0.65;
+bool RelationGraph::eventFilter(QObject *object, QEvent *event) {
+    if (object == view->viewport()) {
+        if (event->type() == QEvent::ToolTip && analysisPopup->isVisible()) {
+            QToolTip::hideText();
+            event->accept();
+            return true;
+        }
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            analysisPressed = mouse->button() == Qt::LeftButton; analysisDoubleClick = false; analysisPress = mouse->position().toPoint();
+            hideFileAnalysis();
+        } else if (event->type() == QEvent::MouseButtonDblClick) {
+            analysisDoubleClick = true; hideFileAnalysis();
+        } else if (event->type() == QEvent::MouseMove && analysisPressed) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            if ((mouse->position().toPoint() - analysisPress).manhattanLength() >= QApplication::startDragDistance()) analysisPressed = false;
+        } else if (event->type() == QEvent::MouseButtonRelease) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            const QPoint point = mouse->position().toPoint();
+            const bool click = analysisPressed && !analysisDoubleClick && mouse->button() == Qt::LeftButton
+                && (point - analysisPress).manhattanLength() < QApplication::startDragDistance();
+            analysisPressed = false;
+            if (click) showFileAnalysis(point);
+        } else if (event->type() == QEvent::Wheel || event->type() == QEvent::Resize) { analysisPressed = false; hideFileAnalysis(); }
     }
-    currentUnit = unit; currentFocus = focus; currentType = type; currentScope = scope;
-    renderMap();
+    return QWidget::eventFilter(object, event);
 }
 
-void RelationGraph::zoomBy(qreal factor) { static_cast<GraphView *>(view)->zoom(factor); }
+void RelationGraph::hideFileAnalysis() { analysisPopup->hide(); }
+
+void RelationGraph::showFileAnalysis(const QPoint &point) {
+    QToolTip::hideText();
+    if (fileExplanation) {
+        auto *item = view->itemAt(point);
+        while (item && item->data(0) != "symbol" && item->data(0) != "container") item = item->parentItem();
+        if (item) {
+            const auto symbol = item->data(1).toJsonObject();
+            if (!symbol.value("is_external").toBool() && !symbol.value("unresolved").toBool()) {
+                QString path = symbol.value("scope_file").toString();
+                if (path.isEmpty()) path = symbol.value("def_file").toString();
+                if (path.isEmpty()) path = symbol.value("decl_file").toString();
+                const QString explanation = path.isEmpty() ? QString() : fileExplanation(path);
+                if (!explanation.isEmpty()) {
+                    analysisPopup->showContent(explanation,
+                        view->viewport()->mapToGlobal(point + QPoint(18, 18)));
+                    return;
+                }
+            }
+        }
+    }
+    hideFileAnalysis();
+}
+
+void RelationGraph::setData(const QJsonObject &unit, const QString &focus, const QString &type, const QString &scope) {
+    const bool changed = currentUnit.value("config_id") != unit.value("config_id") || currentUnit.value("file") != unit.value("file");
+    const bool firstResults = currentUnit.value("symbols").toArray().isEmpty();
+    const bool focusChanged = currentFocus != focus;
+    const bool newResults = currentUnit != unit;
+    if (changed) {
+        zoomLevel = 0.65; groupOverrides.clear(); viewAdjusted = false;
+    }
+    const bool fit = changed || (!viewAdjusted && (firstResults || (newResults && focus.isEmpty())));
+    if (focusChanged && !focus.isEmpty()) viewAdjusted = true;
+    currentUnit = unit; currentFocus = focus; currentType = type; currentScope = scope;
+    renderMap(fit, focusChanged);
+}
 
 void RelationGraph::setZoomLevel(qreal level) {
+    hideFileAnalysis();
     level = qBound(0.05, level, 3.0);
     view->resetTransform(); view->scale(level, level); zoomChanged(level);
 }
 
 void RelationGraph::zoomChanged(qreal level) {
+    viewAdjusted = true;
     zoomLevel = level;
-    const bool next = expanded ? level >= 0.75 : level >= 0.9;
-    if (next != expanded) { expanded = next; renderMap(); }
 }
 
 void RelationGraph::fitGraph() {
     if (scene->items().isEmpty()) return;
-    // 适应视图回到概览，避免把几十个方法压成不可读的小字。
-    expanded = false; renderMap();
-    view->fitInView(scene->itemsBoundingRect().adjusted(-30,-30,30,30), Qt::KeepAspectRatio);
-    zoomLevel = qMin(0.7, view->transform().m11());
-    view->resetTransform(); view->scale(zoomLevel, zoomLevel);
+    // 只适配当前结构，保留各文件/类的详情或缩略选择。
+    viewAdjusted = true; zoomLevel = 0.65; renderMap(true);
 }
 
-void RelationGraph::renderMap() {
+bool RelationGraph::focusFile(const QString &path, const QString &root) {
+    const auto normalized = [&root](const QString &file) {
+        return file.isEmpty() ? QString() : QDir::cleanPath(QDir::fromNativeSeparators(QDir(root).absoluteFilePath(file))).toCaseFolded();
+    };
+    const QString target = normalized(path);
+    const auto matches = [&](const QJsonObject &symbol) {
+        if (symbol.value("is_external").toBool()) return false;
+        for (const QString field : {"scope_file", "def_file", "decl_file"})
+            if (normalized(symbol.value(field).toString()) == target) return true;
+        return false;
+    };
+    const auto locate = [&]() {
+        QList<QGraphicsItem *> found;
+        for (auto *item : scene->items())
+            if ((item->data(0) == "symbol" || item->data(0) == "container") && matches(item->data(1).toJsonObject())) found.append(item);
+        if (found.isEmpty()) return false;
+        hideFileAnalysis(); viewAdjusted = true;
+        { const QSignalBlocker blocker(scene);
+            scene->clearSelection();
+            for (auto *item : found) {
+                if (item->flags().testFlag(QGraphicsItem::ItemIsSelectable)) item->setSelected(true);
+            }
+        }
+        inspectSelection();
+        return true;
+    };
+    return locate();
+}
+
+void RelationGraph::simplifyAll() {
+    viewAdjusted = true;
+    // 无焦点、无筛选收集全部已加载分组，包含当前画布显示上限之外的分组。
+    const auto overview = buildRelationMap(currentUnit, {}, {}, false);
+    for (auto it = groupOverrides.begin(); it != groupOverrides.end(); ++it) it.value() = false;
+    for (const auto &group : overview.groups) groupOverrides[group] = false;
+    renderMap();
+}
+
+void RelationGraph::renderMap(bool fit, bool centerFocus) {
+    hideFileAnalysis(); analysisPressed = false;
+    const QPointF previousCenter = view->mapToScene(view->viewport()->rect().center());
     const QSignalBlocker blocker(scene), siteBlocker(sites);
     scene->clear(); sites->clear(); sites->setEnabled(false); sites->hide();
-    details->setText(QStringLiteral("滚轮缩放 · 单击选中 · 右键查看源代码/刷新 · 双击展开/切换焦点 · 拖动调整布局"));
+    details->setText(QStringLiteral("选择节点或连线"));
     QMap<QString,QJsonObject> languageUnits;
     QString focusLanguage;
     for (const auto &value : currentUnit.value("symbols").toArray()) {
@@ -351,36 +647,70 @@ void RelationGraph::renderMap() {
     }
     RelationNeighborhood neighborhood;
     for (auto it = languageUnits.begin(); it != languageUnits.end(); ++it) {
-        const auto part = buildRelationMap(it.value(), it.key() == focusLanguage ? currentFocus : QString(), currentType, expanded);
+        const auto part = buildRelationMap(it.value(), it.key() == focusLanguage ? currentFocus : QString(), currentType, false, 81, 160, groupOverrides);
         neighborhood.symbols.insert(part.symbols); neighborhood.groups.insert(part.groups); neighborhood.containers.insert(part.containers); neighborhood.edges.append(part.edges);
+        neighborhood.expandedGroups.unite(part.expandedGroups);
         neighborhood.totalSites += part.totalSites; neighborhood.displayedSites += part.displayedSites; neighborhood.hiddenInternalSites += part.hiddenInternalSites; neighborhood.totalNodes += part.totalNodes;
         if (!part.focusId.isEmpty()) neighborhood.focusId = part.focusId;
     }
-    if (neighborhood.symbols.isEmpty()) { summary->setText(QStringLiteral("尚无可显示的索引结果。打开项目后自动分析，右键可导入配置或刷新。")); return; }
+    summary->setText(QStringLiteral("%1 个节点 · %2 条连线")
+        .arg(neighborhood.symbols.size()).arg(neighborhood.edges.size()));
+    QSet<QString> visibleLanguages;
+    const auto collectLanguage = [&visibleLanguages](const QJsonObject &symbol) {
+        const auto style = fileLanguageStyle(symbol);
+        if (style.color.isValid()) visibleLanguages.insert(style.name);
+    };
+    for (auto it = neighborhood.symbols.begin(); it != neighborhood.symbols.end(); ++it) {
+        collectLanguage(it.value());
+        const auto group = neighborhood.groups.value(it.key(), it.key());
+        if (neighborhood.expandedGroups.contains(group)) collectLanguage(neighborhood.containers.value(group));
+    }
+    QStringList fileColors;
+    for (const auto &style : fileLanguagePalette())
+        if (visibleLanguages.contains(style.name))
+            fileColors.append(QStringLiteral("<span style=\"color:%1\">■ %2</span>").arg(style.color.name(), style.name));
+    fileLegend->setText(QStringLiteral("文件<br>") + (fileColors.isEmpty()
+        ? QStringLiteral("当前图中没有语言组件") : fileColors.join(QStringLiteral("<br>"))));
+    static_cast<GraphView *>(view)->positionLegend();
+    if (neighborhood.symbols.isEmpty()) return;
     const auto focus = neighborhood.focusId;
-    summary->setText(QStringLiteral("范围：%1 · 当前分析范围/配置 · %2\n%3/%4 个节点，%5 条连线，显示 %6/%7 处关系；概览收起类内 %8 处%9")
-        .arg(currentScope, expanded ? QStringLiteral("成员层：方法焦点显示邻域，类焦点显示其成员关系") : QStringLiteral("概览：类/文件范围；放大至 90% 展开内部"))
-        .arg(neighborhood.symbols.size()).arg(neighborhood.totalNodes).arg(neighborhood.edges.size()).arg(neighborhood.displayedSites).arg(neighborhood.totalSites).arg(neighborhood.hiddenInternalSites)
-        .arg(neighborhood.displayedSites + neighborhood.hiddenInternalSites < neighborhood.totalSites || neighborhood.symbols.size() < neighborhood.totalNodes
-            ? QStringLiteral(" · 已达显示上限，可筛选；完整记录在列表中") : QString()));
-    if (neighborhood.totalSites == 0) details->setText(QStringLiteral("此符号在当前编译单元/配置和关系筛选下没有索引关系；这不表示全项目没有关系。"));
-    QSet<QString> incoming;
-    for (const auto &edge : neighborhood.edges) if (edge.target == focus && edge.source != focus) incoming.insert(edge.source);
     QMap<QString, SymbolItem *> nodes;
     QMap<QString, QList<SymbolItem *>> groupNodes;
     QMap<QString, QGraphicsRectItem *> frames;
     QMap<QString, QGraphicsSimpleTextItem *> headings;
-    int left = 0, right = 0;
+    QMap<QString, QStringList> membersByGroup;
+    QMap<QString, QMap<QString, QSizeF>> sizesByLanguage;
+    for (auto it = neighborhood.symbols.begin(); it != neighborhood.symbols.end(); ++it)
+        membersByGroup[neighborhood.groups.value(it.key(), it.key())].append(it.key());
+    for (auto it = membersByGroup.begin(); it != membersByGroup.end(); ++it) {
+        const auto language = neighborhood.symbols.value(it.value().first()).value("language").toString();
+        const bool framed = neighborhood.expandedGroups.contains(it.key()) && neighborhood.containers.contains(it.key());
+        sizesByLanguage[language][it.key()] = framed ? QSizeF(565, 70 + std::ceil(it.value().size() / 2.0) * 120) : QSizeF(260, 92);
+    }
+    QList<QPair<QString, QString>> links;
+    for (const auto &edge : neighborhood.edges)
+        links.append({neighborhood.groups.value(edge.target, edge.target), neighborhood.groups.value(edge.source, edge.source)});
+    QMap<QString, QPointF> groupPositions;
+    QMap<QString, QRectF> languageBounds;
+    QSet<QString> cyclicGroups;
+    qreal languageX = 0;
+    for (auto it = sizesByLanguage.begin(); it != sizesByLanguage.end(); ++it) {
+        const auto layout = layoutRelationGroups(it.value(), links);
+        for (auto p = layout.positions.begin(); p != layout.positions.end(); ++p) {
+            groupPositions[p.key()] = p.value() + QPointF(languageX, 60);
+        }
+        cyclicGroups.unite(layout.cyclicGroups);
+        languageBounds[it.key()] = QRectF(QPointF(languageX, 60), layout.size);
+        languageX += layout.size.width() + 180;
+    }
     for (auto i = neighborhood.symbols.begin(); i != neighborhood.symbols.end(); ++i) {
-        auto *node = new SymbolItem(i.value(), i.key() == focus); scene->addItem(node);
-        if (i.key() == focus) node->setPos(380, 0);
-        else if (incoming.contains(i.key())) node->setPos(0, left++ * 135);
-        else node->setPos(760, right++ * 135);
+        auto *node = new SymbolItem(i.value(), i.key() == focus, cyclicGroups.contains(neighborhood.groups.value(i.key(), i.key()))); scene->addItem(node);
+        node->setData(2, neighborhood.groups.value(i.key(), i.key()));
         const auto id = i.key(); const bool container = i.value().value("is_container").toBool();
         const bool abstract = i.value().value("abstract").toBool();
-        node->focused = [this, id, container, abstract] { QTimer::singleShot(0, this, [this, id, container, abstract] {
+        node->focused = [this, id, container, abstract] { if (currentUnit.value("symbol_files").toBool()) return; QTimer::singleShot(0, this, [this, id, container, abstract] {
             if (!container) { emit focusRequested(id); return; }
-            setZoomLevel(1.0);
+            viewAdjusted = true; groupOverrides[id] = true; renderMap();
             if (!abstract) emit focusRequested(id);
             for (auto *item : scene->items())
                 if (item->data(0).toString() == "container" && item->data(1).toJsonObject().value("id").toString() == id) { view->centerOn(item); break; }
@@ -388,67 +718,44 @@ void RelationGraph::renderMap() {
         nodes.insert(id, node);
         groupNodes[neighborhood.groups.value(id, id)].append(node);
     }
-    if (nodes.contains(focus)) nodes.value(focus)->setPos(380, qMax(0, qMax(left, right) - 1) * 135 / 2.0);
-    if (expanded) {
-        // 容器只表达索引的真实归属；没有人为添加“调用/继承”线。
-        const QString focalGroup = neighborhood.groups.value(focus, focus);
-        QSet<QString> incomingGroups;
-        for (const auto &edge : neighborhood.edges) {
-            const auto a = neighborhood.groups.value(edge.source, edge.source), b = neighborhood.groups.value(edge.target, edge.target);
-            if (b == focalGroup && a != focalGroup) incomingGroups.insert(a);
+    QMap<QString, QList<SymbolItem *>> languageNodes;
+    for (auto *node : nodes) languageNodes[node->data(1).toJsonObject().value("language").toString()].append(node);
+    const bool partitioned = languageNodes.size() > 1 || !languageNodes.firstKey().isEmpty();
+    for (auto it = groupNodes.begin(); it != groupNodes.end(); ++it) {
+        const auto position = groupPositions.value(it.key());
+        const bool framed = neighborhood.expandedGroups.contains(it.key()) && neighborhood.containers.contains(it.key());
+        int index = 0;
+        for (auto *node : it.value()) {
+            node->setPos(position + (framed ? QPointF(20 + (index % 2) * 285, 60 + (index / 2) * 120) : QPointF()));
+            ++index;
         }
-        qreal leftY = 0, rightY = 0;
-        for (auto i = groupNodes.begin(); i != groupNodes.end(); ++i) {
-            const qreal height = 70 + std::ceil(i.value().size() / 2.0) * 120;
-            const bool focal = i.key() == focalGroup;
-            const bool in = incomingGroups.contains(i.key());
-            const QPointF position(focal ? 700 : (in ? 0 : 1400), focal ? 0 : (in ? leftY : rightY));
-            if (!focal) { if (in) leftY += height + 70; else rightY += height + 70; }
-            int index = 0;
-            for (auto *node : i.value()) { node->setPos(position + QPointF(20 + (index % 2) * 285, 60 + (index / 2) * 120)); ++index; }
-            if (neighborhood.containers.contains(i.key())) {
-                auto *frame = scene->addRect(QRectF(position, QSizeF(565, height)), QPen(QColor(focal ? "#527ca6" : "#484848"), 1.5), QBrush(QColor("#151b21")));
-                frame->setZValue(-3); frame->setAcceptedMouseButtons(Qt::NoButton);
-                frame->setData(0, "container"); frame->setData(1, neighborhood.containers.value(i.key()));
-                auto *heading = new QGraphicsSimpleTextItem(symbolName(neighborhood.containers.value(i.key())) + QStringLiteral(" · 内部及相关符号"), frame);
-                heading->setFont(QApplication::font()); heading->setBrush(QColor("#bbbbbb")); heading->setPos(position + QPointF(20, 15));
-                heading->setAcceptedMouseButtons(Qt::NoButton);
-                frames.insert(i.key(), frame); headings.insert(i.key(), heading);
-            }
+        if (!framed) continue;
+        const bool focal = it.key() == neighborhood.groups.value(focus, focus);
+        const auto language = it.value().first()->data(1).toJsonObject().value("language").toString();
+        auto *frame = scene->addRect(QRectF(position, sizesByLanguage.value(language).value(it.key())),
+            QPen(QColor(focal ? "#527ca6" : "#484848"), 1.5), QBrush(QColor("#151b21")));
+        const auto fileStyle = fileLanguageStyle(neighborhood.containers.value(it.key()));
+        if (fileStyle.color.isValid()) {
+            frame->setPen(QPen(fileStyle.color, focal ? 2.5 : 1.5)); frame->setBrush(fileBackground(fileStyle.color, focal));
         }
+        frame->setZValue(-3); frame->setAcceptedMouseButtons(Qt::NoButton);
+        frame->setData(0, "container"); frame->setData(1, neighborhood.containers.value(it.key()));
+        const QString title = symbolName(neighborhood.containers.value(it.key())) +
+            (cyclicGroups.contains(it.key()) ? QStringLiteral(" · 循环依赖组") : QStringLiteral(" · 内部及相关符号"));
+        auto *heading = new QGraphicsSimpleTextItem(QFontMetrics(QApplication::font()).elidedText(title, Qt::ElideMiddle, 525), frame);
+        heading->setFont(QApplication::font()); heading->setBrush(QColor("#bbbbbb")); heading->setPos(position + QPointF(20, 15));
+        if (fileStyle.color.isValid()) heading->setBrush(fileStyle.color);
+        heading->setAcceptedMouseButtons(Qt::NoButton); frame->setToolTip(title);
+        frames.insert(it.key(), frame); headings.insert(it.key(), heading);
     }
     // 各语言共享同一个 scene；分区只表达语言归属，不添加跨语言关系。
-    QMap<QString,int> languageColumns, countsByLanguage;
-    QMap<QString,QList<SymbolItem *>> languageNodes;
-    for (auto *node : nodes) {
-        const QString language = node->data(1).toJsonObject().value("language").toString();
-        if (!languageColumns.contains(language)) languageColumns[language] = languageColumns.size();
-        languageNodes[language].append(node);
-    }
-    if (languageColumns.size() > 1 || !languageColumns.firstKey().isEmpty()) {
-        if (!expanded) {
-            for (auto *node : nodes) {
-                const QString language = node->data(1).toJsonObject().value("language").toString(); const int index = countsByLanguage[language]++;
-                node->setPos(languageColumns[language] * 1300 + (index % 3) * 285, 60 + (index / 3) * 135);
-            }
-        } else {
-            QMap<QString,QPair<qreal,qreal>> columns;
-            QMap<QString,int> groupIndices;
-            for (auto it = groupNodes.begin(); it != groupNodes.end(); ++it) {
-                const QString language = it.value().first()->data(1).toJsonObject().value("language").toString();
-                const int column = groupIndices[language]++ % 2; auto heights = columns.value(language);
-                const qreal height = 70 + std::ceil(it.value().size() / 2.0) * 120;
-                const QPointF origin(languageColumns[language] * 1300 + column * 610, 60 + (column ? heights.second : heights.first));
-                int index = 0; for (auto *node : it.value()) { node->setPos(origin + QPointF(20 + (index % 2) * 285, 60 + (index / 2) * 120)); ++index; }
-                if (column) heights.second += height + 50; else heights.first += height + 50; columns[language] = heights;
-                if (frames.contains(it.key())) { frames.value(it.key())->setRect(QRectF(origin, QSizeF(565, height))); headings.value(it.key())->setPos(origin + QPointF(20, 15)); }
-            }
-        }
+    if (partitioned) {
         for (auto it = languageNodes.begin(); it != languageNodes.end(); ++it) {
-            QRectF bounds; for (auto *node : it.value()) bounds = bounds.isNull() ? node->sceneBoundingRect() : bounds.united(node->sceneBoundingRect());
+            QRectF bounds = languageBounds.value(it.key());
+            for (auto *node : it.value()) bounds = bounds.united(node->sceneBoundingRect());
             auto *partition = scene->addRect(bounds.adjusted(-30, -55, 30, 30), QPen(QColor("#404a56")), QBrush(QColor("#11141a")));
             partition->setZValue(-6); partition->setAcceptedMouseButtons(Qt::NoButton); partition->setData(0, "languagePartition"); partition->setData(1, it.key());
-            auto *label = new QGraphicsSimpleTextItem(it.key() == "c#" ? "C#" : "C++", partition);
+            auto *label = new QGraphicsSimpleTextItem(it.key() == "java" ? "Java" : it.key() == "javascript" ? "JavaScript/TypeScript" : it.key() == "python" ? "Python" : it.key() == "c#" ? "C#" : "C++", partition);
             label->setBrush(QColor("#9ac4ff")); label->setFont(QApplication::font()); label->setPos(bounds.topLeft() + QPointF(0, -40)); label->setAcceptedMouseButtons(Qt::NoButton);
         }
     }
@@ -459,7 +766,8 @@ void RelationGraph::renderMap() {
         const auto pair = key({edge.source, edge.target});
         qreal bend = (indices[pair]++ - (counts[pair] - 1) / 2.0) * 60;
         if (edge.source != edge.target && counts.contains(key({edge.target, edge.source}))) bend += edge.source < edge.target ? 45 : -45;
-        auto *item = new EdgeItem(nodes.value(edge.source), nodes.value(edge.target), edge, bend);
+        // 分析数据保留 source=引用者、target=被引用者；只反转画布上的箭头。
+        auto *item = new EdgeItem(nodes.value(edge.target), nodes.value(edge.source), edge, bend);
         scene->addItem(item); edges.append(item);
     }
     for (auto *node : nodes) node->moved = [edges, frames, headings, groupNodes, this] {
@@ -474,24 +782,50 @@ void RelationGraph::renderMap() {
     };
     scene->setSceneRect(scene->itemsBoundingRect().adjusted(-100, -100, 100, 100));
     view->resetTransform(); view->scale(zoomLevel, zoomLevel);
-    if (nodes.contains(focus)) view->centerOn(nodes.value(focus));
-    else {
+    if (fit) {
         view->fitInView(scene->itemsBoundingRect().adjusted(-30, -30, 30, 30), Qt::KeepAspectRatio);
-        zoomLevel = qMin(zoomLevel, view->transform().m11());
+        zoomLevel = qBound(0.05, qMin(zoomLevel, view->transform().m11()), 3.0);
         view->resetTransform(); view->scale(zoomLevel, zoomLevel);
         view->centerOn(scene->sceneRect().center());
-    }
+    } else if (centerFocus && nodes.contains(focus)) view->centerOn(nodes.value(focus));
+    else view->centerOn(previousCenter);
 }
 
 void RelationGraph::inspectSelection() {
     { const QSignalBlocker blocker(sites); sites->clear(); sites->setEnabled(false); sites->hide(); }
-    const auto selected = scene->selectedItems(); if (selected.isEmpty()) return;
+    const auto selected = scene->selectedItems();
+    QSet<QString> selectedNodes, litNodes, litGroups;
+    QSet<QGraphicsItem *> litEdges;
+    for (auto *item : selected)
+        if (item->data(0) == "symbol") selectedNodes.insert(item->data(1).toJsonObject().value("id").toString());
+    litNodes = selectedNodes;
+    for (auto *item : scene->items()) if (item->data(0) == "relation") {
+        const auto a = item->data(2).toString(), b = item->data(3).toString();
+        if (item->isSelected() || selectedNodes.contains(a) || selectedNodes.contains(b)) {
+            litEdges.insert(item); litNodes.insert(a); litNodes.insert(b);
+        }
+    }
+    for (auto *item : scene->items()) if (item->data(0) == "symbol") {
+        const bool lit = selected.isEmpty() || litNodes.contains(item->data(1).toJsonObject().value("id").toString());
+        item->setOpacity(lit ? 1 : 0.22);
+        if (lit) litGroups.insert(item->data(2).toString());
+    }
+    for (auto *item : scene->items()) {
+        if (item->data(0) == "relation") {
+            const bool lit = selected.isEmpty() || litEdges.contains(item);
+            item->setOpacity(lit ? 1 : 0.12); item->setZValue(lit && !selected.isEmpty() ? -0.5 : -1);
+        } else if (item->data(0) == "container") item->setOpacity(selected.isEmpty() || litGroups.contains(item->data(1).toJsonObject().value("id").toString()) ? 1 : 0.25);
+    }
+    if (selected.isEmpty()) {
+        details->setText(QStringLiteral("选择节点或连线"));
+        return;
+    }
     auto *item = selected.first();
     if (item->data(0).toString() == "symbol") {
         const auto s = item->data(1).toJsonObject();
         details->setText(symbolName(s) + " · " + symbolPosition(s));
         if (s.value("abstract").toBool()) {
-            details->setText(symbolName(s) + QStringLiteral(" · 按真实位置归并的范围，放大或双击查看内部符号。"));
+            details->setText(symbolName(s) + QStringLiteral(" · 按真实位置归并的范围"));
             return;
         }
         if (s.value("is_external").toBool() || s.value("unresolved").toBool()) {
@@ -501,11 +835,6 @@ void RelationGraph::inspectSelection() {
         const auto positions = item->data(1).toJsonArray();
         if (positions.isEmpty()) return;
         const auto first = positions.first().toObject();
-        const QString type = first.value("type").toString();
-        static const QMap<QString, QString> explanations{{"calls", QStringLiteral("起点调用终点")}, {"possible_call", QStringLiteral("起点可能调用终点；运行时目标尚未确定")},
-            {"inherits", QStringLiteral("起点继承终点")}, {"member_ref", QStringLiteral("起点引用终点成员；暂不区分读写")},
-            {"references", QStringLiteral("起点引用终点")}, {"overrides", QStringLiteral("起点覆写终点方法")}};
-        details->setText(explanations.value(type, relationDisplayName(type)) + QStringLiteral(" · %1 处源码位置，可在下方逐项选择。").arg(positions.size()));
         { const QSignalBlocker blocker(sites);
             for (const auto &position : positions) {
                 const auto r = position.toObject();
@@ -524,7 +853,7 @@ void RelationGraph::showSite(const QJsonObject &site) {
         if (s.value("id") == site.value("source_id")) a = symbolName(s);
         if (s.value("id") == site.value("target_id")) b = symbolName(s);
     }
-    const QString explanation = a + " → " + b + " · " + relationDisplayName(site.value("type").toString()) +
+    const QString explanation = b + " → " + a + QStringLiteral(" · 被引用者 → 引用者 · ") + relationDisplayName(site.value("type").toString()) +
         QStringLiteral(" · %1 处位置可选").arg(sites->count());
     details->setToolTip(explanation);
     details->setText(QFontMetrics(details->font()).elidedText(explanation, Qt::ElideMiddle, qMax(300, view->viewport()->width() - 12)));
@@ -537,26 +866,49 @@ void RelationGraph::showContextMenu(const QPoint &point) {
     QJsonArray positions;
     if (item && (item->data(0) == "symbol" || item->data(0) == "container")) {
         const auto symbol = item->data(1).toJsonObject();
+        const QString group = item->data(0) == "container" ? symbol.value("id").toString() : item->data(2).toString();
+        if (!group.isEmpty() && symbol.value("kind") != "RelatedFile") {
+            auto *display = menu->addMenu(QStringLiteral("显示状态"));
+            auto *choices = new QActionGroup(display); choices->setExclusive(true);
+            const QStringList labels{QStringLiteral("显示详情"), QStringLiteral("显示缩略")};
+            const QStringList names{"graphShowDetailsAction", "graphShowThumbnailAction"};
+            for (int index = 0; index < labels.size(); ++index) {
+                auto *action = display->addAction(labels[index]); action->setObjectName(names[index]);
+                choices->addAction(action); action->setCheckable(true);
+                action->setChecked(groupOverrides.value(group, false) == (index == 0));
+                connect(action, &QAction::triggered, this, [this, group, index] {
+                    viewAdjusted = true;
+                    groupOverrides[group] = index == 0;
+                    renderMap();
+                });
+            }
+        }
         if (!symbol.value("is_external").toBool() && !symbol.value("unresolved").toBool()) {
             const QString prefix = symbol.value("def_file").toString().isEmpty() ? "decl_" : "def_";
             QString file = symbol.value(prefix + "file").toString(); int line = symbol.value(prefix + "line").toInt(1);
             if (file.isEmpty()) { file = symbol.value("scope_file").toString(); line = 1; }
             if (!file.isEmpty()) positions.append(QJsonObject{{"file", file}, {"line", line}, {"col", symbol.value(prefix + "col").toInt(1)}});
         }
-        auto *focus = menu->addAction(QStringLiteral("查看相关关系"));
-        connect(focus, &QAction::triggered, this, [this, symbol] { emit focusRequested(symbol.value("id").toString()); });
+        if (symbol.value("kind") == "RelatedFile") positions = symbol.value("occurrence_sites").toArray();
+        else {
+            auto *focus = menu->addAction(QStringLiteral("查看相关关系"));
+            connect(focus, &QAction::triggered, this, [this, symbol] { emit focusRequested(symbol.value("id").toString()); });
+        }
     } else if (item && item->data(0) == "relation") positions = item->data(1).toJsonArray();
     if (!positions.isEmpty()) {
         QMenu *sourceMenu = positions.size() > 1 ? menu->addMenu(QStringLiteral("查看源代码")) : menu;
         for (const auto &value : positions) {
             const auto site = value.toObject();
-            auto *source = sourceMenu->addAction(positions.size() == 1 ? QStringLiteral("查看源代码") : site.value("file").toString() + ':' + QString::number(site.value("line").toInt()));
+            const QString at = site.value("file").toString() + ':' + QString::number(site.value("line").toInt()) + ':' + QString::number(site.value("col").toInt(1));
+            auto *source = sourceMenu->addAction(positions.size() == 1 ? QStringLiteral("查看源代码") : at + (site.value("role").toString().isEmpty() ? QString() : " · " + site.value("role").toString()));
             source->setObjectName("graphViewSourceAction");
             source->setData(site);
             connect(source, &QAction::triggered, this, [this, site] { emit sourceRequested(site.value("file").toString(), site.value("line").toInt(1), site.value("col").toInt(1)); });
         }
     }
     menu->addSeparator(); auto *all = menu->addAction(QStringLiteral("显示全部工程关系")); connect(all, &QAction::triggered, this, [this] { emit focusRequested({}); });
+    auto *simplify = menu->addAction(QStringLiteral("全部简化")); simplify->setObjectName("graphSimplifyAllAction");
+    connect(simplify, &QAction::triggered, this, &RelationGraph::simplifyAll);
     auto *fit = menu->addAction(QStringLiteral("适应画布")); connect(fit, &QAction::triggered, this, &RelationGraph::fitGraph);
     auto *refresh = menu->addAction(QStringLiteral("刷新文件和索引")); refresh->setObjectName("graphRefreshAction"); connect(refresh, &QAction::triggered, this, &RelationGraph::refreshRequested);
     emit contextMenuRequested(menu); menu->popup(view->viewport()->mapToGlobal(point));

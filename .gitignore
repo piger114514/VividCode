@@ -4,6 +4,10 @@
 .vividcode/
 .vividcode.lock
 .vividcode-viewer.lock
+/AGENTS.md
+/PROJECT_BRIEF.md
+Document/
+/交付材料/
 
 # Build outputs and IDE-local settings
 .vs/
@@ -30,3 +34,5 @@ venv/
 .env
 .env.*
 !.env.example
+/VividCode/pi-renderer/node_modules/
+/VividCode/dist/

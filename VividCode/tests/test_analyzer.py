@@ -55,6 +55,25 @@ int caller(Child &c) { return twice(3) + c.value(); }
     def exported(self):
         return analyzer.export_project(str(self.root))
 
+    def test_variable_parameters_shadowing_and_cross_file_references(self):
+        (self.root / 'api.hpp').write_text('extern int shared;\nint first(int x);\n')
+        (self.root / 'a.cpp').write_text('#include "api.hpp"\nint shared=1;\nint first(int x){int value=x; {int value=2; shared+=value;} return value+shared;}\n')
+        (self.root / 'b.cpp').write_text('#include "api.hpp"\nint second(int x){int value=x; return value+shared+first(x);}\n')
+        self.assertEqual(self.run_index(), 0)
+        data = self.exported()
+        symbols = {s['id']: s for u in data['units'] for s in u['symbols']}
+        sites = [r for u in data['units'] for r in u['relations']]
+        values = [s for s in symbols.values() if s['name'] == 'value']
+        self.assertEqual(len(values), 3)
+        self.assertEqual(len({s['id'] for s in values}), 3)
+        params = [s for s in symbols.values() if s['name'] == 'x' and s['kind'] == 'ParmDecl']
+        self.assertGreaterEqual(len(params), 2)
+        for variable in values + params:
+            self.assertIn(variable['parent_id'], symbols)
+        shared = next(s['id'] for s in symbols.values() if s['name'] == 'shared')
+        self.assertEqual({r['file'] for r in sites if r['target_id'] == shared}, {'a.cpp', 'b.cpp'})
+        self.assertTrue(any(r['target_id'] in {s['id'] for s in params} for r in sites))
+
     def test_semantics_incremental_failure_and_deletion(self):
         self.assertEqual(self.run_index(), 0)
         data = self.exported()

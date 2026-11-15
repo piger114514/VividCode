@@ -60,6 +60,11 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     const auto project = store.parent_path();
     std::wstring home = environment(L"VIVIDCODE_HOME");
     if (home.empty()) {
+        wchar_t registered[32768]{}; DWORD bytes = sizeof(registered);
+        if (RegGetValueW(HKEY_CURRENT_USER, L"Software\\vividcode", L"InstallHome",
+                        RRF_RT_REG_SZ, nullptr, registered, &bytes) == ERROR_SUCCESS) home = registered;
+    }
+    if (home.empty()) {
         PWSTR local = nullptr;
         if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &local)))
             return fail(L"无法确定当前用户的 vividcode 安装位置。");

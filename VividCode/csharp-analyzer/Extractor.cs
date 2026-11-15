@@ -20,11 +20,15 @@ internal sealed class Extractor(IReadOnlyDictionary<string, string> assemblies, 
         string owner = assemblies.TryGetValue(assembly, out var key) ? key : "external:" + assembly;
         if (symbol is INamespaceSymbol) owner = projectKey;
         string identity = symbol.GetDocumentationCommentId() ?? symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        if (symbol is IMethodSymbol { MethodKind: MethodKind.LocalFunction })
-            identity += ":" + symbol.Locations.FirstOrDefault()?.SourceSpan.Start;
+        if (symbol is ILocalSymbol or IParameterSymbol || symbol is IMethodSymbol { MethodKind: MethodKind.LocalFunction or MethodKind.AnonymousFunction })
+        {
+            var at = symbol.Locations.FirstOrDefault(l => l.IsInSource);
+            identity += ":" + symbol.ContainingSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                + ":" + at?.SourceTree?.FilePath + ":" + at?.SourceSpan.Start;
+        }
         return "c#:" + Store.Hash(owner + "|" + identity);
     }
-    static bool Supported(ISymbol? s) => s is INamedTypeSymbol or IMethodSymbol or IFieldSymbol or IPropertySymbol or IEventSymbol || s is INamespaceSymbol { IsGlobalNamespace: false };
+    static bool Supported(ISymbol? s) => s is INamedTypeSymbol or IMethodSymbol or IFieldSymbol or IPropertySymbol or IEventSymbol or ILocalSymbol or IParameterSymbol || s is INamespaceSymbol { IsGlobalNamespace: false };
     static string Kind(ISymbol s) => s switch
     {
         INamespaceSymbol => "Namespace",
@@ -39,6 +43,8 @@ internal sealed class Extractor(IReadOnlyDictionary<string, string> assemblies, 
         IFieldSymbol => "FieldDecl",
         IPropertySymbol => "PropertyDecl",
         IEventSymbol => "EventDecl",
+        IParameterSymbol => "ParmDecl",
+        ILocalSymbol => "VarDecl",
         _ => "Unknown"
     };
     static (string file, int line, int col) Position(Location? location)
@@ -92,7 +98,9 @@ internal sealed class Extractor(IReadOnlyDictionary<string, string> assemblies, 
     {
         BaseTypeDeclarationSyntax or DelegateDeclarationSyntax or BaseMethodDeclarationSyntax or
         BasePropertyDeclarationSyntax or VariableDeclaratorSyntax or EnumMemberDeclarationSyntax or
-        BaseNamespaceDeclarationSyntax or LocalFunctionStatementSyntax or AccessorDeclarationSyntax => model.GetDeclaredSymbol(node),
+        BaseNamespaceDeclarationSyntax or LocalFunctionStatementSyntax or AccessorDeclarationSyntax or
+        ParameterSyntax or SingleVariableDesignationSyntax or ForEachStatementSyntax or CatchDeclarationSyntax => model.GetDeclaredSymbol(node),
+        AnonymousFunctionExpressionSyntax => model.GetSymbolInfo(node).Symbol,
         _ => null
     };
     static ISymbol? Owner(SemanticModel model, SyntaxNode node)
@@ -100,7 +108,7 @@ internal sealed class Extractor(IReadOnlyDictionary<string, string> assemblies, 
         for (var ancestor = node.Parent; ancestor != null; ancestor = ancestor.Parent)
         {
             var symbol = Declaration(model, ancestor);
-            if (Supported(symbol)) return symbol;
+            if (Supported(symbol) && symbol is not ILocalSymbol && symbol is not IParameterSymbol) return symbol;
         }
         // Top-level statements belong to Roslyn's synthesized entry point.
         var enclosing = model.GetEnclosingSymbol(node.SpanStart);
@@ -158,6 +166,7 @@ internal sealed class Extractor(IReadOnlyDictionary<string, string> assemblies, 
                 {
                     var target = model.GetSymbolInfo(node).Symbol;
                     if (target is IFieldSymbol or IPropertySymbol or IEventSymbol) Edge(owner, target, "member_ref", node.GetLocation());
+                    else if (target is ILocalSymbol or IParameterSymbol) Edge(owner, target, "references", node.GetLocation());
                     else if (target is INamedTypeSymbol) Edge(owner, target, "references", node.GetLocation());
                     else if (target is IMethodSymbol && node.Parent is not MemberAccessExpressionSyntax { Parent: InvocationExpressionSyntax } && node.Parent is not InvocationExpressionSyntax)
                         Edge(owner, target, "references", node.GetLocation());

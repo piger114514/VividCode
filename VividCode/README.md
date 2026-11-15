@@ -1,114 +1,137 @@
-## C# 工程使用（2026-10-02）
+# vividcode 源码使用指南
 
-在工程根目录执行 vividcode -g 并打开启动器。自动识别工程语言；C# 与 C++ 同时存在时分别分析，在同一画布分区展示，成功结果进入同项目 graph.db。C# 只查根目录第一层 .sln：一个直接分析，多个列表点击选择；没有解决方案时检查根目录 .csproj 或以前导入入口，缺配置可右键导入。顶部可选 Debug/Release 和目标框架，修改后自动刷新。F5/右键刷新沿用选择，右键“重新选择分析工程…”可重选，失败保留旧结果。
+更新日期：2026-11-04。
 
-需要工程对应的 .NET SDK/工作负载和 NuGet 依赖，可先 dotnet restore；WinForms/WPF 测试已通过，用户业务工程、Unity/旧框架尚未验收。详细范围与缓存见 ../Document/C#语义索引.md。build.ps1 和原始 VS Release 部署都准备 C# 分析器；共享安装复制 csharp-analyzer，项目 -g 不复制运行环境。
+## 本机 PI 辅助
 
-# vividcode 基础运行版
+打开项目后，在画布底部切换到“PI 辅助”，点击“连接 Pi”，输入要求后点击发送或按 Ctrl+Enter。Pi 沿用自身模型、登录和工具配置，可以修改当前项目文件；“停止”终止任务但保留已写入内容。官方默认安装可自动检测，找不到时在“Pi 设置…”选择 Pi / Node 路径。
 
-正式名称为 vividcode，使用 C++ 和 Qt Widgets 浏览真实项目中的文件与源码，并通过控制台生成项目查看器、管理文件级代码文档记录。
+“每次任务结束后更新代码关系和 AI 解释”默认关闭，勾选后保存。开启时先更新关系图，再用现有 AI 解析接口更新变更文件及受影响解释，可能产生接口费用；无源码变化不请求解释。关闭时用 F5 和顶部 AI 解析手动更新。“图谱信息”页签保留颜色与节点/关系说明；拖动分隔条调整底部高度。详见 [PI 辅助与 Pi 接入](../Document/AI助手与Pi接入.md)。
 
-已实现 C++ 语义索引与真实关系图：独立 Python/libclang 分析，SQLite 缓存，Qt 展示类、函数、成员和真实关系并定位源码。界面采用黑色/深灰背景与浅色文字；缩小时看类，放大后展开内部符号及相关关系。C# 已接入 Roslyn，Python/JS/TS/Java 暂为文件浏览。运行方式与限制见 `../Document/C++语义索引.md`。
+## AI 解析
 
-打开项目自动检测 C++ 已导入配置、根目录或 build 下的 `compile_commands.json`；缺失时右键“导入工程配置…”。左侧“项目文件”和“结构与关系”共用页签，结构树和图中的双击选择类/方法焦点，默认显示全部已加载关系。单击只选中，右键“查看源代码”打开只读小窗口，点击窗外、× 或 Esc 关闭。F5/右键刷新，打开时自动检查；程序不猜测编译参数。
+最右侧“AI 设置…”填写 OpenAI 兼容 Base URL（保留 `/v1` 等前缀）、模型名和 Key，选择“跟随界面 / 中文 / English”和“初学者 / 进阶 / 专业”（默认进阶），保存后点击顶部“AI 解析”。单击画布文件、类、函数/方法、变量或展开容器，弹出只包含所在文件 AI 解析的卡片，可滚动/选中文字，点空白处收起，不使用 Esc 或关闭按钮。悬停仍是普通符号信息；左侧树不显示解析。单击不请求 API，源码不改动。三种程度各有缓存，原缓存沿用为进阶基线。首次逐文件解析，后续只请求新建、哈希变化及 AI 判断受依赖影响的文件；失败保留、取消和重试继续支持。“AI 任务…”查看进度，Key 使用 Windows 用户加密保存。
 
-本项目可使用 `build/semantic-validation/compile_commands.json`；已完成本项目索引。共享 runtime/analyzer 保存独立 Python、libclang 和内置头文件，语义缓存位于 `%LOCALAPPDATA%/vividcode/semantic/<项目路径哈希>/`；`-g` 不复制这些依赖。项目自身 SDK/Qt/第三方头文件仍须可访问。`build.ps1` 首次准备分析运行包需联网，默认读取本机 `D:/LLVM`；运行查看器不会下载依赖。
+源码会发送给你填写的服务，可能产生费用；单文件默认发送上限 256 KiB，可在 AI 设置调整。新文件要在 F5 更新语义图后才能出现在画布。循环影响可能标记为下次继续更新；功能、限制与验证见 [AI 文件解释](../Document/AI文件解释.md)。
 
-## 控制台使用
+vividcode 使用 C++ / Qt 展示源码结构与关系。C++、C#（含 Unity）、Python、JavaScript/TypeScript 已有独立分析器；Java 使用本机 JDK，支持显式工程配置和关系分析。
 
-先构建，再执行 `./install-command.ps1`，将共享程序安装到 `%LOCALAPPDATA%/vividcode/runtime` 并注册当前用户 PATH。在新终端中切换到目标项目目录后运行：
+## 文件、函数与变量
+
+画布文件节点按语言显示不同颜色，下方有“文件颜色”图例：C/C++ 蓝、C# 紫、Python 绿、JavaScript 黄、TypeScript 青、Java 橙。普通概览、展开文件分组与双击后的关联文件使用同一套配色，左侧树沿用原样式。
+
+打开项目并等待分析，在左侧“结构与关系”展开文件和所属类/函数，可看到全局变量、成员、参数和局部变量。双击名称只在画布显示关联文件；右键文件/连线选择具体源码位置，“显示全部工程关系”返回。升级后打开项目或 F5 会自动重抽取旧分析结果，无需删除缓存。没有跨文件引用的局部变量通常只有自己的文件；动态引用与画布上限仍有边界，详见[基础文件浏览](../Document/基础文件浏览.md)。
+
+## 构建和安装
+
+当前开发环境为 Windows x64、Visual Studio 2022 C++ 工具链及 Qt 6.11.2 MSVC 64 位。默认只构建/安装核心及 Qt，按需选择解析组件；Node、Python、.NET SDK、LLVM、JDK 使用本机安装。
+
+在本目录 PowerShell 执行：
+
+```powershell
+# 核心
+.\build.ps1
+.\install-command.ps1
+# 以 JS/TS 为例，首次准备解析库需明确允许获取依赖
+.\build.ps1 -Languages @('javascript') -DownloadDependencies
+.\install-command.ps1 -Languages @('javascript')
+# 需要运行检查时添加 -RunTests
+.\build.ps1 -Languages @('javascript') -RunTests
+```
+
+Languages 可选 cpp/csharp/python/javascript/java，是本次安装的完整列表；重装未选组件移除，环境设置和缓存保留。多语言示例为 `@('cpp','csharp','python','javascript','java')`。-QtRoot/-CMake 可覆盖工具路径。脚本策略阻止时可使用 `powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1`。
+
+本机正式安装已更新至当前 Release，包含 cpp/csharp/python/javascript/java，普通 PowerShell 可直接使用 vividcode。后续功能更新通过验证后直接更新正式安装；本机安装验证流程见构建文档。
+
+| 解析组件 | 本机要求 |
+| --- | --- |
+| cpp | Python 3.12+ x64、LLVM/libclang、内置头文件、真实 compile_commands.json 与项目依赖 |
+| csharp | .NET SDK、目标工程工作负载/引用；Unity 需实际生成工程与 DLL |
+| python | Python 3.12+ x64（含 sqlite3） |
+| javascript | Node.js 22/24 x64；TypeScript 5.9.3 随所选组件提供 |
+| java | 完整 JDK 17+；显式配置源码根/classpath/modulePath/release，禁用注解处理器 |
+
+右键“分析环境…”配置 exe、libclang.dll 和可选 resource 目录；留空自动查找。显式错误路径不回退，缺依赖只影响对应语言。普通 UTF-8/UTF-16 文件浏览不要求语言环境；Python 特殊编码声明读取需本机 Python 及 python 组件。
+
+## 运行与操作
+
+安装后重新打开终端，进入目标项目根目录：
 
 ```powershell
 vividcode -g
+vividcode -sg    # 强制读取，解除数量/单文件限制；谨慎使用
+vividcode -c     # 按提示输入全局源码文件数量上限
+vividcode -n     # 只保留最新成功文件级记录
+vividcode -d     # 删除当前项目生成目录和集中缓存，先关闭查看器
+vividcode -help
 ```
 
-它会生成当前目录的 `.vividcode`，里面只有 `vividcode-viewer.exe` 小启动器、`project.json` 和 `records/` 中的 JSON。双击生成的查看器即可打开这个项目。无需附带演示源码；更新旧部署时会清除其中的 demo 及嵌套运行包，保留 JSON 历史，将旧语义缓存校验迁移到共享根目录的 semantic 中。代码有变化时，重新 `-g` 或在查看器中按 F5 会保存新的文件级记录；无变化不重复创建记录。
+-g 生成 .vividcode/vividcode-viewer.exe 小启动器、project.json 和 records 中的 index.json。双击启动器打开该项目；各项目共用 %LOCALAPPDATA%/vividcode/runtime。更新共享安装后已有启动器直接调用新版。
 
-```powershell
-vividcode -c     # 清理旧记录，只保留最新成功保存的一份
-vividcode -d     # 删除当前 .vividcode 及本项目集中索引（先关闭查看器）
-vividcode -help  # 查看帮助
-```
+记录包含路径、大小、SHA-256，不是源码备份。源码变化时 -g 或已初始化项目打开/F5 创建新记录，内容不变不重复。-n 不改人工 Document 文档或语义索引，-d 保留共享程序及其它项目。
 
-`-c` 不会改动源码或人工维护的 `Document` 文档。当前记录为文件路径、大小、SHA-256 和 JSON 快照，不是完整源码备份，也不是类/函数语义文档。最新记录位置由 `.vividcode/project.json` 中的 `latest` 指定，对应 `records/<记录ID>/index.json`。
+生成中只在当前窗口输入 stop 并回车。新项目取消后没有 .vividcode；已有项目取消后原文件、历史和语义索引不修改，不新增本次记录。
 
-如果旧终端找不到命令，请重开终端，必要时重启其宿主 IDE；也可以在本目录运行 `./install-command.ps1`，使当前 PowerShell 立即获得命令路径。工作区移动后需要重新注册路径。
+-c 设置所有项目共用的源码文件数量（正整数，默认 20000），不清理历史。-sg 仍排除 build/node_modules 等目录及链接，成功后该项目保持强制模式，普通 -g 恢复普通模式。强制读取可能大量占用 CPU、内存、磁盘；图形/结果/后端累计资源限制仍保留。
 
-开发交接和记录格式见 `../Document/控制台与记录管理.md`。
+终端回应已简化为英文。-g/-sg 在同一行刷新 `Generating: 已完成/总数`，成功统一 `Refreshed.`，不输出记录 ID/路径或 -sg 单独警告；有变化和没有变化的成功文案相同。-c 只提示 `Enter file limit: `，成功 `File limit set to 数量.`，错误 `Enter an integer from 1 to 2147483647.`；-n 输出 `Old data cleared.`，-d 输出 `Project cleared.`。stop 取消输出 `Cancelled.`。重定向时仅保留开始/最终计数，不逐文件输出。错误原因和涉及路径仍会保留，完整说明见控制台文档。
+1. Ctrl+O 打开项目；左侧切换“项目文件”或“结构与关系”，按路径筛选文件。
+2. 自动分析完成后查看语言分区图。顶部筛选关系类型，范围下拉框选择全部已加载范围或具体工程/TU。
+3. 选择类/方法/成员查看相关关系；右键节点查看定义，右键连线查看发生处。源码只读，点击窗外、Esc 或 × 关闭。
+4. 关系图默认按类/文件依赖从左到右分层，循环依赖组在同一层标记，无关联区域分开摆放。单击节点突出直接相关的节点/连线，单击连线突出两端，空白处取消高亮；选中不移动节点。滚轮 5%–300% 缩放，空白处平移，拖动节点。缩放只改变比例，文件/类默认缩略；右键“显示状态 → 显示详情”或双击缩略节点才展开，右键“显示缩略”收起。“适应画布”保留展开状态。右键“全部简化”将全部已加载分组设为缩略，保持当前缩放比例，之后可单独展开。所有箭头从被引用者右侧指向引用者左侧，例如 A 调用 B 时显示 B → A。布局尚不保存，展开/筛选/刷新可能重新排列。
+5. 保存源码后 F5/右键刷新。打开先显示成功缓存再后台检查，取消/失败保留旧图，右键可取消、导入配置、重选入口、适应画布。
 
-## 先运行，再阅读代码
+C++ 自动查找已导入数据库或根目录/build 的 compile_commands.json，缺配置时右键导入，不猜编译参数。C# 只查根层 .sln/.csproj，同语言多个入口列表选择；配置/目标框架改变后自动刷新。Python、JS/TS、Java 根据源码自动加入队列。Java 配置读取根目录 vividcode.java.json，见 [Java 语义索引](../Document/Java语义索引.md)。
 
-1. 在目标项目目录执行 `vividcode -g`，双击 `.vividcode/vividcode-viewer.exe`，它会直接打开该项目。开发版可按 Ctrl+O 选择源码目录。
-2. 左侧切换项目文件或结构与关系；筛选文件名/路径，右键文件查看源码。
-3. 自动索引完成后查看各语言分区图，范围下拉框可选工程/TU；滚轮放大到 90% 后展开函数/成员，缩小至 75% 以下收起。双击类也可展开，右键节点/连线查看定义/发生处。缺配置时右键导入，尚未索引也可浏览文件。
-4. 用 Visual Studio 修改源码并保存，再返回查看器按 F5。新增、修改、删除会反映到当前视图中。
+Unity 先在对应编辑器完成编译并生成 .sln/.csproj；改脚本集合、asmdef、包或目标后先重生成工程，再刷新。Python 支持项目根和 src 的导入；JS/TS 支持 JSX/TSX、tsconfig/jsconfig、paths/references。
 
-源码小窗口只读，底部嵌入代码栏已移除。分隔线可拖动；滚轮缩放，空白处可平移。顶部为关系类型和 C# 配置，旧项目/刷新/缩放按钮已移除，Ctrl+O/F5 保留，画布右键提供适应画布与刷新。
-
-共享 runtime 中的 DLL、Qt 插件和 analyzer 供所有项目调用；项目内的小启动器不需要旁边放 DLL。此目录已在本机部署 Qt 运行依赖，未在另一台干净 Windows 电脑验证；另一台机器可能需要安装 Microsoft Visual C++ 2015–2022 x64 运行库。
-
-也可以将项目目录作为唯一命令行参数传入查看器，例如：
+开发版也可运行：
 
 ```powershell
 & .\build\Release\vividcode-viewer.exe 'E:\你的项目'
 ```
 
-## 从源码构建
+## 原始 Visual Studio 工程
 
-本机路径默认是 Qt 6.11.2 MSVC 64 位、Qt 自带 CMake、Visual Studio 2022 的 C++ 工具链。
+VividCode.sln 有 vividcode-viewer、vividcode、vividcode-launcher，选择 Release / x64 输出 x64/Release。控制台入口在 vividcode → Source Files → cli_main.cpp；调试窗口选择 vividcode-viewer，调试 CLI 选择 vividcode，默认参数 -help。
 
-在本目录打开 PowerShell：
+VS 不自动准备全部语言组件，所需 prepare 脚本应显式执行，安装可指定 -RuntimeDirectory .\x64\Release。CMake 生成工程为 build/vividcode.sln，产物 build/Release；不要编辑生成文件。
 
-```powershell
-.\build.ps1
-```
+## 代码阅读入口
 
-若 PowerShell 的本地脚本策略阻止执行，可以仅对本次进程使用：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
-```
-
-脚本依次配置、编译 Release、部署 Qt DLL/插件、运行自动检查。Qt 安装位置不同时，使用 `-QtRoot` 参数；CMake 位置不同时，使用 `-CMake` 参数。本机 Qt 自带 CMake 曾在读取缓存时崩溃，脚本采用 `--fresh` 重新配置以避开该问题。
-
-原始 `VividCode.sln` 现包含 `vividcode-viewer`、独立控制台项目 `vividcode` 和原生启动器 `vividcode-launcher`，依赖 Qt VS Tools 提供的 QtMsBuild。重新加载解决方案后，在 `vividcode → Source Files` 下可找到 `cli_main.cpp`。选择 **Release / x64** 生成解决方案，输出在 `x64/Release`；此构建及产物的 CLI 生命周期、GUI 冒烟检查已通过，Debug 尚未验证。调试窗口时将 vividcode-viewer 设为启动项目；调试控制台时选择 vividcode，默认参数为 -help。
-
-CMake 的 `build.ps1` 入口仍可用，生成的解决方案在 `build/vividcode.sln`，输出在 `build/Release`。不要编辑 CMake 生成的工程文件。安装后当前用户 PATH 指向共享 runtime；验证原始 VS 新产物时使用 `x64/Release` 中 exe 的完整路径。
-
-构建后运行 `./install-command.ps1` 安装或更新一份共享环境，并注册共享 CLI 到当前用户 PATH。本机已于 2026-10-02 完成共享安装与 PATH 迁移。
-
-## 应该从哪里学起
-
-| 文件 | 先理解什么 |
+| 文件 | 职责 |
 | --- | --- |
-| `main.cpp` | 创建 QApplication、创建窗口、进入事件循环 |
-| `SharedRuntime.h` | 共享安装位置、项目缓存键和安装/运行锁 |
-| `ProjectLauncher.cpp` | 项目启动器调用共享 Qt 查看器 |
-| `cli_main.cpp` | 控制台参数解析，分派 -g/-d/-c |
-| `ProjectStore.h/.cpp` | 项目运行文件生成、记录保存、历史清理和限定目录删除 |
-| `VividCode.h` | 主窗口有哪些控件和状态，以及对外提供的打开项目函数 |
-| `VividCode.cpp` | 组装布局，使用 connect 连接按钮、文件选择与处理逻辑 |
-| `ProjectScanner.h` | 遍历文件夹、筛选扩展名、排除生成目录，返回相对路径 |
-| `SemanticPanel.h/.cpp` | 导入索引、选择编译单元和符号、共享关系图与列表的筛选条件 |
-| `RelationGraph.h/.cpp` | 根据真实符号 ID 和 parent_id 建立分层关系图，绘制节点与箭头，处理缩放与源码导航 |
-| `VividCode.ui` | 原始 Qt Designer 主窗口外壳；基础版主要布局在 C++ 中创建 |
-| `SmokeTest.h` | 在临时目录中验证扫描、选中、刷新和异常输入 |
-| `CMakeLists.txt` | 指定源文件，启用 Qt 的 moc/uic/rcc，链接 Widgets |
+| main.cpp、VividCode.h/.cpp | 图形入口、主窗口、文件树与源码导航 |
+| cli_main.cpp、ProjectStore.h/.cpp | 用户命令、JSON 历史、生成/清理 |
+| ProjectLauncher.cpp、SharedRuntime.h | 原生启动器、共享程序与项目缓存 |
+| ProjectScanner.h | 扩展名、排除、迭代扫描 |
+| AnalysisEnvironment.h | 本机工具查找与环境设置 |
+| ProjectDetection.h、SemanticPanel.h/.cpp | 自动发现、队列、配置、状态与结果汇总 |
+| RelationGraph.h/.cpp、RelationLayout.h、SourcePopup.h | 真实图模型、依赖分层/循环组、选中高亮、证据与源码工具窗口 |
+| UnifiedGraphStore.h | 各语言成功图的 SQLite 事务 |
+| analyzer/、csharp-analyzer/、javascript-analyzer/、java-analyzer/ | 各语言解析与缓存 |
+| CMakeLists.txt、build.ps1、tests/ | 构建、部署和检查 |
 
-建议先在 `VividCode.cpp` 中修改窗口标题或按钮文字，执行 `build.ps1`，亲自走一遍“修改 → 编译 → 运行”。随后再研究 `openProject → scanProject → rebuildViews → showFile` 这条流程。
+初学者讲解见 [vividcode代码解析.txt](../Document/vividcode代码解析.txt)，详细交接见 [文档索引](../Document/README.md)。
 
-## 当前范围与限制
+## 当前限制和验证
 
-- 支持 C/C++ 的 `.c/.cc/.cpp/.cxx/.h/.hh/.hpp/.hxx/.inl/.ipp`、C# 的 `.cs`、Python 的 `.py/.pyw/.pyi`、JavaScript/TypeScript 的 `.js/.jsx/.mjs/.cjs/.ts/.tsx`、Java 的 `.java`，均不区分扩展名大小写。
-- 默认排除 `.git/.vs/.codegraph/.codemap/.vividcode/build/out/x64/x86/debug/release/node_modules/vendor/third_party/_deps/CMakeFiles`，以及 JS/TS 的 `dist/.next/.nuxt/.cache/.parcel-cache/coverage`、Java 的 `target/.gradle/.mvn`，还有 `build-*`、`cmake-build-*` 目录，不跟随符号链接。排除列表目前写在 `ProjectScanner.h` 中。CodeGraph 是独立开发辅助工具，保留其 `.codegraph` 名称。
-- 扫描在主线程完成，适用于可读的小型本地项目；大型目录可能暂时无响应。达到 5,000 个源码文件或 50,000 个目录条目时停止并提示；无权限的子目录可能无法列出。
-- 原文件卡片画布已由真实关系图替换；文件树保留全部已扫描文件。图按当前编译单元和符号展示局部关系，最多 81 个节点、160 条合并连线，超出范围会提示；列表保留当前筛选的关系证据。
-- 只读源码按 UTF-8 解码；GBK 等其他编码暂不自动识别。超过 2 MiB 的文件不加载。
-- 每次打开或刷新重新扫描；已初始化项目会更新文件级历史记录。C++ 语义索引通过 SQLite 缓存，后台检查编译配置和文件变化；没有后台文件自动监控、布局持久化或最近项目恢复。
-- C++ 支持类、成员、函数、继承、直接调用及成员引用；关系图基于实际索引，外部符号缺少归属信息时明确归入“项目外依赖”。C# 也支持真实语义图；变量读写细分、Python/JS/TS/Java 语义分析、C++ 全项目图和 AI 接口尚未实现。
+默认扫描 20,000 源码文件/50,000 条目，-c 调整全局文件数量，目录上限随之增加；-sg 解除这两项限制。不跟随链接，保留目录排除，扫描仍在 UI 线程。普通源码速览 2 MiB，强制项目解除单文件大小限制，UTF-8/UTF-16 BOM 或无 BOM UTF-8；Python 合法编码声明支持 GBK。
 
-最新构建：CMake 和原始 VS Release x64 均编译成功。基础关系图此前四组 CTest 通过，本工程 10 个真实编译单元解析及源码定位验证通过；中间分层版本两组界面检查通过。最后交互调整按用户要求不再追加检验，不将此前结果当作最终版本完整验收。2026-09-30 已将源码目录改为 VividCode，主窗口类改为 VividCodeWindow，源码文件改为 VividCode.h/.cpp；本次验证见构建环境与运行文档。
+各语言同画布分区，每语言最多 81 节点/160 条聚合连线；配置并集不代表所有构建配置一致。动态/反射等目标保守处理。Python 复用语法事实后重解析全范围关系；JS/TS、Java 变化时整工程重建。没有 Maven/Gradle 自动导入、跨语言调用、变量读写细分、自动监控、代码编辑、语法高亮、行号栏、布局持久化或完整英文界面。AI 文件解释及其边界见前文和独立功能文档。
 
-用户已确定当前先实现真实关系及地图式类成员展开，本轮功能已完成。后续扩展以新的需求为准。
+2026-10-24 源码清理版 CMake Release 与原始 VS Release/x64 查看器工程构建成功；核心、C++/Python/JS 后端、五语言界面及组件隔离共十组检查全部通过（163.91 秒），正式安装已更新并核验程序/分析源码和数据保留。主窗口直接由 C++ 建立，空 Designer 表单和 uic 依赖已移除。此前真实 C++、普通 .NET/WinForms/WPF、用户 Unity 项目及 Python/JS 源码副本已有验证。Debug、大型工程、完整桌面人工交互和干净机器未在本轮验收。详细证据见 [构建环境与运行](../Document/构建环境与运行.md)。
 
-2026-09-30 命名迁移验证：CMake/原始 VS/Ninja Release 构建成功；四组 CTest、原始 VS 产物 CLI 和界面检查通过；新路径的 10 个 TU 真实索引与调用关系源码定位通过。当前命令 PATH 指向 VividCode/build/Release，旧终端需重开。
+## 生成安装 exe
+
+仅增加打包能力，复用现有安装脚本；不自动下载语言运行环境。先构建 Release，再安装开发工具 Inno Setup 6，然后在本目录执行：
+
+```powershell
+.\package.ps1 -Version 0.1.0
+```
+
+版本号由发布者填写，产物位于 `dist/vividcode-Setup-0.1.0-x64.exe`。默认携带五种分析组件；`-Languages` 指定包内组件。编译器未发现时使用 `-Compiler '完整路径\ISCC.exe'`，`-StageOnly` 只整理载荷。包只封装原有当前用户安装流程和 PATH 注册，没有新增卸载器或快捷方式。参数、升级规则与已执行验证见 `../Document/构建环境与运行.md` 的生成安装 EXE 章节。
+
+### 自选安装目录与再次安装
+
+0.1.1 示例包起提供目录选择，默认显示记录中的现有安装位置。保持该目录为升级；改选另一个空目录为迁移，保留组件、设置和缓存，校验成功后清理旧安装。新目录不能包含无关文件，也不能与旧目录相互嵌套。安装前关闭程序，完成后重开终端/IDE。用户共享根记录在 HKCU\Software\vividcode\InstallHome，并注册 VIVIDCODE_HOME 与 PATH；测试仍可显式覆盖 VIVIDCODE_HOME。打包命令可使用 `./package.ps1 -Version 0.1.1`。

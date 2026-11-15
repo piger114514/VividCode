@@ -1,7 +1,14 @@
-param([string]$RuntimeDirectory = (Join-Path $PSScriptRoot 'build\Release'))
+param([string]$RuntimeDirectory = (Join-Path $PSScriptRoot 'build\Release'),
+    [ValidateSet('cpp','csharp','python','javascript','java')][string[]]$Languages = @())
 # Install one shared runtime and register the current user's CLI.
 $ErrorActionPreference = 'Stop'
-& (Join-Path $PSScriptRoot 'install-runtime.ps1') -RuntimeDirectory $RuntimeDirectory
+if (!$env:VIVIDCODE_HOME) {
+    $homePath = (Get-ItemProperty 'HKCU:\Software\vividcode' -ErrorAction SilentlyContinue).InstallHome
+    if (!$homePath) { $homePath = Join-Path $env:LOCALAPPDATA 'vividcode' }
+    & (Join-Path $PSScriptRoot 'install-location.ps1') -RuntimeDirectory $RuntimeDirectory -HomeDirectory $homePath -Languages $Languages
+    return
+}
+& (Join-Path $PSScriptRoot 'install-runtime.ps1') -RuntimeDirectory $RuntimeDirectory -Languages $Languages
 $sharedHome = if ($env:VIVIDCODE_HOME) { $env:VIVIDCODE_HOME } else { Join-Path $env:LOCALAPPDATA 'vividcode' }
 $runtime = [IO.Path]::GetFullPath((Join-Path $sharedHome 'runtime'))
 $oldRuntimes = @(

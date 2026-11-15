@@ -52,7 +52,7 @@ try {
     Command -Arguments @('--help') # Compatibility with earlier installations.
     Command -Arguments @('-g', '-d') -Expected 2
     Command -Arguments @('--unknown') -Expected 2
-    Command -Arguments @('-c') -Expected 1
+    Command -Arguments @('-n') -Expected 1
     Command -Arguments @('-d')
     Command -Arguments @('-g')
     $first = Manifest
@@ -127,23 +127,23 @@ try {
     $originalManifest = [IO.File]::ReadAllText($manifestFile)
     $before.latest = '../outside'
     WriteUtf8 $manifestFile ($before | ConvertTo-Json -Depth 8)
-    Command -Arguments @('-c') -Expected 1
+    Command -Arguments @('-n') -Expected 1
     Assert ((Get-ChildItem -LiteralPath (Join-Path $store 'records') -Directory).Count -eq 4) 'invalid manifest deletes nothing'
     WriteUtf8 $manifestFile $originalManifest
     $before = Manifest
     $latestIndex = Join-Path $store "records\$($before.latest)\index.json"
     $originalIndex = [IO.File]::ReadAllText($latestIndex)
     WriteUtf8 $latestIndex '{broken'
-    Command -Arguments @('-c') -Expected 1
+    Command -Arguments @('-n') -Expected 1
     Assert ((Get-ChildItem -LiteralPath (Join-Path $store 'records') -Directory).Count -eq 4) 'corrupt latest preserves old records'
     WriteUtf8 $latestIndex $originalIndex
     (Get-Item -LiteralPath $latestFile).LastWriteTime = [datetime]'2000-01-01'
-    Command -Arguments @('-c')
+    Command -Arguments @('-n')
     $after = Manifest
     Assert ($after.history.Count -eq 1 -and $after.latest -eq $before.latest) 'clean preserves manifest latest, not file timestamp'
     Assert ([Convert]::ToBase64String([IO.File]::ReadAllBytes($latestFile)) -eq $latestBytes) 'latest document unchanged'
     Assert ((Get-ChildItem -LiteralPath (Join-Path $store 'records') -Directory).Count -eq 1) 'old record directories removed'
-    Command -Arguments @('-c')
+    Command -Arguments @('-n')
 
     $junction = Join-Path $store 'external-link'
     New-Item -ItemType Junction -Path $junction -Target $outside | Out-Null
@@ -185,7 +185,7 @@ try {
     New-Item -ItemType Junction -Path $junction -Target $outside | Out-Null
     Command -Arguments @('-d') -Expected 1
     Command -Arguments @('-g') -Expected 1
-    Command -Arguments @('-c') -Expected 1
+    Command -Arguments @('-n') -Expected 1
     [IO.Directory]::Delete($junction)
     $junction = $null
     New-Item -ItemType Directory -Path $store | Out-Null
