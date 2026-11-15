@@ -4,6 +4,7 @@
 
 ## 当前能力
 
+- 顶部“语言 / Language”可选择简体中文或 English，自动保存，下次打开程序生效；AI 讲解可跟随界面或单独指定语言。
 - 浏览 C/C++、C#、Python、JS/TS、Java 源码，文件树按路径筛选，右键只读速览。
 - C++ 导入 compile_commands.json，提取类、成员、函数、继承、调用、引用和覆写。
 - C# 加载 .csproj/.sln，分析跨文件/跨项目关系、接口实现与覆写；支持 Unity 生成工程。
@@ -16,7 +17,7 @@
 - 生成时在当前窗口输入 stop 并回车；新项目清理本次输出，已有项目和语义索引保持不变。
 - 按语言安装解析组件，右键“分析环境…”设置用户本机路径。
 
-Java 已支持类/接口、方法/字段、继承/实现/覆写和跨文件调用；动态目标保守显示可能调用或未解析。AI 解析支持 OpenAI 兼容接口、Windows 加密 Key、文件哈希增量和依赖影响更新；单击画布文件/类/函数/变量显示纯解析卡片，点空白收起，不使用 Esc 或关闭按钮。讲解程度为初学者/进阶/专业，默认进阶，语言可跟随界面/中文/English，见 [AI 解析](Document/AI文件解释.md)。尚无跨语言调用、源码编辑、布局持久化、变量读写细分或完整英文界面。当前范围与准确性见 [功能文档](Document/README.md)。
+Java 已支持类/接口、方法/字段、继承/实现/覆写和跨文件调用；动态目标保守显示可能调用或未解析。AI 解析支持 OpenAI 兼容接口、Windows 加密 Key、文件哈希增量和依赖影响更新；单击画布文件/类/函数/变量显示纯解析卡片，点空白收起，不使用 Esc 或关闭按钮。讲解程度为初学者/进阶/专业，默认进阶，语言可跟随界面/中文/English，见 [AI 解析](Document/AI文件解释.md)。尚无跨语言调用、源码编辑、布局持久化、变量读写细分。当前范围与准确性见 [功能文档](Document/README.md)。
 
 ## 构建与运行
 
@@ -46,3 +47,5 @@ Languages 是每次安装的完整列表；更新时明确指定全部所需组�
 原始解决方案为 VividCode/VividCode.sln，主窗口为 VividCodeWindow；正式产品名及命令为 vividcode。本仓库不包含预编译程序、Qt DLL、本机运行时或索引。
 
 远端为 [piger114514/VividCode](https://github.com/piger114514/VividCode)。用户要求当前私人开发、准备完成后公开，许可证未定；托管记录见 [GitHub 托管](Document/GitHub托管.md)。
+
+2026-11-15 英文版 0.1.2：主界面、关系图、AI/Pi 设置、五种语言分析器、启动器与内置错误提示统一为英文；AI 的 auto 跟随英文界面，仍可显式选择中文解释并复用原中文缓存。补齐 C# errors 字段的失败状态展示，构建时部署 Visual C++ app-local DLL。Windows x64 安装包位于 VividCode/dist/english/vividcode-Setup-0.1.2-x64.exe，英文指南见 VividCode/README.en.md，交付与验证见 Document/英文版与打包.md。

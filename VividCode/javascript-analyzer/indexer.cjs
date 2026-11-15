@@ -6,7 +6,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const root = path.resolve(process.argv[2]);
 const policy = process.argv[3] ? JSON.parse(process.argv[3]) : {force: false, maxSourceFiles: 20000, maxEntries: 50000};
-if (typeof policy.force !== 'boolean' || !Number.isSafeInteger(policy.maxSourceFiles) || policy.maxSourceFiles < 1 || policy.maxSourceFiles > 2147483647 || !Number.isSafeInteger(policy.maxEntries) || policy.maxEntries < 1) throw new Error('源码读取范围无效。');
+if (typeof policy.force !== 'boolean' || !Number.isSafeInteger(policy.maxSourceFiles) || policy.maxSourceFiles < 1 || policy.maxSourceFiles > 2147483647 || !Number.isSafeInteger(policy.maxEntries) || policy.maxEntries < 1) throw new Error('Invalid source read policy.');
 const extensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts']);
 const excluded = new Set(['.git', '.vs', '.codegraph', '.codemap', '.vividcode', 'build', 'out', 'x64', 'x86',
   'debug', 'release', 'node_modules', 'vendor', 'third_party', '_deps', 'cmakefiles', 'bin', 'obj', '__pycache__',
@@ -20,7 +20,7 @@ let readBytes = 0, entries = 0;
 function plain(p) {
   let current = path.resolve(p);
   while (true) {
-    if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) throw new Error(`不读取链接路径：${current}`);
+    if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) throw new Error(`Linked path rejected: ${current}`);
     const parent = path.dirname(current); if (parent === current) break; current = parent;
   }
 }
@@ -29,14 +29,14 @@ function read(p) {
   p = path.resolve(p); plain(p);
   if (!fs.existsSync(p)) { dependencies.set(p, null); return undefined; }
   const stat = fs.statSync(p); if (!stat.isFile()) return undefined;
-  if (!policy.force && stat.size > 2 * 1024 * 1024) throw new Error(`文件超过 2 MiB：${p}`);
+  if (!policy.force && stat.size > 2 * 1024 * 1024) throw new Error(`File exceeds 2 MiB: ${p}`);
   readBytes += stat.size;
-  if (readBytes > 256 * 1024 * 1024) throw new Error('依赖读取超过 256 MiB，保留旧图。');
+  if (readBytes > 256 * 1024 * 1024) throw new Error('Dependency reads exceeded 256 MiB. Previous graph retained.');
   const bytes = fs.readFileSync(p); dependencies.set(p, hash(bytes));
   // TypeScript accepts UTF-8 and UTF-16 BOM. Qt source navigation uses the same decoding.
   if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder('utf-16le', {fatal: true}).decode(bytes.subarray(2));
   if (bytes[0] === 0xfe && bytes[1] === 0xff) {
-    if (bytes.length % 2) throw new Error(`非法 UTF-16：${p}`);
+    if (bytes.length % 2) throw new Error(`Invalid UTF-16: ${p}`);
     return new TextDecoder('utf-16be', {fatal: true}).decode(bytes.subarray(2));
   }
   return new TextDecoder('utf-8', {fatal: true}).decode(bytes);
@@ -52,7 +52,7 @@ function scan() {
   while (pending.length) {
     const dir = pending.pop(); plain(dir);
     for (const item of fs.readdirSync(dir, {withFileTypes: true})) {
-      if (!policy.force && ++entries > policy.maxEntries) throw new Error('目录条目超过扫描上限；保留旧图。');
+      if (!policy.force && ++entries > policy.maxEntries) throw new Error('Directory entries exceeded the scan limit. Previous graph retained.');
       if (item.isSymbolicLink()) continue;
       const p = path.join(dir, item.name);
       if (item.isDirectory()) { if (!skip(item.name)) pending.push(p); }
@@ -60,7 +60,7 @@ function scan() {
         if (extensions.has(path.extname(p).toLowerCase())) files.push(p);
         if (['tsconfig.json', 'jsconfig.json'].includes(item.name.toLowerCase())) configs.push(p);
       }
-      if (!policy.force && files.length > policy.maxSourceFiles) throw new Error('JS/TS 源文件超过全局数量上限；保留旧图。');
+      if (!policy.force && files.length > policy.maxSourceFiles) throw new Error('JS/TS source files exceeded the global limit. Previous graph retained.');
     }
   }
   return {files: files.sort(), configs: configs.sort()};
@@ -81,7 +81,7 @@ function analyze() {
         plain(p); const files = [], directories = [];
         if (!fs.existsSync(p)) return {files, directories};
         for (const item of fs.readdirSync(p, {withFileTypes: true})) {
-          if (!policy.force && ++configEntries > Math.max(100000, policy.maxEntries)) throw new Error('配置目录展开超过扫描上限。');
+          if (!policy.force && ++configEntries > Math.max(100000, policy.maxEntries)) throw new Error('Configuration directory expansion exceeded the scan limit.');
           if (item.isSymbolicLink()) continue;
           if (item.isDirectory()) { if (!skip(item.name)) directories.push(item.name); }
           else if (item.isFile()) files.push(item.name);
@@ -94,7 +94,7 @@ function analyze() {
   function config(p) {
     p = path.resolve(p); if (configs.has(key(p))) return;
     plain(p); const parsed = ts.getParsedCommandLineOfConfigFile(p, {noEmit: true}, configHost);
-    if (!parsed) throw new Error(`无法读取配置：${p}`);
+    if (!parsed) throw new Error(`Could not read configuration: ${p}`);
     const errors = parsed.errors.filter(d => d.code !== 18003);
     if (errors.length) throw new Error(errors.map(diagnostic).join('\n'));
     configs.set(key(p), {path: p, parsed});
@@ -111,7 +111,7 @@ function analyze() {
   // An ancestor config's include/exclude remains authoritative. Unconfigured files use defaults.
   const loose = inventory.files.filter(p => !assigned.has(key(p)) && ![...configs.values()].some(c =>
     key(p).startsWith(key(path.dirname(c.path)) + '/')));
-  if (loose.length) programs.push({roots: loose, options: defaults, scope: '无 tsconfig 的项目源码'});
+  if (loose.length) programs.push({roots: loose, options: defaults, scope: 'Project source without tsconfig'});
   const units = []; let unresolved = 0;
   for (const group of programs) {
     const host = ts.createCompilerHost(group.options, true);
@@ -128,7 +128,7 @@ function analyze() {
     host.getSourceFile = (p, version) => {
       const text = read(p); return text === undefined ? undefined : ts.createSourceFile(p, text, version, true);
     };
-    host.writeFile = () => { throw new Error('分析器不允许生成项目代码。'); };
+    host.writeFile = () => { throw new Error('The analyzer cannot emit project code.'); };
     const program = ts.createProgram(group.roots, group.options, host);
     const syntax = program.getSyntacticDiagnostics();
     if (syntax.length) throw new Error(syntax.map(diagnostic).join('\n'));
@@ -148,7 +148,7 @@ function analyze() {
     }
     function nameOf(n, s) {
       const b = binding(n);
-      return b.name ? b.name.getText(s) : b.left ? b.left.getText(s) : ts.isConstructorDeclaration(n) ? 'constructor' : `匿名函数@${pos(n, s).line}:${pos(n, s).col}`;
+      return b.name ? b.name.getText(s) : b.left ? b.left.getText(s) : ts.isConstructorDeclaration(n) ? 'constructor' : `Anonymous function@${pos(n, s).line}:${pos(n, s).col}`;
     }
     function register(n, kind, owner, s) {
       const b = binding(n), loc = pos(b.name || b.left || n, s), name = nameOf(n, s);
@@ -226,7 +226,7 @@ function analyze() {
       if (!end) {
         const expression = n.getText(s).slice(0, 160);
         end = `javascript:unresolved:${relative(s.fileName)}:${n.getStart(s)}`;
-        symbols.set(end, {id: end, kind: 'UnresolvedCall', name: `未解析：${expression}`, qualified_name: `未解析：${expression}`,
+        symbols.set(end, {id: end, kind: 'UnresolvedCall', name: `Unresolved: ${expression}`, qualified_name: `Unresolved: ${expression}`,
           language: 'javascript', parent_id: '', is_external: true, unresolved: true, signature: ''});
         unresolved++; uncertain = true; if (type === 'calls') type = 'possible_call';
       }
@@ -284,5 +284,5 @@ function analyze() {
   return {schema: 1, parser: ts.version, inventory: inventory.files.map(relative),
     dependencies: Object.fromEntries(dependencies), units, unresolved, warnings: [...new Set(warnings)].slice(0, 100)};
 }
-try { const output = JSON.stringify(analyze()); if (Buffer.byteLength(output) > 128 * 1024 * 1024) throw new Error('JS/TS 结果超过 128 MiB。'); process.stdout.write(output); }
+try { const output = JSON.stringify(analyze()); if (Buffer.byteLength(output) > 128 * 1024 * 1024) throw new Error('JS/TS results exceed 128 MiB.'); process.stdout.write(output); }
 catch (error) { process.stderr.write(String(error.stack || error)); process.exitCode = 1; }

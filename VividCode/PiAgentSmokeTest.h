@@ -128,7 +128,7 @@ process.stdin.on('end',()=>process.exit(0));
         }
         for (const auto &mode : {"bad", "crash"}) {
             write(root + "/a.cpp", "int value = 0;\n"); config(true); PiAgentPanel panel; panel.setProject(root);
-            auto *connect = panel.findChild<QPushButton *>("piConnect"); auto *send = panel.findChild<QPushButton *>("piSend"); auto *text = panel.findChild<QTextBrowser *>("piConversation");
+            auto *connect = panel.findChild<QPushButton *>("piConnect"); auto *send = panel.findChild<QPushButton *>("piSend");
             int refreshes = 0; QObject::connect(&panel, &PiAgentPanel::refreshRequested, &panel, [&](const QStringList &paths) { check(paths.contains("a.cpp"), "partial edits survive process failure"); ++refreshes; panel.finishRefresh("failure checked"); });
             waitFor([&] { return send->isEnabled(); }); panel.findChild<QPlainTextEdit *>("piInput")->setPlainText(mode); send->click();
             waitFor([&] { return refreshes == 1 && !panel.isBusy() && connect->isEnabled(); });
@@ -165,7 +165,7 @@ process.stdin.on('end',()=>process.exit(0));
         {
             VividCodeWindow window; check(window.openProject(root), "open integration project"); window.show();
             auto *panel = window.findChild<PiAgentPanel *>(); auto *tabs = window.findChild<QTabWidget *>("workspaceTabs");
-            check(tabs && tabs->count() == 2 && tabs->tabText(0) == QStringLiteral("关系图") && tabs->tabText(1) == QStringLiteral("pi"), "bottom switchable panels");
+            check(tabs && tabs->count() == 2 && tabs->tabText(0) == QStringLiteral("Relations") && tabs->tabText(1) == QStringLiteral("pi"), "bottom switchable panels");
             tabs->setCurrentWidget(panel->outputView()); check(window.findChild<QCheckBox *>("piAutoRefresh")->isChecked(), "update preference persisted");
             auto *send = panel->findChild<QPushButton *>("piSend"); waitFor([&] { return send->isEnabled(); });
             panel->findChild<QPlainTextEdit *>("piInput")->setPlainText("normal"); send->click();

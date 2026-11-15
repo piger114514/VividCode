@@ -37,16 +37,16 @@ def reject_links(path):
     p = Path(os.path.abspath(path))
     for part in [p, *p.parents]:
         if part.is_symlink() or (hasattr(part, 'is_junction') and part.is_junction()):
-            raise ValueError('拒绝通过链接访问索引路径：' + str(part))
+            raise ValueError('Linked index path rejected: ' + str(part))
         if part.exists() and getattr(part.stat(), 'st_file_attributes', 0) & 0x400:
-            raise ValueError('拒绝 reparse point：' + str(part))
+            raise ValueError('Reparse point rejected: ' + str(part))
 
 
 def shared_home():
     configured = os.environ.get('VIVIDCODE_HOME')
     home = Path(configured) if configured else Path(os.environ['LOCALAPPDATA']) / 'vividcode'
     if not home.is_absolute():
-        raise ValueError('共享目录必须是绝对路径。')
+        raise ValueError('Shared directory must be an absolute path.')
     return home
 
 
@@ -56,9 +56,9 @@ def read_policy(root):
     data = json.loads(settings.read_text(encoding='utf-8')) if settings.exists() else {}
     count = data.get('maxSourceFiles', 20000)
     if data and (data.get('app') != 'vividcode' or data.get('schema') != 1):
-        raise ValueError('源码范围设置格式无效。')
+        raise ValueError('Invalid source read policy format.')
     if type(count) is not int or not 1 <= count <= 2147483647:
-        raise ValueError('源码文件数量上限无效。')
+        raise ValueError('Invalid source file count limit.')
     manifest = Path(root) / '.vividcode/project.json'
     reject_links(manifest)
     project = json.loads(manifest.read_text(encoding='utf-8-sig')) if manifest.exists() else {}
@@ -76,15 +76,15 @@ def layout(project):
     root = Path(os.path.abspath(project))
     reject_links(root / '.vividcode')
     if not root.is_dir() or root.name.lower() == '.vividcode':
-        raise ValueError('请选择项目根目录。')
+        raise ValueError('Select the project root directory.')
     root = root.resolve()
     manifest = root / '.vividcode/project.json'
     reject_links(manifest)
     if not manifest.is_file():
-        raise ValueError('项目尚未初始化，请先在项目根目录运行 vividcode -g。')
+        raise ValueError('Project not initialized. Run vividcode -g from the project root first.')
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     if data.get('app') != 'vividcode' or data.get('schema') != 1:
-        raise ValueError('不支持的 project.json。')
+        raise ValueError('Unsupported project.json.')
     sem = semantic_directory(root)
     reject_links(sem)
     if sem.exists():
@@ -92,7 +92,7 @@ def layout(project):
             reject_links(path)
         owner = json.loads((sem / 'project.json').read_text(encoding='utf-8-sig'))
         if owner.get('app') != 'vividcode' or owner.get('schema') != 1 or Path(owner.get('projectRoot', '')).as_posix().lower() != root.as_posix().lower():
-            raise ValueError('共享索引归属不匹配。')
+            raise ValueError('Shared index ownership mismatch.')
     return root, sem
 
 
@@ -108,7 +108,7 @@ def lifecycle_lock(root):
     k.CloseHandle.argtypes = [w.HANDLE]
     handle = k.CreateFileW(path, 0xC0010000, 0, None, 4, 0x04000000, None)
     if handle == ctypes.c_void_p(-1).value:
-        raise RuntimeError('另一个索引或生成/删除操作正在进行。')
+        raise RuntimeError('Another indexing, generation or deletion operation is running.')
     try:
         yield
     finally:
@@ -134,7 +134,7 @@ def split_command(command):
     count = ctypes.c_int()
     ptr = s.CommandLineToArgvW(command.strip(), ctypes.byref(count))
     if not ptr:
-        raise ValueError('无法拆分编译命令。')
+        raise ValueError('Could not split the compiler command.')
     try:
         return [ptr[i] for i in range(count.value)]
     finally:
@@ -144,32 +144,32 @@ def split_command(command):
 def commands(path):
     entries = json.loads(Path(path).read_text(encoding='utf-8-sig'))
     if not isinstance(entries, list):
-        raise ValueError('编译数据库顶层必须是数组。')
+        raise ValueError('Compilation database must contain a top-level array.')
     result = {}
     for entry in entries:
         if not isinstance(entry, dict):
-            raise ValueError('编译数据库条目必须是对象。')
+            raise ValueError('Compilation database entries must be objects.')
         directory, source = entry.get('directory'), entry.get('file')
         if not isinstance(directory, str) or not os.path.isabs(directory) or not Path(directory).is_dir():
-            raise ValueError('编译条目的 directory 必须是有效绝对目录。')
+            raise ValueError('Compilation entry directory must be a valid absolute directory.')
         if not isinstance(source, str):
-            raise ValueError('编译条目缺少 file。')
+            raise ValueError('Compilation entry is missing file.')
         source = os.path.abspath(os.path.join(directory, source))
         if Path(source).suffix.lower() not in SOURCE_EXTS:
             continue
         argv = entry.get('arguments')
         if argv is None:
             if not isinstance(entry.get('command'), str):
-                raise ValueError('编译条目缺少 arguments 或 command。')
+                raise ValueError('Compilation entry is missing arguments or command.')
             argv = split_command(entry['command'])
         if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
-            raise ValueError('arguments 必须是非空字符串数组。')
+            raise ValueError('arguments must be a non-empty array of strings.')
         mode = 'cl' if Path(argv[0]).name.lower() in {'cl.exe', 'cl', 'clang-cl.exe', 'clang-cl'} else 'gcc'
         args, i = [], 1
         while i < len(argv):
             arg = argv[i]
             if arg.startswith('@') or arg.startswith(('/Yu', '/Yc')) or arg == '-include-pch':
-                raise ValueError('首版不支持响应文件或预编译头参数：' + arg)
+                raise ValueError('Response files and precompiled header arguments are not supported: ' + arg)
             # Preserve semantic options, including optimisation/runtime macros.
             normalized = '/' + arg[1:] if mode == 'cl' and arg.startswith('-') and not arg.startswith('--') else arg
             output = {'/Fo', '/Fd', '/Fe', '/Fa', '/Fp'} if mode == 'cl' else {'-o', '-MF', '-MT', '-MQ', '-MJ'}
@@ -187,7 +187,7 @@ def commands(path):
             pairs = {'-I', '-isystem', '-iquote', '-include', '-imacros', '-isysroot', '--sysroot', '-target', '-x', '-D', '-U', '/I', '/FI', '/D', '/U', '/external:I'}
             if arg in pairs or normalized in pairs:
                 if i + 1 >= len(argv):
-                    raise ValueError('选项缺少值：' + arg)
+                    raise ValueError('Missing option value: ' + arg)
                 args.extend([arg, argv[i + 1]])
                 i += 2
                 continue
@@ -211,7 +211,7 @@ def connect(path, readonly=False):
     version = conn.execute('PRAGMA user_version').fetchone()[0]
     if version not in (0, SCHEMA) or (version == 0 and conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchone()):
         conn.close()
-        raise ValueError('索引数据库版本不兼容，请重新初始化该项目的索引。')
+        raise ValueError('Incompatible index database version. Reinitialize this project index.')
     if not readonly and version == 0:
         conn.executescript('CREATE TABLE IF NOT EXISTS units (id TEXT PRIMARY KEY, command TEXT NOT NULL, fingerprint TEXT NOT NULL, dependencies TEXT NOT NULL, payload TEXT NOT NULL); CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY,value TEXT NOT NULL);')
         conn.execute(f'PRAGMA user_version={SCHEMA}')
@@ -262,7 +262,7 @@ def parse_unit(root, record, lib):
     if configured_resource:
         resource = Path(configured_resource)
         if not (resource / 'include/stddef.h').is_file():
-            raise ValueError('指定 Clang 内置头文件目录无效：' + str(resource))
+            raise ValueError('Invalid Clang built-in headers directory: ' + str(resource))
     else:
         resource_root = Path(lib.path).resolve().parent.parent / 'lib/clang'
         resources = [p for p in resource_root.iterdir() if (p / 'include/stddef.h').is_file()] if resource_root.is_dir() else []
@@ -278,7 +278,7 @@ def parse_unit(root, record, lib):
         with contextlib.chdir(record['directory']):
             error = lib.lib.clang_parseTranslationUnit2(index, source.encode('utf-8'), encoded, len(args), None, 0, clang_bridge.CXTRANSLATIONUNIT_KEEP_GOING, ctypes.byref(tu))
             if error or not tu.value:
-                raise ValueError(f'libclang 解析失败，错误码 {error}：{source}')
+                raise ValueError(f'libclang parse failed, error {error}: {source}')
             diagnostics = lib.diagnostics(tu)
             failures = [d for d in diagnostics if d['severity'] >= clang_bridge.SEV_ERROR]
             if failures:
@@ -287,7 +287,7 @@ def parse_unit(root, record, lib):
             includes = {os.path.abspath(p) for p in lib.inclusions(tu)} | {source}
         dependencies = {p: file_hash(p) for p in sorted(includes)}
         if dependencies[source] != before or any(os.stat(p).st_mtime_ns >= started for p in includes):
-            raise ValueError('解析期间源码或头文件发生变化，请重试。')
+            raise ValueError('Source or headers changed during parsing. Please retry.')
         return {'symbols': symbols, 'relations': relations, 'diagnostics': diagnostics}, dependencies
     finally:
         if tu.value:
@@ -309,7 +309,7 @@ def index_project(project, compilation):
         try:
             records = commands(compilation)
             if not records:
-                raise ValueError('编译数据库中没有 C++ 源文件。')
+                raise ValueError('No C++ source files in the compilation database.')
             import clang_bridge
             lib = clang_bridge.get_libclang()
             parser = lib.version()
@@ -335,12 +335,12 @@ def index_project(project, compilation):
                     emit(type='diagnostic', file=record['file'], message=str(exc))
             if failures:
                 state.update(last_status='failed', errors=failures)
-                raise ValueError(f'{len(failures)} 个编译单元失败；保留上一次完整索引。')
+                raise ValueError(f'{len(failures)} translation units failed. Previous complete index retained.')
             # Validate content again immediately before commit (including reused TUs).
             for key in records:
                 deps = json.loads(updates[key][2] if key in updates else old[key][1])
                 if any(file_hash(p) != h for p, h in deps.items()):
-                    raise ValueError('提交前检测到文件变化，请重新索引。')
+                    raise ValueError('Files changed before commit. Please reindex.')
             with db:
                 for key in set(old) - set(records):
                     db.execute('DELETE FROM units WHERE id=?', (key,))
@@ -352,7 +352,7 @@ def index_project(project, compilation):
             emit(type='result', ok=True, **state)
             return 0
         except (OSError, ValueError, RuntimeError, sqlite3.Error, KeyboardInterrupt) as exc:
-            state.update(last_status='failed', message=str(exc) or '已取消')
+            state.update(last_status='failed', message=str(exc) or 'Cancelled')
             atomic_json(sem / 'config.json', state)
             emit(type='result', ok=False, **state)
             return 1
@@ -376,7 +376,7 @@ def export_project(project):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='vividcode C++ 语义索引')
+    parser = argparse.ArgumentParser(description='vividcode C++ semantic index')
     parser.add_argument('command', choices=['index', 'export'])
     parser.add_argument('--project', required=True)
     parser.add_argument('--compile-commands')
@@ -384,7 +384,7 @@ def main():
     try:
         if args.command == 'index':
             if not args.compile_commands:
-                raise ValueError('请提供 --compile-commands。')
+                raise ValueError('Provide --compile-commands.')
             return index_project(args.project, args.compile_commands)
         root, _ = layout(args.project)
         with lifecycle_lock(root):

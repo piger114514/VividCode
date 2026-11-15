@@ -10,6 +10,7 @@
 namespace VividCode {
 // Keep command-line wording separate from the shared store's UI messages.
 inline QString englishConsoleMessage(const QString &message) {
+    if (message.startsWith("Cancelled.")) return "Cancelled.";
     struct Translation { const char *source; const char *english; };
     static const Translation translations[] = {
         {"已停止生成：本次临时目录已清除，没有留下 .vividcode 或记录。", "Cancelled."},

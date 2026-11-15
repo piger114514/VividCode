@@ -13,7 +13,8 @@ add_executable(vividcode-viewer WIN32 main.cpp VividCode.cpp VividCode.h
     AiExplanation.cpp AiExplanation.h
     PiAgent.cpp PiAgent.h PiRichText.h
     RelationGraph.cpp RelationGraph.h RelationLayout.h
-    ProjectScanner.h ProjectDetection.h UnifiedGraphStore.h SourcePopup.h)
+    ProjectScanner.h ProjectDetection.h UnifiedGraphStore.h SourcePopup.h SourceHighlighter.h SourceHighlightTest.h
+    UiLanguage.h UiTranslations.h UiLanguageTest.h)
 target_link_libraries(vividcode-viewer PRIVATE Qt6::Widgets Qt6::Sql Qt6::Network vividcode_store)
 if(WIN32)
     target_link_libraries(vividcode-viewer PRIVATE crypt32)
@@ -33,6 +34,10 @@ endif()
 add_dependencies(vividcode vividcode-viewer vividcode-launcher)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT vividcode-viewer)
 enable_testing()
+add_test(NAME ui_language COMMAND vividcode-viewer --language-test -platform offscreen)
+set_tests_properties(ui_language PROPERTIES TIMEOUT 60)
+add_test(NAME source_highlighting COMMAND vividcode-viewer --highlight-test -platform offscreen)
+set_tests_properties(source_highlighting PROPERTIES TIMEOUT 30)
 add_test(NAME pi_agent COMMAND vividcode-viewer --pi-test -platform offscreen)
 set_tests_properties(pi_agent PROPERTIES TIMEOUT 90)
 add_test(NAME ai_explanations COMMAND vividcode-viewer --ai-test -platform offscreen)
@@ -76,7 +81,8 @@ add_test(NAME javascript_ui COMMAND powershell -NoProfile -ExecutionPolicy Bypas
 set_tests_properties(javascript_ui PROPERTIES TIMEOUT 150)
 add_test(NAME local_environment COMMAND powershell -NoProfile -ExecutionPolicy Bypass
     -File "${CMAKE_CURRENT_SOURCE_DIR}/tests/local-environment.Tests.ps1" -RuntimeDirectory "$<TARGET_FILE_DIR:vividcode>")
-set_tests_properties(local_environment PROPERTIES TIMEOUT 180)
+# This check stages four complete runtime variants; allow for Windows file scanning.
+set_tests_properties(local_environment PROPERTIES TIMEOUT 420)
 if(Python3_Interpreter_FOUND)
 add_test(NAME java_backend COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_java_indexer.py" -v)
 set_tests_properties(java_backend PROPERTIES ENVIRONMENT "VIVIDCODE_JAVA_RUNTIME=$<TARGET_FILE_DIR:vividcode>" TIMEOUT 240)

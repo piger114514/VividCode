@@ -74,5 +74,5 @@ int main(int argc, char *argv[])
     else result = VividCode::cleanHistory(root);
     if (result.ok) out << (command == "-n" ? "Old data cleared." : command == "-d" ? "Project cleared." : "Refreshed.") << Qt::endl;
     else error << VividCode::englishConsoleMessage(result.message) << Qt::endl;
-    return result.ok ? 0 : result.message.startsWith(QStringLiteral("已停止生成")) ? 130 : 1;
+    return result.ok ? 0 : result.message.startsWith(QStringLiteral("Cancelled")) ? 130 : 1;
 }

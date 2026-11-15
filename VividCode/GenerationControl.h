@@ -12,7 +12,7 @@
 #endif
 
 namespace VividCode {
-struct GenerationCancelled : std::runtime_error { GenerationCancelled() : std::runtime_error("已停止生成") {} };
+struct GenerationCancelled : std::runtime_error { GenerationCancelled() : std::runtime_error("Cancelled") {} };
 class GenerationControl {
     std::thread input;
     std::atomic<bool> closing{false}, cancelled{false};

@@ -169,7 +169,7 @@ public class VividCodeJava {
             if(target instanceof ExecutableElement) {boolean possible=virtual(target,expression);edge(owner,target,possible?"possible_call":"calls",unit,site,possible);}
             else {
                 var pos=position(unit,site);String id="java:unresolved:"+pos.get("file")+":"+pos.get("line")+":"+pos.get("col");
-                symbols.put(id,obj("id",id,"name",expression.toString(),"qualified_name","未解析："+expression,"kind","UnresolvedCall","language","java","is_external",true));
+                symbols.put(id,obj("id",id,"name",expression.toString(),"qualified_name","Unresolved: "+expression,"kind","UnresolvedCall","language","java","is_external",true));
                 pos.putAll(obj("source_id",owner,"target_id",id,"type","possible_call","confidence","unresolved"));
                 if(owner!=null && relationKeys.add(json(pos))) {relations.add(pos);unresolved++;}
             }
@@ -201,7 +201,7 @@ public class VividCodeJava {
             var files=new ArrayList<Path>();var options=new ArrayList<>(List.of("-proc:none","-implicit:none","-Xlint:none","-encoding","UTF-8"));
             for(String line:lines.subList(1,lines.size())) {if(line.startsWith("F\t")) files.add(Path.of(decode(line.substring(2))));else if(line.startsWith("O\t")) options.add(decode(line.substring(2)));else throw new IOException("Invalid request record");}
             JavaCompiler compiler=ToolProvider.getSystemJavaCompiler();
-            if(compiler==null) throw new IOException("需要完整 JDK 17+，当前环境没有 jdk.compiler。");
+            if(compiler==null) throw new IOException("A full JDK 17+ is required; jdk.compiler is missing.");
             var diagnostics=new DiagnosticCollector<JavaFileObject>();
             try(var fm=compiler.getStandardFileManager(diagnostics,Locale.ROOT,StandardCharsets.UTF_8)) {
                 var sources=new ArrayList<Source>();

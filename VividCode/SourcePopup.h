@@ -1,5 +1,7 @@
 #pragma once
+#include "UiLanguage.h"
 #include <QtWidgets>
+#include "SourceHighlighter.h"
 
 // 临时源码速览：窗外点击或切换到其它应用后关闭，没有编辑/保存入口。
 class SourcePopup : public QWidget {
@@ -8,15 +10,21 @@ public:
         setObjectName("sourcePopup");
         auto *layout = new QVBoxLayout(this);
         layout->setContentsMargins(6, 4, 6, 6); layout->setSpacing(2);
-        auto *bar = new QHBoxLayout; bar->addStretch();
+        auto *bar = new QHBoxLayout;
+        auto *mode = new QComboBox; mode->setObjectName("sourceHighlightMode");
+        mode->addItems({UiLanguage::text("Semantic highlighting"), UiLanguage::text("Syntax highlighting"), UiLanguage::text("Plain text")});
+        mode->setToolTip(UiLanguage::text("Types: teal; functions: yellow; variables: blue; parameters: light blue; members: purple.\nSemantic mode uses indexed locations when available; other tokens use syntax highlighting."));
+        bar->addWidget(mode); bar->addStretch();
         auto *closeButton = new QToolButton;
         closeButton->setObjectName("sourcePopupClose"); closeButton->setText(QStringLiteral("×"));
-        closeButton->setToolTip(QStringLiteral("关闭")); closeButton->setFixedSize(28, 26);
+        closeButton->setToolTip(UiLanguage::text("Close")); closeButton->setFixedSize(28, 26);
         bar->addWidget(closeButton); layout->addLayout(bar);
         code = new QPlainTextEdit;
         code->setObjectName("sourceViewer"); code->setReadOnly(true);
         code->setLineWrapMode(QPlainTextEdit::NoWrap); code->setFont(QFont("Consolas", 11));
         code->setContextMenuPolicy(Qt::NoContextMenu);
+        highlighter = new SourceHighlighter(code->document());
+        connect(mode, &QComboBox::currentIndexChanged, this, [this](int index) { highlighter->setMode(static_cast<SourceHighlighter::Mode>(index)); });
         layout->addWidget(code);
         connect(closeButton, &QToolButton::clicked, this, &QWidget::close);
         auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
@@ -24,9 +32,12 @@ public:
         qApp->installEventFilter(this);
         resize(760, 480);
     }
-    void showCode(const QString &text, int line, int column, const QPoint &anchor) {
+    void showCode(const QString &text, int line, int column, const QPoint &anchor,
+                  const QString &path = {}, const QJsonArray &positions = {}) {
         ++generation;
+        highlighter->configure(path, positions);
         code->setPlainText(text);
+        highlighter->rehighlight();
         QTextCursor cursor(code->document()->findBlockByNumber(qMax(0, line - 1)));
         if (!cursor.isNull()) {
             cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
@@ -45,12 +56,13 @@ protected:
     bool eventFilter(QObject *object, QEvent *event) override {
         if (isVisible() && event->type() == QEvent::MouseButtonPress) {
             auto *mouse = static_cast<QMouseEvent *>(event);
-            if (!frameGeometry().contains(mouse->globalPosition().toPoint())) close();
+            const auto *widget = qobject_cast<QWidget *>(object);
+            if (!frameGeometry().contains(mouse->globalPosition().toPoint()) && (!widget || !isAncestorOf(widget))) close();
         }
         return QWidget::eventFilter(object, event);
     }
     void hideEvent(QHideEvent *event) override {
-        code->clear(); QWidget::hideEvent(event);
+        highlighter->configure({}, {}); code->clear(); QWidget::hideEvent(event);
     }
     bool event(QEvent *event) override {
         if (event->type() == QEvent::WindowDeactivate && isVisible()) {
@@ -61,5 +73,6 @@ protected:
     }
 private:
     QPlainTextEdit *code;
+    SourceHighlighter *highlighter;
     quint64 generation = 0;
 };

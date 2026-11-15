@@ -1,3 +1,4 @@
+#include "UiLanguage.h"
 #include "SemanticPanel.h"
 #include "ProjectStore.h"
 #include "UnifiedGraphStore.h"
@@ -21,22 +22,22 @@ SemanticPanel::SemanticPanel(QWidget *parent) : QWidget(parent) {
     auto *layout = new QVBoxLayout(this); layout->setContentsMargins(0, 0, 0, 0);
     controls = new QWidget(this); controls->setObjectName("analysisControls");
     auto *row = new QHBoxLayout(controls); row->setContentsMargins(0, 0, 0, 0);
-    relationType = new QComboBox; relationType->setObjectName("semanticRelationType"); relationType->addItem(QStringLiteral("全部关系类型"), "");
+    relationType = new QComboBox; relationType->setObjectName("semanticRelationType"); relationType->addItem(UiLanguage::text("All relation types"), "");
     for (const QString &type : {"calls", "possible_call", "inherits", "implements", "member_ref", "references", "overrides"}) relationType->addItem(relationDisplayName(type), type);
     row->addWidget(relationType);
     buildConfiguration = new QComboBox; buildConfiguration->setObjectName("csharpConfiguration"); buildConfiguration->addItems({"Debug", "Release"}); row->addWidget(buildConfiguration);
-    targetFramework = new QLineEdit; targetFramework->setObjectName("csharpFramework"); targetFramework->setPlaceholderText(QStringLiteral("目标框架（留空使用工程默认值）")); row->addWidget(targetFramework, 1);
-    status = new QLabel(QStringLiteral("打开项目后自动识别工程；右键可刷新或导入配置。")); status->setObjectName("semanticStatus"); status->setWordWrap(true); status->setTextFormat(Qt::PlainText); layout->addWidget(status);
+    targetFramework = new QLineEdit; targetFramework->setObjectName("csharpFramework"); targetFramework->setPlaceholderText(UiLanguage::text("Target framework (blank for project default)")); row->addWidget(targetFramework, 1);
+    status = new QLabel(UiLanguage::text("Open a project to detect its configuration. Right-click to refresh or import configuration.")); status->setObjectName("semanticStatus"); status->setWordWrap(true); status->setTextFormat(Qt::PlainText); layout->addWidget(status);
     units = new QComboBox; units->setObjectName("semanticUnits"); layout->addWidget(units);
     graph = new RelationGraph; graph->setObjectName("realRelationGraph"); layout->addWidget(graph, 1);
     diagnostics = new QPlainTextEdit; diagnostics->setObjectName("semanticDiagnostics"); diagnostics->setReadOnly(true); diagnostics->setMaximumHeight(100); diagnostics->hide(); layout->addWidget(diagnostics);
     structure = new QWidget(this); structure->setObjectName("structureRelationsView");
     auto *sl = new QVBoxLayout(structure); sl->setContentsMargins(0, 0, 0, 0);
-    auto *all = new QPushButton(QStringLiteral("显示全部工程关系")); sl->addWidget(all);
+    auto *all = new QPushButton(UiLanguage::text("Show All Relations")); sl->addWidget(all);
     auto *splitter = new QSplitter(Qt::Vertical); sl->addWidget(splitter, 1);
-    symbols = new QTreeWidget; symbols->setObjectName("semanticSymbols"); symbols->setHeaderLabels({QStringLiteral("文件 / 类 / 函数 / 变量"), QStringLiteral("类型"), QStringLiteral("源码位置")}); symbols->setColumnWidth(0, 250); symbols->setColumnHidden(2, true); splitter->addWidget(symbols);
-    symbols->setToolTip(QStringLiteral("按文件和作用域整理函数、参数及变量；双击名称，在画布查看该符号出现的关联文件；右键查看源码。"));
-    relations = new QTreeWidget; relations->setObjectName("semanticRelations"); relations->setHeaderLabels({QStringLiteral("起点"), QStringLiteral("关系"), QStringLiteral("终点"), QStringLiteral("发生位置")}); splitter->addWidget(relations); splitter->setSizes({450, 230});
+    symbols = new QTreeWidget; symbols->setObjectName("semanticSymbols"); symbols->setHeaderLabels({UiLanguage::text("File / Class / Function / Variable"), UiLanguage::text("Type"), UiLanguage::text("Source location")}); symbols->setColumnWidth(0, 250); symbols->setColumnHidden(2, true); splitter->addWidget(symbols);
+    symbols->setToolTip(UiLanguage::text("Symbols grouped by file: classes, functions and variables. Double-click a name to show its related files on the graph; right-click to view source."));
+    relations = new QTreeWidget; relations->setObjectName("semanticRelations"); relations->setHeaderLabels({UiLanguage::text("Start"), UiLanguage::text("Relation"), UiLanguage::text("End"), UiLanguage::text("Occurrence")}); splitter->addWidget(relations); splitter->setSizes({450, 230});
     connect(diagnostics, &QPlainTextEdit::textChanged, this, [this] { diagnostics->setVisible(!diagnostics->toPlainText().isEmpty()); });
     connect(units, &QComboBox::currentIndexChanged, this, &SemanticPanel::renderUnit);
     connect(relationType, &QComboBox::currentIndexChanged, this, &SemanticPanel::renderRelations);
@@ -66,29 +67,29 @@ SemanticPanel::SemanticPanel(QWidget *parent) : QWidget(parent) {
                 const auto value = item->data(0, Qt::UserRole).toJsonObject();
                 const QString prefix = tree == relations ? QString() : value.value("def_file").toString().isEmpty() ? "decl_" : "def_";
                 if (!value.value(prefix + "file").toString().isEmpty()) {
-                    auto *source = menu->addAction(QStringLiteral("查看源代码"));
+                    auto *source = menu->addAction(UiLanguage::text("View Source"));
                     source->setObjectName("structureViewSourceAction");
                     connect(source, &QAction::triggered, this, [this, value, prefix] { emit sourceRequested(value.value(prefix + "file").toString(), value.value(prefix + "line").toInt(1), value.value(prefix + "col").toInt(1)); });
                 }
             }
-            auto *refresh = menu->addAction(QStringLiteral("刷新文件和索引")); connect(refresh, &QAction::triggered, this, &SemanticPanel::refreshRequested);
+            auto *refresh = menu->addAction(UiLanguage::text("Refresh Files and Index")); connect(refresh, &QAction::triggered, this, &SemanticPanel::refreshRequested);
             addContextActions(menu); menu->popup(tree->viewport()->mapToGlobal(point));
         });
     }
     connect(&process, &QProcess::readyReadStandardOutput, this, [this] {
         output += process.readAllStandardOutput();
-        if (output.size() > 128 * 1024 * 1024) { diagnostics->appendPlainText(QStringLiteral("结果超过 128 MiB 展示上限。")); process.kill(); }
+        if (output.size() > 128 * 1024 * 1024) { diagnostics->appendPlainText(UiLanguage::text("Analysis results exceed the 128 MiB display limit.")); process.kill(); }
         if (command == "index") while (output.contains('\n')) {
             const auto line = output.left(output.indexOf('\n')); output.remove(0, line.size() + 1);
             const auto obj = QJsonDocument::fromJson(line).object();
-            if (obj.value("type") == "progress") setStatus(QStringLiteral("%1：分析 %2/%3 · %4").arg(languageName(workerLanguage)).arg(obj.value("current").toInt()).arg(obj.value("total").toInt()).arg(obj.value("file").toString()));
+            if (obj.value("type") == "progress") setStatus(UiLanguage::text("%1: processing %2/%3 - %4").arg(languageName(workerLanguage)).arg(obj.value("current").toInt()).arg(obj.value("total").toInt()).arg(obj.value("file").toString()));
             if (obj.contains("message")) diagnostics->appendPlainText(obj.value("message").toString());
         }
     });
     connect(&process, &QProcess::readyReadStandardError, this, [this] { diagnostics->appendPlainText(QString::fromUtf8(process.readAllStandardError())); });
     connect(&process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (stopping || error != QProcess::FailedToStart) return;
-        diagnostics->appendPlainText(languageName(workerLanguage) + QStringLiteral(" 分析器无法启动：") + process.errorString()); beginNextLanguage();
+        diagnostics->appendPlainText(languageName(workerLanguage) + UiLanguage::text(" analyzer could not start: ") + process.errorString()); beginNextLanguage();
     });
     connect(&process, qOverload<int,QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus exitStatus) {
         if (stopping) return;
@@ -99,15 +100,15 @@ SemanticPanel::SemanticPanel(QWidget *parent) : QWidget(parent) {
                 languageSnapshots[workerLanguage] = doc.object();
                 if (!refreshAfterLoad && doc.object().value("state").toObject().value("last_status") == "ok") {
                     UnifiedGraphStore store(root);
-                    if (!store.saveLanguage(workerLanguage, doc.object())) diagnostics->appendPlainText(QStringLiteral("共享图数据库保存失败：") + store.error);
+                    if (!store.saveLanguage(workerLanguage, doc.object())) diagnostics->appendPlainText(UiLanguage::text("Could not save the shared graph database: ") + store.error);
                     else languageSnapshots[workerLanguage] = store.load().value(workerLanguage);
                 }
                 render();
-            } else diagnostics->appendPlainText(QStringLiteral("索引结果无效：") + error.errorString());
-        } else diagnostics->appendPlainText(QStringLiteral("读取索引失败：") + QString::fromUtf8(output));
+            } else diagnostics->appendPlainText(UiLanguage::text("Invalid analysis results: ") + error.errorString());
+        } else diagnostics->appendPlainText(UiLanguage::text("Could not read analysis results: ") + QString::fromUtf8(output));
         if (refreshAfterLoad && !cancelled) { refreshAfterLoad = false; refreshIndex(); return; }
         refreshAfterLoad = false;
-        if (cancelled) { pendingLanguages.clear(); setStatus(QStringLiteral("已取消，保留上次完整结果。")); cancelled = false; }
+        if (cancelled) { pendingLanguages.clear(); setStatus(UiLanguage::text("Cancelled. Previous analysis results retained.")); cancelled = false; }
         beginNextLanguage();
     });
     updateControls(false);
@@ -125,11 +126,11 @@ void SemanticPanel::updateControls(bool busy) {
 }
 AnalysisEntry SemanticPanel::selectEntry(const QList<AnalysisEntry> &entries, const QString &language) {
     if (entries.size() == 1) return entries.first();
-    QDialog dialog(this); dialog.setObjectName("analysisProjectDialog"); dialog.setWindowTitle(QStringLiteral("vividcode · 选择 %1 工程").arg(languageName(language))); dialog.resize(600, 320);
-    auto *layout = new QVBoxLayout(&dialog); layout->addWidget(new QLabel(QStringLiteral("发现多个 %1 工程入口，请点击要分析的工程：").arg(languageName(language))));
+    QDialog dialog(this); dialog.setObjectName("analysisProjectDialog"); dialog.setWindowTitle(UiLanguage::text("vividcode - Select %1 Project").arg(languageName(language))); dialog.resize(600, 320);
+    auto *layout = new QVBoxLayout(&dialog); layout->addWidget(new QLabel(UiLanguage::text("Multiple %1 project entries found. Select the project to analyze:").arg(languageName(language))));
     auto *list = new QListWidget; list->setObjectName("analysisProjectList");
     for (int index = 0; index < entries.size(); ++index) { auto *item = new QListWidgetItem(entries[index].label, list); item->setData(Qt::UserRole, index); item->setToolTip(entries[index].path); }
-    layout->addWidget(list); auto *buttons = new QDialogButtonBox(QDialogButtonBox::Cancel); buttons->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("取消")); layout->addWidget(buttons);
+    layout->addWidget(list); auto *buttons = new QDialogButtonBox(QDialogButtonBox::Cancel); buttons->button(QDialogButtonBox::Cancel)->setText(UiLanguage::text("Cancel")); layout->addWidget(buttons);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject); connect(list, &QListWidget::itemClicked, &dialog, &QDialog::accept); connect(list, &QListWidget::itemActivated, &dialog, &QDialog::accept);
     if (dialog.exec() != QDialog::Accepted || !list->currentItem()) return {};
     return entries[list->currentItem()->data(Qt::UserRole).toInt()];
@@ -146,7 +147,7 @@ void SemanticPanel::setProject(const QString &path, const QStringList &sources, 
     }
     if (!scanComplete) {
         render(); updateControls(false);
-        setStatus(QStringLiteral("文件扫描达到上限，本次不更新语义索引，保留成功缓存；用 vividcode -c 调整全局上限，或谨慎使用 -sg。"));
+        setStatus(UiLanguage::text("File scan reached its limit. Analysis skipped; previous successful cache retained. Adjust the global limit with vividcode -c or use -sg with care."));
         emit settled(); return;
     }
     QMap<QString,QList<AnalysisEntry>> grouped;
@@ -163,7 +164,7 @@ void SemanticPanel::setProject(const QString &path, const QStringList &sources, 
     render(); updateControls(!pendingLanguages.isEmpty());
     if (pendingLanguages.isEmpty()) {
         const bool unity = QDir(root + "/Assets").exists() && QFileInfo::exists(root + "/ProjectSettings/ProjectVersion.txt");
-        setStatus(cancelledSelection ? QStringLiteral("已取消选择工程。右键刷新可重新选择。") : grouped.isEmpty() ? QStringLiteral("当前语言仅支持文件浏览。右键文件可查看源码。") : unity ? QStringLiteral("已识别 Unity 项目。请在 Unity 中重新生成 .sln / .csproj，等待脚本编译完成后按 F5；也可右键导入工程配置。") : QStringLiteral("已自动识别语言；尚未找到可分析的工程配置，请右键导入 .sln / .csproj 或 compile_commands.json。")); emit settled(); return;
+        setStatus(cancelledSelection ? UiLanguage::text("Project selection cancelled. Right-click to refresh and select again.") : grouped.isEmpty() ? UiLanguage::text("Only file browsing is supported for this language. Right-click a file to view source.") : unity ? UiLanguage::text("Unity project detected. Regenerate .sln / .csproj in Unity, wait for script compilation, then press F5. You can also right-click to import project configuration.") : UiLanguage::text("Language detected, but no analyzable project configuration found. Right-click to import .sln / .csproj or compile_commands.json.")); emit settled(); return;
     }
     working = true; beginNextLanguage();
 }
@@ -179,24 +180,24 @@ void SemanticPanel::refreshIndex() {
     cancelled = false; launch("index", compilation);
 }
 void SemanticPanel::importDatabase(const QString &path) {
-    if (root.isEmpty()) return; stop(); selectedEntries["c++"] = {"c++", QFileInfo(path).absoluteFilePath(), QStringLiteral("C++ 工程")}; workerLanguage = "c++"; compilation = selectedEntries.value(workerLanguage).path; working = true; updateControls(true); refreshIndex();
+    if (root.isEmpty()) return; stop(); selectedEntries["c++"] = {"c++", QFileInfo(path).absoluteFilePath(), UiLanguage::text("C++ project")}; workerLanguage = "c++"; compilation = selectedEntries.value(workerLanguage).path; working = true; updateControls(true); refreshIndex();
 }
 void SemanticPanel::importCSharpProject(const QString &path, const QString &configuration, const QString &framework) {
-    if (root.isEmpty()) return; stop(); selectedEntries["c#"] = {"c#", QFileInfo(path).absoluteFilePath(), QStringLiteral("C# 工程")};
+    if (root.isEmpty()) return; stop(); selectedEntries["c#"] = {"c#", QFileInfo(path).absoluteFilePath(), UiLanguage::text("C# project")};
     { const QSignalBlocker cb(buildConfiguration), fb(targetFramework); buildConfiguration->setCurrentText(configuration); targetFramework->setText(framework); }
     workerLanguage = "c#"; compilation = selectedEntries.value(workerLanguage).path; working = true; updateControls(true); refreshIndex();
 }
 void SemanticPanel::chooseConfiguration() {
-    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("选择工程配置"), root, "工程配置 (*.sln *.csproj compile_commands.json);;所有文件 (*)"); if (path.isEmpty()) return;
+    const QString path = QFileDialog::getOpenFileName(this, UiLanguage::text("Select Project Configuration"), root, UiLanguage::text("Project configuration (*.sln *.csproj compile_commands.json);;All files (*)")); if (path.isEmpty()) return;
     const QString suffix = QFileInfo(path).suffix().toLower();
     if (suffix == "sln" || suffix == "csproj") importCSharpProject(path, buildConfiguration->currentText(), targetFramework->text().trimmed()); else importDatabase(path);
 }
 void SemanticPanel::addContextActions(QMenu *menu) {
-    auto *environment = menu->addAction(QStringLiteral("分析环境…")); environment->setObjectName("analysisEnvironmentAction");
+    auto *environment = menu->addAction(UiLanguage::text("Analysis Environment...")); environment->setObjectName("analysisEnvironmentAction");
     environment->setEnabled(!isBusy()); connect(environment, &QAction::triggered, this, &SemanticPanel::chooseEnvironment);
-    menu->addSeparator(); auto *configure = menu->addAction(QStringLiteral("导入工程配置…")); configure->setEnabled(!root.isEmpty() && !isBusy()); connect(configure, &QAction::triggered, this, &SemanticPanel::chooseConfiguration);
-    auto *choose = menu->addAction(QStringLiteral("重新选择分析工程…")); choose->setEnabled(!root.isEmpty() && !isBusy()); connect(choose, &QAction::triggered, this, [this] { selectedEntries.clear(); emit refreshRequested(); });
-    auto *cancel = menu->addAction(QStringLiteral("取消分析")); cancel->setObjectName("cancelAnalysisAction"); cancel->setEnabled(isBusy()); connect(cancel, &QAction::triggered, this, [this] { cancelled = true; pendingLanguages.clear(); refreshAfterLoad = false; process.kill(); });
+    menu->addSeparator(); auto *configure = menu->addAction(UiLanguage::text("Import Project Configuration...")); configure->setEnabled(!root.isEmpty() && !isBusy()); connect(configure, &QAction::triggered, this, &SemanticPanel::chooseConfiguration);
+    auto *choose = menu->addAction(UiLanguage::text("Select Analysis Project...")); choose->setEnabled(!root.isEmpty() && !isBusy()); connect(choose, &QAction::triggered, this, [this] { selectedEntries.clear(); emit refreshRequested(); });
+    auto *cancel = menu->addAction(UiLanguage::text("Cancel Analysis")); cancel->setObjectName("cancelAnalysisAction"); cancel->setEnabled(isBusy()); connect(cancel, &QAction::triggered, this, [this] { cancelled = true; pendingLanguages.clear(); refreshAfterLoad = false; process.kill(); });
 }
 void SemanticPanel::loadCache(bool refresh) { refreshAfterLoad = refresh; launch("export"); }
 void SemanticPanel::launch(const QString &action, const QString &database) {
@@ -207,18 +208,18 @@ void SemanticPanel::launch(const QString &action, const QString &database) {
         args = {"--java-analyzer", action, "--project", root};
         process.setProgram(VividCode::sharedRuntime() + "/vividcode.exe");
         if (action == "index" && !QFileInfo::exists(VividCode::sharedRuntime() + "/java-analyzer/VividCodeJava.java"))
-            throw std::runtime_error("尚未安装 Java 解析组件，请安装时选择 java，并准备本机 JDK 17+。");
+            throw std::runtime_error("Java analyzer is not installed. Select java during installation and prepare a local JDK 17+.");
     } else if (workerLanguage == "javascript") {
         args = {"--javascript-analyzer", action, "--project", root};
         process.setProgram(VividCode::sharedRuntime() + "/vividcode.exe");
         if (action == "index" && !QFileInfo::exists(VividCode::sharedRuntime() + "/javascript-analyzer/typescript/lib/typescript.js"))
-            throw std::runtime_error("尚未安装 JavaScript/TypeScript 解析组件。请安装时选择 javascript；无需 Python 或其它语言环境。");
+            throw std::runtime_error("JavaScript/TypeScript analyzer is not installed. Select javascript during installation; Python and other language runtimes are not required.");
     } else
     if (isCSharp()) {
         const QString dotnet = VividCode::localExecutable("dotnet", {"dotnet.exe"});
-        if (action == "index" && VividCode::probeExecutable(dotnet, {"--list-sdks"}).isEmpty()) throw std::runtime_error("C# 分析需要本机 .NET SDK，请自行安装项目所需 SDK/工作负载。");
+        if (action == "index" && VividCode::probeExecutable(dotnet, {"--list-sdks"}).isEmpty()) throw std::runtime_error("C# analysis requires a local .NET SDK. Install the SDK/workloads required by the project.");
         const QString analyzer = VividCode::sharedRuntime() + "/csharp-analyzer/vividcode-csharp.dll";
-        if (!QFileInfo::exists(analyzer)) throw std::runtime_error("尚未安装 C# 解析组件。请安装时选择 csharp；不需要其它语言组件。");
+        if (!QFileInfo::exists(analyzer)) throw std::runtime_error("C# analyzer is not installed. Select csharp during installation; other language components are not required.");
         args = {analyzer, action, "--project", root}; if (!database.isEmpty()) args << "--project-file" << database << "--configuration" << buildConfiguration->currentText();
         if (!database.isEmpty() && !targetFramework->text().trimmed().isEmpty()) args << "--framework" << targetFramework->text().trimmed(); process.setProgram(dotnet);
         env.insert("DOTNET_HOST_PATH", dotnet); env.insert("DOTNET_ROOT", QFileInfo(dotnet).absolutePath());
@@ -226,7 +227,7 @@ void SemanticPanel::launch(const QString &action, const QString &database) {
         const QString base = VividCode::sharedRuntime() + "/analyzer";
         const bool python = workerLanguage == "python";
         const QString script = base + (python ? "/python_indexer.py" : "/analyzer.py");
-        if (!QFileInfo::exists(script)) throw std::runtime_error((QStringLiteral("尚未安装 %1 解析组件，请安装时选择 %2。").arg(languageName(workerLanguage), python ? "python" : "cpp")).toStdString());
+        if (!QFileInfo::exists(script)) throw std::runtime_error((QStringLiteral("%1 analyzer is not installed. Select %2 during installation.").arg(languageName(workerLanguage), python ? "python" : "cpp")).toStdString());
         const auto py = VividCode::localPython(); args = py.prefix + QStringList{script, action, "--project", root};
         if (!python && !database.isEmpty()) args << "--compile-commands" << database;
         process.setProgram(py.program);
@@ -237,25 +238,25 @@ void SemanticPanel::launch(const QString &action, const QString &database) {
         }
     }
     } catch (const std::exception &error) {
-        const QString message = languageName(workerLanguage) + QStringLiteral(" 暂不可分析：") + QString::fromUtf8(error.what()); diagnostics->appendPlainText(message);
+        const QString message = languageName(workerLanguage) + UiLanguage::text(" is not available for analysis: ") + QString::fromUtf8(error.what()); diagnostics->appendPlainText(message);
         auto languageSnapshot = languageSnapshots.value(workerLanguage); auto state = languageSnapshot.value("state").toObject(); state["last_status"] = "unavailable"; state["message"] = message;
         languageSnapshot["state"] = state; languageSnapshots[workerLanguage] = languageSnapshot; refreshAfterLoad = false; render(); beginNextLanguage(); return;
     }
     process.setArguments(args); process.setProcessEnvironment(env);
-    updateControls(true); setStatus(languageName(workerLanguage) + (action == "index" ? QStringLiteral("：后台检查工程和依赖变化…") : QStringLiteral("：读取已有结果，随后自动检查修改…"))); process.start();
+    updateControls(true); setStatus(languageName(workerLanguage) + (action == "index" ? UiLanguage::text(": checking project and dependency changes in the background...") : UiLanguage::text(": loading cached results, then checking for changes..."))); process.start();
 }
 void SemanticPanel::chooseEnvironment() {
-    QDialog dialog(this); dialog.setObjectName("analysisEnvironmentDialog"); dialog.setWindowTitle(QStringLiteral("vividcode · 本机分析环境")); dialog.resize(760, 380);
-    auto *layout = new QVBoxLayout(&dialog); auto *hint = new QLabel(QStringLiteral("留空时从 PATH 自动查找。只需准备所使用语言的环境；vividcode 不会下载或安装运行时。\nJS/TS：Node 22/24 x64；Python：3.12+ x64；C++：Python + LLVM/libclang；C#：项目所需 .NET SDK；Java：完整 JDK 17+。")); hint->setWordWrap(true); layout->addWidget(hint);
+    QDialog dialog(this); dialog.setObjectName("analysisEnvironmentDialog"); dialog.setWindowTitle(UiLanguage::text("vividcode - Analysis Environment")); dialog.resize(760, 380);
+    auto *layout = new QVBoxLayout(&dialog); auto *hint = new QLabel(UiLanguage::text("Leave blank to detect from PATH. Prepare only the runtimes for the languages you use; vividcode does not download or install runtimes.\nJS/TS: Node 22/24 x64; Python: 3.12+ x64; C++: Python + LLVM/libclang; C#: the project's .NET SDK; Java: full JDK 17+.")); hint->setWordWrap(true); layout->addWidget(hint);
     auto *form = new QFormLayout; QMap<QString,QLineEdit *> fields; QJsonObject settings;
     try { settings = VividCode::analysisEnvironment(); } catch (const std::exception &e) { layout->addWidget(new QLabel(QString::fromUtf8(e.what()))); }
-    const QMap<QString,QString> labels{{"java", "Java JDK 17+ bin/java.exe"}, {"node", "Node.js node.exe"}, {"python", "Python python.exe / py.exe"}, {"dotnet", ".NET dotnet.exe"}, {"libclang", "LLVM libclang.dll"}, {"clang_resource", QStringLiteral("Clang 内置头文件目录（可选）")}};
+    const QMap<QString,QString> labels{{"java", "Java JDK 17+ bin/java.exe"}, {"node", "Node.js node.exe"}, {"python", "Python python.exe / py.exe"}, {"dotnet", ".NET dotnet.exe"}, {"libclang", "LLVM libclang.dll"}, {"clang_resource", UiLanguage::text("Clang built-in headers (optional)")}};
     for (auto it = labels.begin(); it != labels.end(); ++it) {
         auto *row = new QWidget; auto *line = new QHBoxLayout(row); line->setContentsMargins(0,0,0,0);
-        auto *field = new QLineEdit(settings.value(it.key()).toString()); field->setObjectName("environment_" + it.key()); field->setPlaceholderText(QStringLiteral("自动检测 / 未配置")); fields[it.key()] = field;
-        auto *browse = new QPushButton(QStringLiteral("浏览…")); line->addWidget(field,1); line->addWidget(browse); form->addRow(it.value(),row);
+        auto *field = new QLineEdit(settings.value(it.key()).toString()); field->setObjectName("environment_" + it.key()); field->setPlaceholderText(UiLanguage::text("Auto-detect / not configured")); fields[it.key()] = field;
+        auto *browse = new QPushButton(UiLanguage::text("Browse...")); line->addWidget(field,1); line->addWidget(browse); form->addRow(it.value(),row);
         const QString name = it.key(); connect(browse,&QPushButton::clicked,&dialog,[&,field,name] {
-            const QString path = name == "clang_resource" ? QFileDialog::getExistingDirectory(&dialog,QStringLiteral("选择 Clang resource 目录"),field->text()) : QFileDialog::getOpenFileName(&dialog,QStringLiteral("选择本机环境文件"),field->text(),name == "libclang" ? "DLL (*.dll)" : "程序 (*.exe)");
+            const QString path = name == "clang_resource" ? QFileDialog::getExistingDirectory(&dialog,UiLanguage::text("Select Clang Resource Directory"),field->text()) : QFileDialog::getOpenFileName(&dialog,UiLanguage::text("Select Local Runtime File"),field->text(),name == "libclang" ? "DLL (*.dll)" : UiLanguage::text("Programs (*.exe)"));
             if (!path.isEmpty()) field->setText(path);
         });
     }
@@ -264,7 +265,7 @@ void SemanticPanel::chooseEnvironment() {
     connect(buttons,&QDialogButtonBox::accepted,&dialog,[&] {
         QJsonObject selected; for (auto it = fields.begin(); it != fields.end(); ++it) {
             const QString path = it.value()->text().trimmed();
-            if (!path.isEmpty() && (!QFileInfo(path).isAbsolute() || (it.key() == "clang_resource" ? !QFileInfo(path).isDir() : !QFileInfo(path).isFile()))) { QMessageBox::warning(&dialog, "vividcode", QStringLiteral("路径无效：") + path); return; }
+            if (!path.isEmpty() && (!QFileInfo(path).isAbsolute() || (it.key() == "clang_resource" ? !QFileInfo(path).isDir() : !QFileInfo(path).isFile()))) { QMessageBox::warning(&dialog, "vividcode", UiLanguage::text("Invalid path: ") + path); return; }
             if (!path.isEmpty()) selected[it.key()] = QDir::fromNativeSeparators(path);
         }
         QString error; if (!VividCode::saveAnalysisEnvironment(selected,&error)) { QMessageBox::warning(&dialog,"vividcode",error); return; } dialog.accept();
@@ -297,6 +298,36 @@ QMap<QString, QStringList> SemanticPanel::fileDependencies() const {
     return result;
 }
 
+QJsonArray SemanticPanel::sourceHighlights(const QString &path) const {
+    const auto normalize = [this](const QString &file) {
+        return QDir::cleanPath(QDir::fromNativeSeparators(QDir::isAbsolutePath(file) ? file : QDir(root).filePath(file)));
+    };
+    const QString wanted = normalize(path);
+    QJsonArray result; QSet<QByteArray> seen;
+    const auto append = [&](const QJsonObject &symbol, const QJsonObject &site, const QString &prefix, bool declaration, const QString &language) {
+        const QString file = site.value(prefix + "file").toString();
+        if (file.isEmpty() || normalize(file).compare(wanted, Qt::CaseInsensitive) != 0 || symbol.value("name").toString().isEmpty()) return;
+        const QJsonObject mark{{"line", site.value(prefix + "line")}, {"col", site.value(prefix + "col")},
+            {"name", symbol.value("name")}, {"kind", symbol.value("kind")}, {"language", language}, {"declaration", declaration}};
+        const auto key = QJsonDocument(mark).toJson(QJsonDocument::Compact);
+        if (!seen.contains(key)) { seen.insert(key); result.append(mark); }
+    };
+    // Read every unit, independent of graph focus, relation filters or selected scope.
+    for (const auto &value : snapshot.value("units").toArray()) {
+        const auto unit = value.toObject(); const QString language = unit.value("language").toString();
+        QHash<QString, QJsonObject> symbolsById;
+        for (const auto &entry : unit.value("symbols").toArray()) {
+            const auto symbol = entry.toObject(); symbolsById.insert(symbol.value("id").toString(), symbol);
+            append(symbol, symbol, "decl_", true, language); append(symbol, symbol, "def_", true, language);
+        }
+        for (const auto &entry : unit.value("relations").toArray()) {
+            const auto site = entry.toObject(); const auto symbol = symbolsById.value(site.value("target_id").toString());
+            if (symbol.value("kind") != "UnresolvedCall") append(symbol, site, {}, false, language);
+        }
+    }
+    return result;
+}
+
 QJsonObject SemanticPanel::combinedUnit() const {
     QMap<QString,QJsonObject> symbolMap, relationMap; const int selectedScope = units->currentData().toInt(); const auto values = snapshot.value("units").toArray();
     for (int index = 0; index < values.size(); ++index) {
@@ -314,7 +345,15 @@ void SemanticPanel::setStatus(const QString &text) {
 void SemanticPanel::render() {
     QJsonArray values; QStringList states;
     for (auto it = languageSnapshots.begin(); it != languageSnapshots.end(); ++it) {
-        const QString language = it.key(), prefix = language + ':'; const auto state = it.value().value("state").toObject(); if (state.value("last_status") != "ok") states.append(languageName(language) + QStringLiteral("：") + state.value("message").toString(QStringLiteral("分析未完成，请检查分析环境或刷新。")));
+        const QString language = it.key(), prefix = language + ':';
+        const auto state = it.value().value("state").toObject();
+        if (state.value("last_status") != "ok") {
+            QString message = state.value("message").toString();
+            const auto errors = state.value("errors").toArray();
+            if (message.isEmpty() && !errors.isEmpty()) message = errors.first().toObject().value("message").toString();
+            if (message.isEmpty()) message = UiLanguage::text("Analysis incomplete. Check the environment and refresh.");
+            states.append(languageName(language) + ": " + state.value("last_status").toString("incomplete") + " - " + message);
+        }
         for (const auto &value : it.value().value("units").toArray()) {
             auto unit = value.toObject(); if (unit.value("config_id") == "csharp-solution") continue; unit["language"] = language; QJsonArray sv, rv;
             for (const auto &item : unit.value("symbols").toArray()) { auto s = item.toObject(); s["language"] = language; s["id"] = prefix + s.value("id").toString(); if (!s.value("parent_id").toString().isEmpty()) s["parent_id"] = prefix + s.value("parent_id").toString(); sv.append(s); }
@@ -323,10 +362,10 @@ void SemanticPanel::render() {
         }
     }
     snapshot = {{"units", values}};
-    { const QSignalBlocker blocker(units); units->clear(); units->addItem(QStringLiteral("全部工程"), -1);
+    { const QSignalBlocker blocker(units); units->clear(); units->addItem(UiLanguage::text("All configurations"), -1);
         for (int index = 0; index < values.size(); ++index) { const auto u = values[index].toObject(); units->addItem(languageName(u.value("language").toString()) + " · " + u.value("scope_name").toString(QDir(root).relativeFilePath(u.value("file").toString())), index); }
     }
-    setStatus(languageSnapshots.isEmpty() ? QStringLiteral("尚无语义结果。右键可导入工程配置或刷新。") : states.join(QStringLiteral(" · "))); renderUnit();
+    setStatus(languageSnapshots.isEmpty() ? UiLanguage::text("Waiting for analysis. Right-click to import configuration or refresh.") : states.join(QStringLiteral(" · "))); renderUnit();
 }
 void SemanticPanel::renderUnit() {
     const QSignalBlocker blocker(symbols); symbols->clear(); selectedSymbol.clear(); symbolFilesMode = false; const auto unit = combinedUnit();
@@ -346,8 +385,8 @@ void SemanticPanel::renderUnit() {
         if (s.value("kind") == "ModuleDecl") continue;
         QString label = s.value("name").toString(); if (label.isEmpty()) label = s.value("qualified_name").toString();
         const QString kind = s.value("kind").toString();
-        const QString type = kind == "ParmDecl" ? QStringLiteral("参数") : kind == "VarDecl" ? QStringLiteral("变量") : kind == "FieldDecl" ? QStringLiteral("成员变量") : kind == "FunctionDecl" ? QStringLiteral("函数") : kind == "CXXMethod" ? QStringLiteral("方法") : kind;
-        auto *item = new QTreeWidgetItem({label, type, location(s)}); item->setToolTip(0, s.value("qualified_name").toString() + '\n' + s.value("signature").toString() + QStringLiteral("\n双击查看关联文件"));
+        const QString type = kind == "ParmDecl" ? UiLanguage::text("Parameter") : kind == "VarDecl" ? UiLanguage::text("Variable") : kind == "FieldDecl" ? UiLanguage::text("Field") : kind == "FunctionDecl" ? UiLanguage::text("Function") : kind == "CXXMethod" ? UiLanguage::text("Method") : kind;
+        auto *item = new QTreeWidgetItem({label, type, location(s)}); item->setToolTip(0, s.value("qualified_name").toString() + '\n' + s.value("signature").toString() + UiLanguage::text("\nDouble-click to view related files"));
         item->setData(0, Qt::UserRole, s); items[id] = item;
     }
     for (auto it = items.begin(); it != items.end(); ++it) {
@@ -361,7 +400,7 @@ void SemanticPanel::renderUnit() {
 void SemanticPanel::renderRelations() {
     relations->clear(); const auto unit = combinedUnit(); QMap<QString,QString> names;
     for (const auto &value : unit.value("symbols").toArray()) { const auto s = value.toObject(); names[s.value("id").toString()] = s.value("qualified_name").toString(s.value("name").toString()); }
-    if (symbolFilesMode) graph->setData(buildSymbolFileUnit(unit, selectedSymbol, root, relationType->currentData().toString()), {}, {}, QStringLiteral("关联文件 · 双击左侧名称切换；显示全部工程关系返回"));
+    if (symbolFilesMode) graph->setData(buildSymbolFileUnit(unit, selectedSymbol, root, relationType->currentData().toString()), {}, {}, UiLanguage::text("Related files - double-click other symbols to switch; use Show All Relations to return."));
     else graph->setData(unit, selectedSymbol, relationType->currentData().toString(), units->currentText());
     for (const auto &value : unit.value("relations").toArray()) {
         const auto r = value.toObject(); const QString a = r.value("source_id").toString(), b = r.value("target_id").toString(), type = r.value("type").toString();

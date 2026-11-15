@@ -298,7 +298,7 @@ inline bool runRelationGraphModelTest() {
     for (auto *item : layoutScene->items()) if (item->data(0) == "symbol") scriptNodes[item->data(1).toJsonObject().value("id").toString()] = item;
     if (!require(scriptNodes["ZData"]->x() < scriptNodes["MMiddle"]->x() && scriptNodes["MMiddle"]->x() < scriptNodes["ACaller"]->x(),
         "overview positions follow dependencies rather than names")) return false;
-    if (!require(scriptNodes["CycleP"]->data(3).toBool() && scriptNodes["CycleQ"]->toolTip().contains(QStringLiteral("循环依赖")), "cycles have visible explanatory labels")) return false;
+    if (!require(scriptNodes["CycleP"]->data(3).toBool() && scriptNodes["CycleQ"]->toolTip().contains(QStringLiteral("dependency cycle")), "cycles have visible explanatory labels")) return false;
     for (auto *item : layoutScene->items()) if (item->data(0) == "relation") {
         const auto path = static_cast<QGraphicsPathItem *>(item)->path();
         for (auto node = scriptNodes.begin(); node != scriptNodes.end(); ++node)

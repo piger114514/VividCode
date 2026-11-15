@@ -52,11 +52,11 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     };
     std::wstring executable(32768, L'\0');
     DWORD count = GetModuleFileNameW(nullptr, executable.data(), static_cast<DWORD>(executable.size()));
-    if (!count || count >= executable.size()) return fail(L"无法确定项目启动器路径。");
+    if (!count || count >= executable.size()) return fail(L"Could not determine the project launcher path.");
     executable.resize(count);
     std::filesystem::path store = std::filesystem::path(executable).parent_path();
     if (_wcsicmp(store.filename().c_str(), L".vividcode") || !plainPath(store))
-        return fail(L"请使用项目 .vividcode 文件夹中的启动器。");
+        return fail(L"Use the launcher in the project's .vividcode folder.");
     const auto project = store.parent_path();
     std::wstring home = environment(L"VIVIDCODE_HOME");
     if (home.empty()) {
@@ -67,40 +67,40 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     if (home.empty()) {
         PWSTR local = nullptr;
         if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &local)))
-            return fail(L"无法确定当前用户的 vividcode 安装位置。");
+            return fail(L"Could not determine the current user's vividcode installation location.");
         home = std::wstring(local) + L"\\vividcode"; CoTaskMemFree(local);
     }
     std::filesystem::path base(home), runtime = base / L"runtime", viewer = runtime / L"vividcode-viewer.exe";
     if (!base.is_absolute() || !plainPath(base) || !plainPath(viewer) ||
         GetFileAttributesW(viewer.c_str()) == INVALID_FILE_ATTRIBUTES)
-        return fail(L"本机尚未安装 vividcode 共享程序。请先安装，再打开项目启动器。");
+        return fail(L"The shared vividcode runtime is not installed. Install it before opening the project launcher.");
     Handle runtimeLock;
     runtimeLock.value = CreateFileW((base / L"runtime.lock").c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (runtimeLock.value == INVALID_HANDLE_VALUE) return fail(L"vividcode 共享程序正在更新，请稍后重试。");
+    if (runtimeLock.value == INVALID_HANDLE_VALUE) return fail(L"The shared vividcode runtime is updating. Please retry shortly.");
     std::wstring command = quote(viewer.native()) + L" --project " + quote(project.native());
     for (size_t i = 1; i < args.size(); ++i) {
         if (args[i] == L"--verify-startup") command += L" --verify-startup";
         else if (args[i] == L"-platform" && i + 1 < args.size()) {
             command += L" -platform " + quote(args[++i]);
-        } else return fail(L"启动器参数无效。");
+        } else return fail(L"Invalid launcher arguments.");
     }
     Handle job;
     job.value = CreateJobObjectW(nullptr, nullptr);
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
     limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
     if (!job.value || !SetInformationJobObject(job.value, JobObjectExtendedLimitInformation, &limits, sizeof(limits)))
-        return fail(L"无法建立 vividcode 进程生命周期。");
+        return fail(L"Could not create the vividcode process lifecycle.");
     STARTUPINFOW startup{}; startup.cb = sizeof(startup);
     PROCESS_INFORMATION process{};
     if (!CreateProcessW(viewer.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_SUSPENDED,
-        nullptr, runtime.c_str(), &startup, &process)) return fail(L"无法启动共享查看器，请重新安装 vividcode。");
+        nullptr, runtime.c_str(), &startup, &process)) return fail(L"Could not start the shared viewer. Reinstall vividcode.");
     Handle child{process.hProcess}, thread{process.hThread};
     if (!AssignProcessToJobObject(job.value, child.value)) {
-        TerminateProcess(child.value, 1); return fail(L"无法管理共享查看器进程。");
+        TerminateProcess(child.value, 1); return fail(L"Could not manage the shared viewer process.");
     }
     if (ResumeThread(thread.value) == static_cast<DWORD>(-1)) {
-        TerminateProcess(child.value, 1); return fail(L"无法运行共享查看器。");
+        TerminateProcess(child.value, 1); return fail(L"Could not run the shared viewer.");
     }
     WaitForSingleObject(child.value, INFINITE);
     DWORD code = 1; GetExitCodeProcess(child.value, &code);

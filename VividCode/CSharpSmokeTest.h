@@ -123,7 +123,7 @@ inline int runCSharpSmokeTest(QApplication &app) {
         if (auto *dialog = window.findChild<QDialog *>("analysisProjectDialog")) dialog->reject();
     });
     window.openProject(dir.path());
-    if (panel->isBusy() || !window.findChild<QLabel *>("semanticStatus")->text().contains(QStringLiteral("已取消选择")) || selectedProject() != dir.filePath("Alternative.sln")) return fail(__LINE__);
+    if (panel->isBusy() || !window.findChild<QLabel *>("semanticStatus")->text().contains(QStringLiteral("Project selection cancelled")) || selectedProject() != dir.filePath("Alternative.sln")) return fail(__LINE__);
     choseSolution = false;
     QTimer::singleShot(0, panel, chooseSolution);
     refresh->trigger();
@@ -155,7 +155,9 @@ inline int runCSharpSmokeTest(QApplication &app) {
     if (!index.open(QIODevice::ReadOnly)) return fail(__LINE__);
     const auto latest = index.readAll(); index.close();
     write("Use.cs", "invalid C#;"); panel->setProject(dir.path()); if (!wait()) return fail(__LINE__);
-    if (!window.findChild<QLabel *>("semanticStatus")->text().contains("failed") || !index.open(QIODevice::ReadOnly) || index.readAll() != latest) return fail(__LINE__);
+    const auto failureStatus = window.findChild<QLabel *>("semanticStatus")->text();
+    if (!failureStatus.contains("failed")) { qCritical().noquote() << "Expected failure status:" << failureStatus << window.findChild<QPlainTextEdit *>("semanticDiagnostics")->toPlainText(); return fail(__LINE__); }
+    if (!index.open(QIODevice::ReadOnly) || index.readAll() != latest) { qCritical() << "Failed refresh changed the previous complete C# index"; return fail(__LINE__); }
     index.close();
     // A failed C# refresh must not discard the successful C++ result or shared C# snapshot.
     { UnifiedGraphStore store(dir.path()); if (store.load().size() != 2) return fail(__LINE__); }

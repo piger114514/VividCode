@@ -34,7 +34,7 @@ def scan(root, policy=None):
         for path in sorted(directory.iterdir()):
             visited += 1
             if not policy['force'] and visited > policy['maxEntries']:
-                raise ValueError('目录条目超过扫描上限；未发布不完整的 Python 索引。')
+                raise ValueError('Directory scan limit exceeded. Incomplete Python index was not published.')
             if path.is_symlink() or path.is_junction():
                 continue
             reject_links(path)
@@ -48,7 +48,7 @@ def scan(root, policy=None):
             elif path.suffix.lower() in EXTENSIONS:
                 files.append(path)
                 if not policy['force'] and len(files) > policy['maxSourceFiles']:
-                    raise ValueError('Python 文件超过全局数量上限；未发布不完整索引。')
+                    raise ValueError('Python files exceeded the global limit. Incomplete index was not published.')
     return sorted(files)
 
 
@@ -57,7 +57,7 @@ def read_source(path, force=False):
     with path.open('rb') as stream:
         raw = stream.read() if force else stream.read(MAX_BYTES + 1)
     if not force and len(raw) > MAX_BYTES:
-        raise ValueError(f'{path.name} 超过 2 MiB 读取上限。')
+        raise ValueError(f'{path.name} exceeds the 2 MiB read limit.')
     encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
     return raw.decode(encoding), digest(raw)
 
@@ -530,7 +530,7 @@ class Resolver:
                     target = 'py:unresolved:' + digest((file + ':' + scope + ':' + site['expr']).encode())
                     # Unknown locals and external imports share explicit unresolved
                     # endpoints; no project symbol is selected merely by name.
-                    endpoints[target] = dict(id=target, name='未解析：' + site['expr'], qualified_name='未解析：' + site['expr'],
+                    endpoints[target] = dict(id=target, name='Unresolved: ' + site['expr'], qualified_name='Unresolved: ' + site['expr'],
                                              kind='UnresolvedCall', is_external=True, unresolved=True, parent_id='')
                     if kind == 'calls':
                         kind = 'possible_call'
@@ -599,19 +599,19 @@ def index_project(project):
                     facts[relative] = Facts(relative, text).result(tree)
             units, unresolved = Resolver(facts).units()
             if read_policy(root) != policy or scan(root, policy) != paths or any(file_hash(root / file) != value for file, value in hashes.items()):
-                raise ValueError('分析期间源码文件发生变化，请按 F5 重试；保留旧结果。')
+                raise ValueError('Source changed during analysis. Press F5 to retry; previous results retained.')
             state.update(last_status='ok', total=len(paths), indexed=len(paths) - reused, reused=reused, unresolved=unresolved,
-                         analysis='static', message='Python 静态分析：模块搜索范围为项目根目录及 src；实例/装饰器调用为可能调用，动态/外部目标未解析；lambda/推导式使用独立作用域，不执行项目代码。')
-            state['message'] += f' 共 {unresolved} 处未解析关系。'
+                         analysis='static', message='Python static analysis searches the project root and src. Instance/decorator calls are possible calls; dynamic/external targets are unresolved. Lambdas/comprehensions have separate scopes. Project code is not executed.')
+            state['message'] += f' {unresolved} unresolved relations.'
             payload = dict(version=signature, parser=state['parser'], hashes=hashes, facts=facts, units=units)
             if len(json.dumps(payload, ensure_ascii=False).encode('utf-8')) > 128 * 1024 * 1024:
-                raise ValueError('Python 结果超过 128 MiB；未发布不完整结果。')
+                raise ValueError('Python results exceed 128 MiB. Incomplete results were not published.')
             atomic_json(cache / 'index.json', payload)
             atomic_json(cache / 'config.json', state)
             emit(type='result', ok=True, **state)
             return 0
         except (OSError, ValueError, SyntaxError, UnicodeError, LookupError, RecursionError, KeyboardInterrupt) as exc:
-            state.update(last_status='failed', message=str(exc) or '已取消；保留旧结果。')
+            state.update(last_status='failed', message=str(exc) or 'Cancelled; previous results retained.')
             atomic_json(cache / 'config.json', state)
             emit(type='result', ok=False, **state)
             return 1
@@ -621,13 +621,13 @@ def export_project(project):
     _, _, cache = cache_paths(project)
     state = json.loads((cache / 'config.json').read_text(encoding='utf-8')) if (cache / 'config.json').exists() else {}
     if state.get('last_status') == 'running':
-        state.update(last_status='interrupted', message='上次分析未完成，保留旧结果；按 F5 重试。')
+        state.update(last_status='interrupted', message='Previous analysis did not finish. Previous results retained; press F5 to retry.')
     snapshot = json.loads((cache / 'index.json').read_text(encoding='utf-8')) if (cache / 'index.json').exists() else {}
     return dict(ok=True, schema=1, language='python', state=state, units=snapshot.get('units', []))
 
 
 def main():
-    parser = argparse.ArgumentParser(description='vividcode Python 静态分析')
+    parser = argparse.ArgumentParser(description='vividcode Python static analysis')
     parser.add_argument('command', choices=['index', 'export', 'source'])
     parser.add_argument('--project', required=True)
     parser.add_argument('--file')
@@ -641,7 +641,7 @@ def main():
             reject_links(path)
             path = path.resolve()
             if not path.is_relative_to(root) or path.suffix.lower() not in EXTENSIONS:
-                raise ValueError('只读取项目内 Python 源码。')
+                raise ValueError('Only Python source inside the project can be read.')
             text, _ = read_source(path, read_policy(root)['force'])
             emit(ok=True, text=text)
         else:

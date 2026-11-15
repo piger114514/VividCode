@@ -2,24 +2,25 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyleFactory>
 #include "SmokeTest.h"
+#include "SourceHighlightTest.h"
 #include "SemanticSmokeTest.h"
 #include "CSharpSmokeTest.h"
 #include "PythonSmokeTest.h"
 #include "JavaSmokeTest.h"
 #include "JavaScriptSmokeTest.h"
 #include "EnvironmentSmokeTest.h"
-#include "EnvironmentSmokeTest.h"
-#include "EnvironmentSmokeTest.h"
-#include "JavaScriptSmokeTest.h"
 #include "SharedRuntime.h"
 #include "AiSmokeTest.h"
 #include "PiAgentSmokeTest.h"
 #include <memory>
+#include "UiLanguage.h"
+#include "UiLanguageTest.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     if (qEnvironmentVariableIsEmpty("VIVIDCODE_HOME")) qputenv("VIVIDCODE_HOME", VividCode::sharedHome().toUtf8());
+    UiLanguage::initialize(app, qEnvironmentVariable("VIVIDCODE_UI_LANGUAGE", UiLanguage::preference()));
     app.setStyle(QStyleFactory::create("Fusion"));
     QPalette palette;
     palette.setColor(QPalette::Window, QColor("#101010"));
@@ -71,6 +72,9 @@ int main(int argc, char *argv[])
         QToolTip { background:#282828; color:#f0f0f0; border:1px solid #484848; }
     )");
     QCoreApplication::setApplicationName("vividcode");
+    if (app.arguments().contains("--language-test")) return runUiLanguageTest(app);
+    if (app.arguments().contains("--verify-ui-language")) return verifyUiLanguage(app, app.arguments().value(app.arguments().indexOf("--verify-ui-language") + 1));
+    if (app.arguments().contains("--highlight-test")) return runSourceHighlightTest(app);
     if (app.arguments().contains("--ai-test")) return runAiSmokeTest(app);
     if (app.arguments().contains("--pi-test")) return runPiAgentSmokeTest(app);
     std::unique_ptr<VividCode::RuntimeReadLock> sharedLock;
@@ -85,9 +89,6 @@ int main(int argc, char *argv[])
     if (app.arguments().contains("--java-test")) return runJavaSmokeTest(app);
     if (app.arguments().contains("--javascript-test")) return runJavaScriptSmokeTest(app);
     if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
-    if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
-    if (app.arguments().contains("--environment-test")) return runEnvironmentSmokeTest(app);
-    if (app.arguments().contains("--javascript-test")) return runJavaScriptSmokeTest(app);
     const auto args = app.arguments();
     QString project;
     const int option = args.indexOf("--project");
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
         projectLock = std::make_unique<QLockFile>(lockPath);
         projectLock->setStaleLockTime(0);
         if (!projectLock->tryLock()) {
-            if (!args.contains("--verify-startup")) QMessageBox::warning(nullptr, "vividcode", QStringLiteral("此项目已经打开，或正在更新/删除。"));
+            if (!args.contains("--verify-startup")) QMessageBox::warning(nullptr, "vividcode", UiLanguage::text("This project is already open or is being updated/deleted."));
             return 1;
         }
     }

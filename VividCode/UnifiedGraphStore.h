@@ -1,4 +1,5 @@
 #pragma once
+#include "UiLanguage.h"
 #include "SharedRuntime.h"
 #include <QtSql>
 
@@ -9,7 +10,7 @@ public:
         const QString directory = VividCode::semanticDirectory(root);
         for (QString part = directory; !part.isEmpty();) {
             QFileInfo info(part);
-            if (info.isSymLink() || info.isJunction()) { error = QStringLiteral("拒绝链接索引目录。"); return; }
+            if (info.isSymLink() || info.isJunction()) { error = UiLanguage::text("Linked cache directory rejected: "); return; }
             const QString parent = info.absolutePath(); if (parent == part) break; part = parent;
         }
         QFile owner(directory + "/project.json");
@@ -17,12 +18,12 @@ public:
         const auto identity = QJsonDocument::fromJson(owner.readAll()).object();
         if (identity.value("app") != "vividcode" || identity.value("schema").toInt() != 1 ||
             QFileInfo(identity.value("projectRoot").toString()).canonicalFilePath().compare(QFileInfo(root).canonicalFilePath(), Qt::CaseInsensitive)) {
-            error = QStringLiteral("共享图数据库归属不匹配。"); return;
+            error = UiLanguage::text("Shared graph database ownership mismatch."); return;
         }
         const QString path = directory + "/graph.db";
         for (const QString &suffix : {QString(), QStringLiteral("-journal"), QStringLiteral("-wal"), QStringLiteral("-shm")}) {
             QFileInfo info(path + suffix);
-            if (info.isSymLink() || info.isJunction()) { error = QStringLiteral("拒绝链接图数据库。"); return; }
+            if (info.isSymLink() || info.isJunction()) { error = UiLanguage::text("Linked graph database rejected."); return; }
         }
         connection = "vividcode-graph-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
         db = QSqlDatabase::addDatabase("QSQLITE", connection);
@@ -31,9 +32,9 @@ public:
         QSqlQuery query(db);
         if (!query.exec("PRAGMA user_version") || !query.next()) { error = query.lastError().text(); return; }
         const int schema = query.value(0).toInt();
-        if (schema != 0 && schema != 1) { error = QStringLiteral("图数据库版本不兼容。"); return; }
+        if (schema != 0 && schema != 1) { error = UiLanguage::text("Incompatible graph database version."); return; }
         if (!schema) {
-            if (!query.exec("SELECT name FROM sqlite_master WHERE type='table'") || query.next()) { error = QStringLiteral("未知图数据库，未覆盖。"); return; }
+            if (!query.exec("SELECT name FROM sqlite_master WHERE type='table'") || query.next()) { error = UiLanguage::text("Unknown graph database; nothing overwritten."); return; }
             if (!db.transaction() || !query.exec("CREATE TABLE language_states(language TEXT PRIMARY KEY,state TEXT NOT NULL)") ||
                 !query.exec("CREATE TABLE graph_units(language TEXT NOT NULL,unit_key TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(language,unit_key))") ||
                 !query.exec("PRAGMA user_version=1") || !db.commit()) { db.rollback(); error = query.lastError().text(); return; }

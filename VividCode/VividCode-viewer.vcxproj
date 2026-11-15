@@ -78,6 +78,11 @@
     <ClInclude Include="SharedRuntime.h" /><ClInclude Include="ReadPolicy.h" /><ClInclude Include="GenerationControl.h" />
     <ClInclude Include="SmokeTest.h" />
     <ClInclude Include="SourcePopup.h" />
+    <ClInclude Include="SourceHighlighter.h" />
+    <ClInclude Include="SourceHighlightTest.h" />
+    <ClInclude Include="UiLanguage.h" />
+    <ClInclude Include="UiTranslations.h" />
+    <ClInclude Include="UiLanguageTest.h" />
     <ClInclude Include="UiTestHelpers.h" />
     <ClInclude Include="ProjectDetection.h" />
     <ClInclude Include="UnifiedGraphStore.h" />

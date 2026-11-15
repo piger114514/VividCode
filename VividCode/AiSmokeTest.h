@@ -28,13 +28,14 @@ inline int runAiSmokeTest(QApplication &app) {
         check(done(), "asynchronous operation timeout");
     };
     try {
+        check(AiSettings{}.resolvedLanguage() == "en", "English interface is the default AI language");
         write("a.cpp", "#include \"b.hpp\"\nint main() { return value; }\n"); write("b.hpp", "constexpr int value = 1;\n");
         QTcpServer server; check(server.listen(QHostAddress::LocalHost), "listen local fake API");
         AiSettings settings; settings.baseUrl = QString("http://127.0.0.1:%1/v1/").arg(server.serverPort());
         settings.model = "vividcode-test"; settings.apiKey = "vividcode-local-test-key"; settings.language = "zh";
         {
             AiExplanation unconfigured; unconfigured.setProject(root, {"a.cpp", "b.hpp"}, true);
-            check(unconfigured.tooltip("a.cpp").contains(QStringLiteral("尚未配置 AI")) && unconfigured.tooltip("outside.cpp").isEmpty(), "unconfigured hover explains how to configure AI");
+            check(unconfigured.tooltip("a.cpp").contains("Configure AI Settings") && unconfigured.tooltip("outside.cpp").isEmpty(), "unconfigured hover explains how to configure AI");
         }
         check(settings.endpoint().path() == "/v1/chat/completions", "endpoint normalization");
         const auto chineseProfile = settings.profile(); settings.language = "en"; check(settings.profile() != chineseProfile, "language cache identity"); settings.language = "zh";
@@ -128,13 +129,13 @@ inline int runAiSmokeTest(QApplication &app) {
         qInfo() << "PASS: HTTP/malformed/redirect/oversize failures, source races, redaction, cancellation and retry";
 
         settings.language = "en"; settings.save(); run(); check(ai.tooltip("a.cpp").contains("AI Analysis"), "English profile and tooltip language");
-        settings.language = "auto"; qApp->setProperty("vividcode.uiLanguage", "en-US"); check(settings.resolvedLanguage() == "en", "future UI language integration");
-        qApp->setProperty("vividcode.uiLanguage", QVariant()); settings.language = "zh"; settings.save();
+        settings.language = "auto"; qApp->setProperty("vividcode.uiLanguage", "en-US"); check(settings.resolvedLanguage() == "en", "auto follows English UI");
+        qApp->setProperty("vividcode.uiLanguage", "en"); settings.language = "zh"; settings.save();
         ai.setProject(root, files, true); run();
         QFile::remove(root + "/a.cpp"); ai.setProject(root, {"b.hpp"}, true); const int beforeDelete = requests.size(); run();
         check(requests.size() == beforeDelete + 2 && requests.at(beforeDelete).value("deleted").toBool() && ai.tooltip("a.cpp").isEmpty(), "deletion removes annotation and AI refreshes affected file");
         write("large.cpp", QByteArray(300 * 1024, 'x')); ai.setProject(root, {"b.hpp", "large.cpp"}, true); const int beforeLarge = requests.size(); run();
-        check(requests.size() == beforeLarge && ai.report().contains(QStringLiteral("超过 AI 单文件发送上限")), "large source never silently truncated");
+        check(requests.size() == beforeLarge && ai.report().contains(QStringLiteral("exceeds the AI source limit")), "large source never silently truncated");
         ai.setProject(root, {"b.hpp"}, false); const int beforeTruncated = requests.size(); run(); check(requests.size() == beforeTruncated, "incomplete project scan blocks AI");
         qInfo() << "PASS: language profiles, removed-file impact, upload limit and incomplete scan";
 
@@ -235,7 +236,7 @@ inline int runAiSmokeTest(QApplication &app) {
             if (!dialog) return;
             auto *audience = dialog->findChild<QComboBox *>("aiAudience");
             check(audience && audience->count() == 3 && audience->currentData() == "intermediate", "three audience choices default to intermediate");
-            check(audience->itemText(0) == QStringLiteral("初学者") && audience->itemText(1) == QStringLiteral("进阶") && audience->itemText(2) == QStringLiteral("专业"), "audience choices show names only");
+            check(audience->itemText(0) == QStringLiteral("Beginner") && audience->itemText(1) == QStringLiteral("Intermediate") && audience->itemText(2) == QStringLiteral("Professional"), "audience choices show names only");
             if (!screenshot.isEmpty()) dialog->grab().save(screenshot + ".settings.png");
             dialog->reject();
         });

@@ -130,7 +130,7 @@ class JavaScriptTests(unittest.TestCase):
         self.assertEqual(self.run_index(),0,self.log); self.assertEqual(self.data()['state']['reused'],0)
         after = next(r['target_id'] for a,b,r in self.edges() if a == 'caller' and b == 'f')
         self.assertNotEqual(before,after)
-        self.assertTrue(any(a == 'caller' and b.startswith('未解析') for a,b,r in self.edges()))
+        self.assertTrue(any(a == 'caller' and b.startswith('Unresolved: ') for a,b,r in self.edges()))
         self.assertFalse(any(u['file'].startswith('node_modules') for u in self.data()['units']))
 
     def test_project_references_multiple_configs_and_size_limit(self):

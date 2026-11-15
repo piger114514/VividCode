@@ -31,6 +31,12 @@ inline int runSmokeTest(QApplication &app)
     auto result = scanProject(root.path());
     if (!require(result.files.size() == 2 && result.skippedDirectories == 2, "scan and exclusions")) return 1;
     VividCodeWindow window;
+    if (!require(app.property("vividcode.uiLanguage") == "en" &&
+        window.findChild<QAction *>("openProjectAction")->text() == "Open Project..." &&
+        window.findChild<QAction *>("aiSettingsAction")->text() == "AI Settings" &&
+        window.findChild<QTabWidget *>("sidebarViews")->tabText(1) == "Structure and Relations",
+        "English default, actions and sidebar labels")) return 1;
+
     if (!require(window.openProject(root.path()), "open project")) return 1;
     window.show(); app.processEvents();
     auto *tree = window.findChild<QTreeWidget *>("fileTree");

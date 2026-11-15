@@ -22,9 +22,20 @@ if ($LASTEXITCODE -ne 0) { throw 'CMake configure failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 & "$QtRoot\bin\windeployqt.exe" --release --no-translations --no-opengl-sw --no-system-d3d-compiler "$buildDir\Release\vividcode-viewer.exe"
 if ($LASTEXITCODE -ne 0) { throw 'Qt deployment failed' }
+# windeployqt cannot locate the MSVC runtime outside a Developer PowerShell.
+# Copy the licensed app-local CRT from the installed Visual Studio redist tree.
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+if (!(Test-Path -LiteralPath $vswhere)) { throw 'vswhere is required to locate the Visual C++ redistributable files.' }
+$visualStudio = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+if (!$visualStudio) { throw 'Visual Studio C++ tools were not found for runtime deployment.' }
+$crt = Get-ChildItem -Path (Join-Path $visualStudio 'VC/Redist/MSVC/*/x64/Microsoft.VC143.CRT') -Directory |
+    Sort-Object FullName -Descending | Select-Object -First 1
+if (!$crt) { throw 'Visual C++ x64 app-local redistributable directory not found.' }
+Get-ChildItem -LiteralPath $crt.FullName -Filter '*.dll' -File | Copy-Item -Destination (Join-Path $buildDir 'Release') -Force
+
 Copy-Item -LiteralPath "$QtRoot\plugins\platforms\qoffscreen.dll" -Destination "$buildDir\Release\platforms\qoffscreen.dll" -Force
 if ($RunTests) {
-    $tests = @('prototype_smoke','ai_explanations','pi_agent','cli_lifecycle','generation_commands','local_environment')
+    $tests = @('ui_language','source_highlighting','prototype_smoke','ai_explanations','pi_agent','cli_lifecycle','generation_commands','local_environment')
     if ($Languages -contains 'cpp') { $tests += @('semantic_backend','semantic_ui') }
     if ($Languages -contains 'csharp') { $tests += @('csharp_backend','csharp_ui') }
     if ($Languages -contains 'python') { $tests += @('python_backend','python_ui') }

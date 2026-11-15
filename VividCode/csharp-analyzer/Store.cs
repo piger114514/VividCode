@@ -17,29 +17,29 @@ internal static class Store
     public static JsonObject Read(string path)
     {
         Plain(path);
-        return JsonNode.Parse(File.ReadAllText(path, Encoding.UTF8).TrimStart('\uFEFF'))?.AsObject() ?? throw new InvalidDataException("无效 JSON：" + path);
+        return JsonNode.Parse(File.ReadAllText(path, Encoding.UTF8).TrimStart('\uFEFF'))?.AsObject() ?? throw new InvalidDataException("Invalid JSON: " + path);
     }
     public static void Plain(string path)
     {
         for (var part = Path.GetFullPath(path); !string.IsNullOrEmpty(part); part = Path.GetDirectoryName(part))
             if ((File.Exists(part) || Directory.Exists(part)) && (File.GetAttributes(part) & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("拒绝链接或 junction：" + part);
+                throw new IOException("Link or junction rejected: " + part);
     }
     public static string Layout(string root)
     {
         Plain(root);
         var manifest = Read(Path.Combine(root, ".vividcode", "project.json"));
         if (manifest["app"]?.GetValue<string>() != "vividcode" || manifest["schema"]?.GetValue<int>() != 1)
-            throw new InvalidDataException("请先在项目根目录执行 vividcode -g。");
+            throw new InvalidDataException("Run vividcode -g from the project root first.");
         var home = Environment.GetEnvironmentVariable("VIVIDCODE_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "vividcode");
-        if (!Path.IsPathFullyQualified(home)) throw new IOException("共享目录必须为绝对路径。");
+        if (!Path.IsPathFullyQualified(home)) throw new IOException("Shared directory must be an absolute path.");
         var sem = Path.Combine(home, "semantic", Hash(PathKey(root)));
         Plain(sem);
         if (Directory.Exists(sem))
         {
             var owner = Read(Path.Combine(sem, "project.json"));
             if (owner["app"]?.GetValue<string>() != "vividcode" || owner["schema"]?.GetValue<int>() != 1 || PathKey(owner["projectRoot"]!.GetValue<string>()) != PathKey(root))
-                throw new IOException("共享索引归属不匹配。");
+                throw new IOException("Shared index ownership mismatch.");
         }
         return Path.Combine(sem, "csharp");
     }
@@ -58,7 +58,7 @@ internal static class Store
     {
         var state = File.Exists(Path.Combine(cache, "config.json")) ? Read(Path.Combine(cache, "config.json")) : new JsonObject();
         var snapshot = File.Exists(Path.Combine(cache, "index.json")) ? Read(Path.Combine(cache, "index.json")) : new JsonObject { ["schema"] = Schema, ["units"] = new JsonArray() };
-        if (snapshot["schema"]?.GetValue<int>() != Schema) throw new InvalidDataException("C# 索引版本不兼容。");
+        if (snapshot["schema"]?.GetValue<int>() != Schema) throw new InvalidDataException("Incompatible C# index version.");
         snapshot["ok"] = true; snapshot["language"] = "c#"; snapshot["state"] = state;
         return snapshot;
     }
@@ -76,7 +76,7 @@ internal sealed class WorkerJob : IDisposable
     [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
     public WorkerJob()
     {
-        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("C# 分析器目前面向 Windows x64。");
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("The C# analyzer requires Windows x64.");
         handle = CreateJobObject(IntPtr.Zero, null);
         // JOBOBJECT_EXTENDED_LIMIT_INFORMATION on Windows x64: LimitFlags at byte 16.
         var info = Marshal.AllocHGlobal(144);
@@ -84,7 +84,7 @@ internal sealed class WorkerJob : IDisposable
         {
             Marshal.Copy(new byte[144], 0, info, 144); Marshal.WriteInt32(info, 16, 0x2000);
             if (handle == IntPtr.Zero || !SetInformationJobObject(handle, 9, info, 144) || !AssignProcessToJobObject(handle, GetCurrentProcess()))
-                throw new IOException("无法建立分析器子进程取消边界。");
+                throw new IOException("Could not establish analyzer child-process cancellation protection.");
         }
         finally { Marshal.FreeHGlobal(info); }
     }

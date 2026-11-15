@@ -1,3 +1,4 @@
+#include "UiLanguage.h"
 #include "PiAgent.h"
 #include "ProjectScanner.h"
 #include "SharedRuntime.h"
@@ -18,7 +19,7 @@ void check(bool ok, const QString &message) { if (!ok) throw std::runtime_error(
 void plainPath(QString path) {
     for (;;) {
         const QFileInfo info(path);
-        check(!info.isSymLink() && !info.isJunction(), QStringLiteral("Pi 设置路径不能经过链接：") + path);
+        check(!info.isSymLink() && !info.isJunction(), UiLanguage::text("Pi settings path cannot contain links: ") + path);
         const auto parent = info.dir().absolutePath(); if (parent == path) break; path = parent;
     }
 }
@@ -46,7 +47,7 @@ QString piScript(const QString &command) {
         const QString base = QFileInfo(packageDir).canonicalFilePath();
         if (!relative.isEmpty() && !base.isEmpty() && cli.startsWith(base + '/', Qt::CaseInsensitive)) return cli;
     }
-    throw std::runtime_error("无法识别此 Pi 启动脚本。请在 Pi 设置中选择官方 pi.cmd、Pi CLI 的 .js 文件或可执行文件。");
+    throw std::runtime_error("Unrecognized Pi launch script. Select the official pi.cmd, Pi CLI .js file or executable in Pi Settings.");
 }
 }
 
@@ -65,35 +66,35 @@ PiAgentPanel::PiAgentPanel(QWidget *parent) : QWidget(parent) {
     outputPanel = new QWidget(this); outputPanel->setObjectName("piOutputPanel");
     auto *outputLayout = new QVBoxLayout(outputPanel);
     auto *row = new QHBoxLayout;
-    status = new QLabel(QStringLiteral("打开项目后连接本机 Pi；使用 Pi 已配置的模型和登录。"));
+    status = new QLabel(UiLanguage::text("Open a project and connect local Pi using its configured model and login."));
     status->setObjectName("piStatus"); status->setTextFormat(Qt::PlainText); status->setWordWrap(true);
-    connectionButton = new QPushButton(QStringLiteral("连接 Pi")); connectionButton->setObjectName("piConnect"); row->addWidget(connectionButton);
-    settingsButton = new QPushButton(QStringLiteral("Pi 设置…")); settingsButton->setObjectName("piSettings"); row->addWidget(settingsButton); 
+    connectionButton = new QPushButton(UiLanguage::text("Connect Pi")); connectionButton->setObjectName("piConnect"); row->addWidget(connectionButton);
+    settingsButton = new QPushButton(UiLanguage::text("Pi Settings...")); settingsButton->setObjectName("piSettings"); row->addWidget(settingsButton);
 
     history = new QComboBox; history->setObjectName("piHistory"); history->setMinimumContentsLength(12); history->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    newSessionButton = new QPushButton(QStringLiteral("新会话")); newSessionButton->setObjectName("piNewSession");
-    historyRefresh = new QPushButton(QStringLiteral("刷新历史")); historyRefresh->setObjectName("piRefreshHistory");
+    newSessionButton = new QPushButton(UiLanguage::text("New Session")); newSessionButton->setObjectName("piNewSession");
+    historyRefresh = new QPushButton(UiLanguage::text("Refresh History")); historyRefresh->setObjectName("piRefreshHistory");
     row->insertWidget(0,history,1); row->insertWidget(1,newSessionButton); row->insertWidget(2,historyRefresh); outputLayout->addLayout(row); outputLayout->addWidget(status);
     connect(history,qOverload<int>(&QComboBox::activated),this,[this](int index){changeSession(history->itemData(index).toString());});
     connect(newSessionButton,&QPushButton::clicked,this,[this]{changeSession({});});
     connect(historyRefresh,&QPushButton::clicked,this,[this]{send({{"type","get_state"},{"id","history-state"}});});
-    historyTimer.setSingleShot(true); connect(&historyTimer,&QTimer::timeout,this,[this]{report(QStringLiteral("会话读取超时，请重新连接。"));disconnectAgent();});
+    historyTimer.setSingleShot(true); connect(&historyTimer,&QTimer::timeout,this,[this]{report(UiLanguage::text("Session read timed out. Please reconnect."));disconnectAgent();});
     conversation = new PiRichText; conversation->setObjectName("piConversation"); conversation->setReadOnly(true);
     conversation->setMinimumHeight(65); outputLayout->addWidget(conversation, 1);
-    autoRefresh = new QCheckBox(QStringLiteral("每次任务结束后更新代码关系和 AI 解释")); autoRefresh->setObjectName("piAutoRefresh");
-    autoRefresh->setToolTip(QStringLiteral("先刷新关系图，再用现有 AI 解析配置更新变更文件及受影响的解释，可能产生接口费用。默认关闭。")); outputLayout->addWidget(autoRefresh);
+    autoRefresh = new QCheckBox(UiLanguage::text("Update graph and AI explanations after each task")); autoRefresh->setObjectName("piAutoRefresh");
+    autoRefresh->setToolTip(UiLanguage::text("Refresh the graph, then update changed files and affected explanations using AI Settings. API charges may apply. Off by default.")); outputLayout->addWidget(autoRefresh);
     auto *composer = new QHBoxLayout;
     input = new QPlainTextEdit; input->setObjectName("piInput"); input->setPlaceholderText(QStringLiteral(""));
     input->setFixedHeight(58); composer->addWidget(input, 1);
-    sendButton = new QPushButton(QStringLiteral("发送")); sendButton->setObjectName("piSend"); auto *actions = new QVBoxLayout; actions->setSpacing(4); actions->addWidget(sendButton);
-    stopButton = new QPushButton(QStringLiteral("停止")); stopButton->setObjectName("piStop"); actions->addWidget(stopButton); composer->addLayout(actions); layout->addLayout(composer);
+    sendButton = new QPushButton(UiLanguage::text("Send")); sendButton->setObjectName("piSend"); auto *actions = new QVBoxLayout; actions->setSpacing(4); actions->addWidget(sendButton);
+    stopButton = new QPushButton(UiLanguage::text("Stop")); stopButton->setObjectName("piStop"); actions->addWidget(stopButton); composer->addLayout(actions); layout->addLayout(composer);
     outputPanel->hide();
     try {
         plainPath(configPath()); QFile file(configPath());
         if (file.exists()) {
-            check(file.open(QIODevice::ReadOnly), QStringLiteral("无法读取 Pi 设置。"));
+            check(file.open(QIODevice::ReadOnly), UiLanguage::text("Could not read Pi settings."));
             QJsonParseError error; const auto doc = QJsonDocument::fromJson(file.read(256 * 1024), &error);
-            check(error.error == QJsonParseError::NoError && doc.object().value("schema").toInt() == 1, QStringLiteral("Pi 设置格式无效，请重新配置。"));
+            check(error.error == QJsonParseError::NoError && doc.object().value("schema").toInt() == 1, UiLanguage::text("Invalid Pi settings format. Please configure Pi again."));
             piPath = doc.object().value("piPath").toString(); nodePath = doc.object().value("nodePath").toString();
             autoRefresh->setChecked(doc.object().value("autoRefresh").toBool());
         }
@@ -105,8 +106,8 @@ PiAgentPanel::PiAgentPanel(QWidget *parent) : QWidget(parent) {
     connect(stopButton, &QPushButton::clicked, this, &PiAgentPanel::stopTask);
     input->installEventFilter(this);
     startupTimer.setSingleShot(true); stopTimer.setSingleShot(true);
-    connect(&startupTimer, &QTimer::timeout, this, [this] { report(QStringLiteral("Pi 连接超时，请检查安装和登录状态。")); disconnectAgent(); });
-    connect(&stopTimer, &QTimer::timeout, this, [this] { report(QStringLiteral("Pi 未及时停止，正在关闭后台进程。")); disconnectAgent(); });
+    connect(&startupTimer, &QTimer::timeout, this, [this] { report(UiLanguage::text("Pi connection timed out. Check installation and login status.")); disconnectAgent(); });
+    connect(&stopTimer, &QTimer::timeout, this, [this] { report(UiLanguage::text("Pi did not stop in time. Closing the background process.")); disconnectAgent(); });
     connect(&process, &QProcess::started, this, [this] {
 #ifdef Q_OS_WIN
         // Cover launcher descendants and tool processes when the panel closes.
@@ -115,7 +116,7 @@ PiAgentPanel::PiAgentPanel(QWidget *parent) : QWidget(parent) {
         HANDLE child = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, FALSE, DWORD(process.processId()));
         if (!job || !SetInformationJobObject(HANDLE(job), JobObjectExtendedLimitInformation, &info, sizeof(info)) || !child || !AssignProcessToJobObject(HANDLE(job), child)) {
             if (child) CloseHandle(child); if (job) CloseHandle(HANDLE(job)); job = nullptr;
-            report(QStringLiteral("无法管理 Pi 后台进程树，连接已关闭。")); disconnectAgent(); return;
+            report(UiLanguage::text("Could not manage the Pi process tree. Connection closed.")); disconnectAgent(); return;
         }
         CloseHandle(child);
 #endif
@@ -124,7 +125,7 @@ PiAgentPanel::PiAgentPanel(QWidget *parent) : QWidget(parent) {
     connect(&process, &QProcess::readyReadStandardOutput, this, &PiAgentPanel::consumeOutput);
     connect(&process, &QProcess::readyReadStandardError, this, [this] { report(QString::fromUtf8(process.readAllStandardError()).left(1000)); });
     connect(&process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
-        if (error == QProcess::FailedToStart) { startupTimer.stop(); ready = false; report(QStringLiteral("Pi 启动失败：") + process.errorString()); updateControls(); }
+        if (error == QProcess::FailedToStart) { startupTimer.stop(); ready = false; report(UiLanguage::text("Pi failed to start: ") + process.errorString()); updateControls(); }
     });
     connect(&process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus) {
         consumeOutput(); startupTimer.stop(); stopTimer.stop(); historyTimer.stop(); historyBusy=false; ready = false; shuttingDown = false;
@@ -132,8 +133,8 @@ PiAgentPanel::PiAgentPanel(QWidget *parent) : QWidget(parent) {
         if (job) { CloseHandle(HANDLE(job)); job = nullptr; }
 #endif
         if (!closing) {
-            report(QStringLiteral("Pi 已断开（退出码 %1）。").arg(code));
-            if (running) settle(QStringLiteral("任务中断；检查已写入的源码变化。"));
+            report(UiLanguage::text("Pi disconnected (exit code %1).").arg(code));
+            if (running) settle(UiLanguage::text("Task interrupted. Check source changes already written."));
         }
         updateControls();
         if (autoConnectPending && !root.isEmpty()) { autoConnectPending=false; QTimer::singleShot(0,this,&PiAgentPanel::connectAgent); }
@@ -163,7 +164,7 @@ void PiAgentPanel::setProject(const QString &path) {
     if (scanner) { scanner->wait(); delete scanner; scanner = nullptr; }
     running = scanning = updating = false; pendingPrompt.clear(); beforeHashes.clear();
     disconnectAgent(); root = canonical; sessionFile.clear(); history->clear(); conversation->clear(); input->clear();
-    report(root.isEmpty() ? QStringLiteral("请先打开项目。") : QStringLiteral("当前项目：") + QDir::toNativeSeparators(root)); updateControls();
+    report(root.isEmpty() ? UiLanguage::text("Open a project first.") : UiLanguage::text("Current project: ") + QDir::toNativeSeparators(root)); updateControls();
     autoConnectPending = !root.isEmpty();
     if (autoConnectPending && process.state()==QProcess::NotRunning) {
         autoConnectPending=false; const QString expected=root;
@@ -185,11 +186,11 @@ void PiAgentPanel::refreshHistory() {
             history->addItem(file.lastModified().toString("yyyy-MM-dd HH:mm")+" · "+file.completeBaseName().right(12),file.absoluteFilePath());
     }
     int selected=history->findData(sessionFile);
-    if(selected<0){history->insertItem(0,QStringLiteral("当前会话"),sessionFile);selected=0;}history->setCurrentIndex(selected);
+    if(selected<0){history->insertItem(0,UiLanguage::text("Current session"),sessionFile);selected=0;}history->setCurrentIndex(selected);
 }
 void PiAgentPanel::changeSession(const QString &path) {
     if(!ready||isBusy())return;
-    if(!path.isEmpty()&&!projectSession(path)){report(QStringLiteral("会话不属于当前项目或已不可用。"));refreshHistory();return;}
+    if(!path.isEmpty()&&!projectSession(path)){report(UiLanguage::text("Session is unavailable or does not belong to this project."));refreshHistory();return;}
     historyBusy=true;updateControls();historyTimer.start(15000);
     QJsonObject command{{"id","session-change"},{"type",path.isEmpty()?"new_session":"switch_session"}};
     if(!path.isEmpty())command["sessionPath"]=path;send(command);
@@ -205,23 +206,23 @@ void PiAgentPanel::showMessage(const QJsonObject &message) {
 }
 void PiAgentPanel::saveSettings() {
     try {
-        plainPath(configPath()); check(QDir().mkpath(sharedHome()), QStringLiteral("无法创建设置目录。"));
-        QSaveFile file(configPath()); check(file.open(QIODevice::WriteOnly), QStringLiteral("无法保存 Pi 设置。"));
+        plainPath(configPath()); check(QDir().mkpath(sharedHome()), UiLanguage::text("Could not create the settings directory."));
+        QSaveFile file(configPath()); check(file.open(QIODevice::WriteOnly), UiLanguage::text("Could not save Pi settings."));
         const auto bytes = QJsonDocument(QJsonObject{{"schema", 1}, {"piPath", piPath}, {"nodePath", nodePath}, {"autoRefresh", autoRefresh->isChecked()}}).toJson();
-        check(file.write(bytes) == bytes.size() && file.commit(), QStringLiteral("Pi 设置保存失败。"));
+        check(file.write(bytes) == bytes.size() && file.commit(), UiLanguage::text("Pi settings could not be saved."));
     } catch (const std::exception &e) { report(QString::fromUtf8(e.what())); }
 }
 void PiAgentPanel::configure() {
-    QDialog dialog(this); dialog.setWindowTitle(QStringLiteral("vividcode · Pi 设置")); dialog.resize(640, 220);
+    QDialog dialog(this); dialog.setWindowTitle(UiLanguage::text("vividcode - Pi Settings")); dialog.resize(640, 220);
     auto *layout = new QVBoxLayout(&dialog); auto *form = new QFormLayout; layout->addLayout(form);
     auto addPath = [&](const QString &label, const QString &value) {
         auto *row = new QWidget; auto *line = new QHBoxLayout(row); line->setContentsMargins(0,0,0,0);
-        auto *edit = new QLineEdit(value); edit->setPlaceholderText(QStringLiteral("留空自动检测")); line->addWidget(edit, 1);
-        auto *browse = new QPushButton(QStringLiteral("浏览…")); line->addWidget(browse); form->addRow(label, row);
+        auto *edit = new QLineEdit(value); edit->setPlaceholderText(UiLanguage::text("Leave blank to auto-detect")); line->addWidget(edit, 1);
+        auto *browse = new QPushButton(UiLanguage::text("Browse...")); line->addWidget(browse); form->addRow(label, row);
         connect(browse, &QPushButton::clicked, &dialog, [&, edit, label] { const auto file = QFileDialog::getOpenFileName(&dialog, label, edit->text()); if (!file.isEmpty()) edit->setText(file); }); return edit;
     };
-    auto *pi = addPath(QStringLiteral("Pi 路径"), piPath); auto *node = addPath(QStringLiteral("Node.js 路径"), nodePath);
-    auto *help = new QLabel(QStringLiteral("支持官方 Pi 安装及 npm 安装的 pi.cmd、CLI .js 或可执行文件。模型、登录和工具沿用本机 Pi 配置；连接后可直接修改当前项目。")); help->setWordWrap(true); layout->addWidget(help);
+    auto *pi = addPath(UiLanguage::text("Pi path"), piPath); auto *node = addPath(UiLanguage::text("Node.js path"), nodePath);
+    auto *help = new QLabel(UiLanguage::text("Supports official Pi installations, npm pi.cmd, CLI .js files and executables. Uses local Pi models, login and tools; connecting allows Pi to modify the current project.")); help->setWordWrap(true); layout->addWidget(help);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel); layout->addWidget(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept); connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     if (dialog.exec() == QDialog::Accepted) { piPath = pi->text().trimmed(); nodePath = node->text().trimmed(); saveSettings(); }
@@ -232,18 +233,18 @@ void PiAgentPanel::connectAgent() {
         QString command = piPath;
         if (command.isEmpty()) command = QStandardPaths::findExecutable("pi");
         if (command.isEmpty() && QFileInfo::exists(QDir::homePath() + "/.pi/agent/bin/pi.cmd")) command = QDir::homePath() + "/.pi/agent/bin/pi.cmd";
-        check(!command.isEmpty() && QFileInfo(command).isFile(), QStringLiteral("找不到本机 Pi，请先安装并登录，或在 Pi 设置中选择路径。"));
+        check(!command.isEmpty() && QFileInfo(command).isFile(), UiLanguage::text("Local Pi not found. Install and log in first, or select its path in Pi Settings."));
         const auto script = piScript(command); QString program = command; QStringList args;
         if (!script.isEmpty()) {
             program = nodePath;
             if (program.isEmpty()) program = QStandardPaths::findExecutable("node");
             if (program.isEmpty()) program = qEnvironmentVariable("LOCALAPPDATA") + "/pi-node/current/node.exe";
-            check(QFileInfo(program).isFile(), QStringLiteral("找不到 Node.js，请在 Pi 设置中指定路径。")); args.append(script);
+            check(QFileInfo(program).isFile(), UiLanguage::text("Node.js not found. Set its path in Pi Settings.")); args.append(script);
         }
         args << "--mode" << "rpc";
         output.clear(); ready = false; process.setWorkingDirectory(root); process.setProgram(program); process.setArguments(args);
         auto env = QProcessEnvironment::systemEnvironment(); env.remove("NODE_OPTIONS"); env.remove("NODE_PATH"); process.setProcessEnvironment(env);
-        conversation->setNode(script.isEmpty()?nodePath:program); report(QStringLiteral("正在连接本机 Pi…")); process.start(); startupTimer.start(30000); updateControls();
+        conversation->setNode(script.isEmpty()?nodePath:program); report(UiLanguage::text("Connecting to local Pi...")); process.start(); startupTimer.start(30000); updateControls();
     } catch (const std::exception &e) { report(QString::fromUtf8(e.what())); }
 }
 void PiAgentPanel::disconnectAgent() {
@@ -263,7 +264,7 @@ void PiAgentPanel::disconnectAgent() {
 void PiAgentPanel::send(QJsonObject command) {
     if (!command.contains("id")) command["id"] = QString::number(++serial);
     const auto bytes = QJsonDocument(command).toJson(QJsonDocument::Compact) + '\n';
-    if (process.write(bytes) != bytes.size()) { report(QStringLiteral("无法向 Pi 写入命令。")); disconnectAgent(); }
+    if (process.write(bytes) != bytes.size()) { report(UiLanguage::text("Could not send a command to Pi.")); disconnectAgent(); }
 }
 bool PiAgentPanel::eventFilter(QObject *object, QEvent *event) {
     if (object == input && event->type() == QEvent::KeyPress) {
@@ -278,7 +279,7 @@ bool PiAgentPanel::eventFilter(QObject *object, QEvent *event) {
 void PiAgentPanel::sendPrompt() {
     if (!ready || historyBusy || scanning || updating || shuttingDown || stopTimer.isActive() || root.isEmpty() || input->toPlainText().trimmed().isEmpty()) return;
     pendingPrompt = input->toPlainText();
-    if (pendingPrompt.toUtf8().size() > 256 * 1024) { report(QStringLiteral("单次输入不能超过 256 KiB。")); pendingPrompt.clear(); return; }
+    if (pendingPrompt.toUtf8().size() > 256 * 1024) { report(UiLanguage::text("A single input cannot exceed 256 KiB.")); pendingPrompt.clear(); return; }
     if (running) {
         showMessage({{"role","user"},{"content",pendingPrompt}});
         conversation->setThinking(true);
@@ -289,19 +290,19 @@ void PiAgentPanel::sendPrompt() {
     autoThisRun = autoRefresh->isChecked(); snapshot(true);
 }
 void PiAgentPanel::snapshot(bool before) {
-    scanning = true; updateControls(); report(before ? QStringLiteral("正在记录任务前的源码状态…") : QStringLiteral("正在检查任务后的源码变化…"));
+    scanning = true; updateControls(); report(before ? UiLanguage::text("Recording source state before the task...") : UiLanguage::text("Checking source changes after the task..."));
     scanCancelled = std::make_shared<std::atomic_bool>(false); const auto token = scanCancelled; const QString scanRoot = root;
     QPointer<PiAgentPanel> owner(this);
     scanner = QThread::create([owner, token, scanRoot, before] {
         QMap<QString, QByteArray> hashes; QString error;
         try {
             auto checkpoint = [token] { if (token->load()) throw std::runtime_error("cancelled"); };
-            check(QFileInfo(scanRoot).isDir(), QStringLiteral("项目目录已不可用。"));
+            check(QFileInfo(scanRoot).isDir(), UiLanguage::text("Project directory is no longer available."));
             const auto result = scanProject(scanRoot, readPolicy(scanRoot), checkpoint);
-            check(!result.truncated && result.error.isEmpty(), QStringLiteral("文件扫描未完成；请调整文件上限后重试。"));
+            check(!result.truncated && result.error.isEmpty(), UiLanguage::text("File scan incomplete. Adjust the file limit and retry."));
             for (const auto &relative : result.files) {
                 checkpoint(); const QString path = QDir(scanRoot).filePath(relative); plainPath(path);
-                check(QFileInfo(path).canonicalFilePath().startsWith(scanRoot + '/', Qt::CaseInsensitive), QStringLiteral("源码超出项目边界。"));
+                check(QFileInfo(path).canonicalFilePath().startsWith(scanRoot + '/', Qt::CaseInsensitive), UiLanguage::text("Source is outside the project boundary."));
                 QFile file(path); check(file.open(QIODevice::ReadOnly), relative + ": " + file.errorString());
                 QCryptographicHash hash(QCryptographicHash::Sha256);
                 while (!file.atEnd()) { checkpoint(); const auto bytes = file.read(1024 * 1024); check(!bytes.isEmpty() || file.error() == QFileDevice::NoError, relative + ": " + file.errorString()); hash.addData(bytes); }
@@ -311,19 +312,19 @@ void PiAgentPanel::snapshot(bool before) {
         if (owner && !token->load()) QMetaObject::invokeMethod(owner, [owner, token, hashes, error, before] {
             if (!owner || token->load()) return;
             owner->scanner->wait(); delete owner->scanner; owner->scanner = nullptr; owner->scanning = false;
-            if (!error.isEmpty()) { owner->conversation->setThinking(false); owner->report(error + QStringLiteral(" 可使用 F5 和顶部 AI 解析手动更新。")); owner->pendingPrompt.clear(); owner->updateControls(); return; }
+            if (!error.isEmpty()) { owner->conversation->setThinking(false); owner->report(error + UiLanguage::text(" Use F5 and AI Analyze to update manually.")); owner->pendingPrompt.clear(); owner->updateControls(); return; }
             if (before) {
                 owner->beforeHashes = hashes;
-                if (!owner->ready) { owner->conversation->setThinking(false); owner->report(QStringLiteral("Pi 已断开，请重新连接后发送。")); owner->updateControls(); return; }
+                if (!owner->ready) { owner->conversation->setThinking(false); owner->report(UiLanguage::text("Pi disconnected. Reconnect before sending.")); owner->updateControls(); return; }
                 owner->running = true; owner->startedThisPrompt = false; owner->promptId = QString::number(++owner->serial);
 
                 owner->send({{"id", owner->promptId}, {"type", "prompt"}, {"message", owner->pendingPrompt}});
-                owner->pendingPrompt.clear(); owner->input->clear(); owner->status->setText(QStringLiteral("Pi 正在执行…"));
+                owner->pendingPrompt.clear(); owner->input->clear(); owner->status->setText(UiLanguage::text("Pi is working..."));
             } else {
                 QSet<QString> paths; for (auto it = hashes.begin(); it != hashes.end(); ++it) paths.insert(it.key());
                 for (auto it = owner->beforeHashes.begin(); it != owner->beforeHashes.end(); ++it) paths.insert(it.key());
                 QStringList changed; for (const auto &path : paths) if (hashes.value(path) != owner->beforeHashes.value(path)) changed.append(path); changed.sort();
-                owner->report(QStringLiteral("任务结束，%1 个源码文件发生变化。").arg(changed.size()));
+                owner->report(UiLanguage::text("Task finished; %1 source files changed.").arg(changed.size()));
                 if (owner->autoThisRun) { owner->updating = true; emit owner->refreshRequested(changed); }
             }
             owner->updateControls();
@@ -333,7 +334,7 @@ void PiAgentPanel::snapshot(bool before) {
 void PiAgentPanel::stopTask() {
     if (!running || stopTimer.isActive()) return;
     send({{"type", "clear_queue"}}); send({{"type", "abort"}, {"id", "abort-task"}});
-    report(QStringLiteral("正在停止 Pi；已写入的文件会保留。")); stopTimer.start(10000); updateControls();
+    report(UiLanguage::text("Stopping Pi. Files already written will be retained.")); stopTimer.start(10000); updateControls();
 }
 void PiAgentPanel::settle(const QString &message) {
     conversation->setThinking(false);
@@ -344,50 +345,50 @@ void PiAgentPanel::consumeOutput() {
     while (output.contains('\n')) {
         const auto index = output.indexOf('\n'); auto line = output.left(index); output.remove(0, index + 1); if (line.endsWith('\r')) line.chop(1);
         if (line.isEmpty()) continue;
-        if (line.size() > 16 * 1024 * 1024) { report(QStringLiteral("Pi 单条消息超过 16 MiB，已断开。")); disconnectAgent(); return; }
+        if (line.size() > 16 * 1024 * 1024) { report(UiLanguage::text("Pi message exceeded 16 MiB. Disconnected.")); disconnectAgent(); return; }
         QJsonParseError error; const auto doc = QJsonDocument::fromJson(line, &error);
-        if (error.error != QJsonParseError::NoError || !doc.isObject()) { report(QStringLiteral("Pi 返回了无效协议数据，已断开。")); disconnectAgent(); return; }
+        if (error.error != QJsonParseError::NoError || !doc.isObject()) { report(UiLanguage::text("Pi returned invalid protocol data. Disconnected.")); disconnectAgent(); return; }
         record(doc.object());
     }
-    if (output.size() > 16 * 1024 * 1024) { output.clear(); report(QStringLiteral("Pi 消息过大，已断开。")); disconnectAgent(); }
+    if (output.size() > 16 * 1024 * 1024) { output.clear(); report(UiLanguage::text("Pi message too large. Disconnected.")); disconnectAgent(); }
 }
 void PiAgentPanel::record(const QJsonObject &object) {
     const auto type = object.value("type").toString();
     if (type == "response") {
         const QString id = object.value("id").toString();
         if (!object.value("success").toBool()) {
-            report(QStringLiteral("Pi 请求失败：") + object.value("error").toString());
+            report(UiLanguage::text("Pi request failed: ") + object.value("error").toString());
             if(id=="session-change"||id=="history-state"||id=="history-messages"){historyBusy=false;historyTimer.stop();refreshHistory();updateControls();}
             if (id == "handshake") disconnectAgent();
             if (id == promptId && running) { running = false; updateControls(); }
             return;
         }
         if(id=="session-change") {
-            if(object.value("data").toObject().value("cancelled").toBool()){historyBusy=false;historyTimer.stop();refreshHistory();report(QStringLiteral("会话切换已取消。"));updateControls();return;}
+            if(object.value("data").toObject().value("cancelled").toBool()){historyBusy=false;historyTimer.stop();refreshHistory();report(UiLanguage::text("Session switch cancelled."));updateControls();return;}
             conversation->clear();input->clear();send({{"type","get_state"},{"id","history-state"}});send({{"type","get_messages"},{"id","history-messages"}});return;
         }
         if(id=="history-state") {sessionFile=QDir::fromNativeSeparators(object.value("data").toObject().value("sessionFile").toString());refreshHistory();return;}
         if(id=="history-messages") {
             conversation->clear();for(const auto &message:object.value("data").toObject().value("messages").toArray())showMessage(message.toObject());
-            historyBusy=false;historyTimer.stop();report(QStringLiteral("会话已就绪。"));updateControls();return;
+            historyBusy=false;historyTimer.stop();report(UiLanguage::text("Session ready."));updateControls();return;
         }
         if (id == "handshake") {
             startupTimer.stop(); ready = true; sessionFile=QDir::fromNativeSeparators(object.value("data").toObject().value("sessionFile").toString()); refreshHistory(); historyBusy=true;historyTimer.start(15000);send({{"type","get_messages"},{"id","history-messages"}}); const auto model = object.value("data").toObject().value("model").toObject();
-            report(QStringLiteral("已连接 Pi · %1").arg(model.value("id").toString(QStringLiteral("模型由 Pi 配置")))); updateControls();
+            report(UiLanguage::text("Connected to Pi - %1").arg(model.value("id").toString(UiLanguage::text("Model configured by Pi")))); updateControls();
         } else if (id == promptId && object.value("data").toObject().value("disposition") == "handled" && running && !startedThisPrompt) {
             // A consumed extension command need not start an agent run.
-            settle(QStringLiteral("Pi 已处理此命令。"));
-        } else if (id == "abort-task" && running) settle(QStringLiteral("Pi 已停止。"));
+            settle(UiLanguage::text("Pi processed this command."));
+        } else if (id == "abort-task" && running) settle(UiLanguage::text("Pi stopped."));
     } else if (type == "agent_start") {
         startedThisPrompt = true;
         if (!running && !scanning && !updating) { running = true; autoThisRun = false; beforeHashes.clear(); }
-        status->setText(QStringLiteral("Pi 正在执行…")); updateControls();
+        status->setText(UiLanguage::text("Pi is working...")); updateControls();
     } else if (type == "message_end" && object.value("message").toObject().value("role")=="assistant") {
         const auto message=object.value("message").toObject();showMessage(message);
         if(!message.value("errorMessage").toString().isEmpty())report(message.value("errorMessage").toString());
-    } else if (type == "agent_settled") settle(object.value("aborted").toBool() ? QStringLiteral("Pi 已停止。") : QStringLiteral("Pi 本轮任务已完成。"));
+    } else if (type == "agent_settled") settle(object.value("aborted").toBool() ? UiLanguage::text("Pi stopped.") : UiLanguage::text("Pi completed this task."));
     else if (type == "extension_ui_request") requestUi(object);
-    else if (type == "auto_retry_start" || type == "auto_compaction_start") status->setText(QStringLiteral("Pi 正在重试或整理上下文…"));
+    else if (type == "auto_retry_start" || type == "auto_compaction_start") status->setText(UiLanguage::text("Pi is retrying or compacting context..."));
     // agent_end is deliberately not completion: retries/follow-up may still run.
 }
 void PiAgentPanel::requestUi(const QJsonObject &object) {
@@ -417,7 +418,7 @@ void PiAgentPanel::finishRefresh(const QString &message) { updating = false; rep
 void PiAgentPanel::updateControls() {
     const bool disconnected = process.state() == QProcess::NotRunning;
     history->setEnabled(ready&&!isBusy());newSessionButton->setEnabled(ready&&!isBusy());historyRefresh->setEnabled(ready&&!isBusy());
-    connectionButton->setText(disconnected ? QStringLiteral("连接 Pi") : QStringLiteral("断开 Pi"));
+    connectionButton->setText(disconnected ? UiLanguage::text("Connect Pi") : UiLanguage::text("Disconnect Pi"));
     connectionButton->setEnabled(!root.isEmpty() && !isBusy() && !shuttingDown);
     settingsButton->setEnabled(disconnected && !isBusy()); sendButton->setEnabled(ready && !historyBusy && !scanning && !updating && !shuttingDown && !stopTimer.isActive());
     stopButton->setEnabled(running && !stopTimer.isActive()); autoRefresh->setEnabled(!isBusy());

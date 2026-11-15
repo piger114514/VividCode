@@ -31,7 +31,7 @@ inline int runEnvironmentSmokeTest(QApplication &app) {
     clickOutsidePopup(window); app.processEvents();
     if (!QFileInfo::exists(directory.filePath(".vividcode/project.json"))) return fail(__LINE__);
     auto *messages = window.findChild<QPlainTextEdit *>("semanticDiagnostics");
-    if (!python && !messages->toPlainText().contains(QStringLiteral("Python 暂不可分析"))) return fail(__LINE__);
+    if (!python && !messages->toPlainText().contains(QStringLiteral("Python is not available for analysis"))) return fail(__LINE__);
     QMenu menu; panel->addContextActions(&menu);
     if (!menu.findChild<QAction *>("analysisEnvironmentAction")) return fail(__LINE__);
     if (python) {
@@ -42,7 +42,7 @@ inline int runEnvironmentSmokeTest(QApplication &app) {
         qInfo() << "PASS: Python-only component uses local Python without Node/.NET/LLVM or C++ helper files"; return 0;
     }
     if (!javascript) {
-        if (!messages->toPlainText().contains(QStringLiteral("尚未安装 JavaScript/TypeScript"))) return fail(__LINE__);
+        if (!messages->toPlainText().contains(QStringLiteral("JavaScript/TypeScript analyzer is not installed"))) return fail(__LINE__);
         qInfo() << "PASS: core-only browses files and creates launcher without language environments; missing components isolated"; return 0;
     }
     const auto state = [&] { QFile file(VividCode::semanticDirectory(directory.path()) + "/javascript/config.json"); return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object() : QJsonObject(); };

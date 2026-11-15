@@ -1,4 +1,5 @@
 #pragma once
+#include "UiLanguage.h"
 #include "SharedRuntime.h"
 #include <QtCore>
 
@@ -61,15 +62,15 @@ inline QList<AnalysisEntry> detectAnalysisEntries(const QString &root, const QSt
     }
     bool csEntry = false, cppEntry = false;
     for (const auto &entry : result) { csEntry |= entry.language == "c#"; cppEntry |= entry.language == "c++"; }
-    if (csSources && !csEntry) result.append({"c#", {}, QStringLiteral("C# 项目（尚未找到 .sln / .csproj）")});
-    if (cppSources && !cppEntry) result.append({"c++", {}, QStringLiteral("C++ 项目（尚未找到编译数据库）")});
+    if (csSources && !csEntry) result.append({"c#", {}, UiLanguage::text("C# project (.sln / .csproj not found)")});
+    if (cppSources && !cppEntry) result.append({"c++", {}, UiLanguage::text("C++ project (compilation database not found)")});
     // Keep refreshing a previously indexed Python project after its last file is
     // deleted, so both its language cache and shared graph become empty.
     if (pythonSources || !state("/python/config.json").value("project_root").toString().isEmpty())
-        result.append({"python", QFileInfo(root).absoluteFilePath(), QStringLiteral("Python · 项目源码")});
+        result.append({"python", QFileInfo(root).absoluteFilePath(), UiLanguage::text("Python - project source")});
     if (javascriptSources || !state("/javascript/config.json").value("project_root").toString().isEmpty())
-        result.append({"javascript", QFileInfo(root).absoluteFilePath(), QStringLiteral("JavaScript/TypeScript · 项目源码")});
+        result.append({"javascript", QFileInfo(root).absoluteFilePath(), UiLanguage::text("JavaScript/TypeScript - project source")});
     if (javaSources || QFileInfo::exists(root + "/vividcode.java.json") || !state("/java/config.json").value("project_root").toString().isEmpty())
-        result.append({"java", QFileInfo(root).absoluteFilePath(), QStringLiteral("Java · 项目源码 / vividcode.java.json")});
+        result.append({"java", QFileInfo(root).absoluteFilePath(), UiLanguage::text("Java - project source / vividcode.java.json")});
     return result;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <QWidget>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QProcess>
 #include <QStringList>
 #include <QMap>
@@ -31,6 +32,7 @@ public:
     QString focusedSymbol() const { return selectedSymbol; }
     QStringList analysisLanguages() const { return selectedEntries.keys(); }
     QMap<QString, QStringList> fileDependencies() const;
+    QJsonArray sourceHighlights(const QString &path) const;
 signals:
     void sourceRequested(const QString &path, int line, int column);
     void settled();

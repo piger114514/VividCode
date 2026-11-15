@@ -16,22 +16,22 @@ internal static class Program
         JsonObject? state = null; string? cache = null;
         try
         {
-            if (args.Length == 0 || args[0] is not ("index" or "export")) throw new ArgumentException("使用 index/export --project 根目录 [--project-file .csproj/.sln --configuration Debug/Release --framework 目标框架]。");
+            if (args.Length == 0 || args[0] is not ("index" or "export")) throw new ArgumentException("Usage: index/export --project ROOT [--project-file .csproj/.sln --configuration Debug/Release --framework FRAMEWORK].");
             var options = new Dictionary<string, string>();
             for (int i = 1; i < args.Length; i += 2)
-                if (i + 1 >= args.Length || !new[] { "--project", "--project-file", "--configuration", "--framework" }.Contains(args[i]) || !options.TryAdd(args[i], args[i + 1])) throw new ArgumentException("无效或重复参数。");
+                if (i + 1 >= args.Length || !new[] { "--project", "--project-file", "--configuration", "--framework" }.Contains(args[i]) || !options.TryAdd(args[i], args[i + 1])) throw new ArgumentException("Invalid or duplicate arguments.");
             var root = Path.GetFullPath(options["--project"]);
             cache = Store.Layout(root);
             using var guard = Store.Lock(root);
             cache = Store.Layout(root);
             if (args[0] == "export") { Store.Emit(Export(cache)); return 0; }
-            if (!options.TryGetValue("--project-file", out var input)) throw new ArgumentException("请提供 --project-file。");
+            if (!options.TryGetValue("--project-file", out var input)) throw new ArgumentException("Provide --project-file.");
             input = Path.GetFullPath(input); Store.Plain(input);
-            if (!Store.PathKey(input).StartsWith(Store.PathKey(root) + "/", StringComparison.Ordinal)) throw new ArgumentException("导入的工程必须位于当前项目根目录内。");
+            if (!Store.PathKey(input).StartsWith(Store.PathKey(root) + "/", StringComparison.Ordinal)) throw new ArgumentException("Imported project must be within the current project root.");
             var extension = Path.GetExtension(input).ToLowerInvariant();
-            if (extension is not (".csproj" or ".sln")) throw new ArgumentException("请选择 .csproj 或 .sln。");
+            if (extension is not (".csproj" or ".sln")) throw new ArgumentException("Select .csproj or .sln.");
             string configuration = options.GetValueOrDefault("--configuration", "Debug"), framework = options.GetValueOrDefault("--framework", "");
-            if (configuration is not ("Debug" or "Release")) throw new ArgumentException("配置应为 Debug 或 Release。");
+            if (configuration is not ("Debug" or "Release")) throw new ArgumentException("Configuration must be Debug or Release.");
             Directory.CreateDirectory(cache);
             var owner = Path.Combine(Path.GetDirectoryName(cache)!, "project.json");
             if (!File.Exists(owner)) Store.Atomic(owner, new JsonObject { ["app"] = "vividcode", ["schema"] = 1, ["projectRoot"] = root.Replace('\\', '/') });
@@ -76,7 +76,7 @@ internal static class Program
                 }
                 foreach (var r in unit["relations"]!.AsArray().OfType<JsonObject>()) relations.TryAdd(r.ToJsonString(), r);
             }
-            units.Insert(0, new JsonObject { ["file"] = result["state"]?["project_file"]?.DeepClone(), ["config_id"] = "csharp-solution", ["language"] = "c#", ["scope_name"] = "C# 全工程（已加载配置）",
+            units.Insert(0, new JsonObject { ["file"] = result["state"]?["project_file"]?.DeepClone(), ["config_id"] = "csharp-solution", ["language"] = "c#", ["scope_name"] = "Entire C# project (loaded configuration)",
                 ["symbols"] = new JsonArray(symbols.Values.Select(s => s.DeepClone()).ToArray()), ["relations"] = new JsonArray(relations.Values.Select(r => r.DeepClone()).ToArray()) });
         }
         return result;
@@ -93,7 +93,7 @@ internal static class Program
         public void Verify()
         {
             foreach (var (path, hash) in Files)
-                if (!File.Exists(path) || Store.FileHash(path) != hash) throw new IOException("分析期间输入发生变化，请重试：" + path);
+                if (!File.Exists(path) || Store.FileHash(path) != hash) throw new IOException("Inputs changed during analysis. Retry: " + path);
         }
     }
     static async Task Index(string root, string cache, string input, JsonObject state, string msbuild)
@@ -104,7 +104,7 @@ internal static class Program
         workspace.LoadMetadataForReferencedProjects = false;
         var workspaceFailures = new List<string>();
         workspace.WorkspaceFailed += (_, e) => { lock (workspaceFailures) { if (e.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure) workspaceFailures.Add(e.Diagnostic.Message); } Store.Emit(new { protocol = 1, type = "diagnostic", message = e.Diagnostic.Message }); };
-        Store.Emit(new { protocol = 1, type = "progress", current = 0, total = 0, file = "加载 C# 工程及真实编译配置…" });
+        Store.Emit(new { protocol = 1, type = "progress", current = 0, total = 0, file = "Loading C# project and compilation configuration..." });
         var inputs = new Inputs(); inputs.Capture(input);
         using var unity = new UnityProjectLoader();
         var isUnity = UnityProjectLoader.IsUnity(root, input);
@@ -113,10 +113,10 @@ internal static class Program
         if (isUnity) solution = await unity.Load(root, input, state["configuration"]!.GetValue<string>(), framework, msbuild, inputs.Capture);
         else if (Path.GetExtension(input).Equals(".sln", StringComparison.OrdinalIgnoreCase)) solution = await workspace.OpenSolutionAsync(input);
         else { await workspace.OpenProjectAsync(input); solution = workspace.CurrentSolution; }
-        if (workspaceFailures.Count > 0) throw new InvalidDataException(string.Join('\n', workspaceFailures.Take(15)) + "\n请确认项目 SDK、工作负载和 NuGet 依赖可用；必要时在项目中执行 dotnet restore。");
+        if (workspaceFailures.Count > 0) throw new InvalidDataException(string.Join('\n', workspaceFailures.Take(15)) + "\nCheck the project SDK, workloads and NuGet dependencies; run dotnet restore in the project if needed.");
         var projects = solution.Projects.Where(p => p.Language == LanguageNames.CSharp).OrderBy(p => p.FilePath, StringComparer.Ordinal).ToArray();
-        if (projects.Length == 0) throw new InvalidDataException("工程中没有可加载的 C# 项目。");
-        if (solution.Projects.Any(p => p.Language != LanguageNames.CSharp)) throw new InvalidDataException("本轮只支持纯 C# 工程；混合语言解决方案请导入 C# 的 .csproj。");
+        if (projects.Length == 0) throw new InvalidDataException("No loadable C# projects found.");
+        if (solution.Projects.Any(p => p.Language != LanguageNames.CSharp)) throw new InvalidDataException("Only C# projects are supported. For mixed-language solutions, import the C# .csproj.");
         var keys = projects.ToDictionary(p => p.Id, p => Store.PathKey(p.FilePath!) + "|" + p.Name + "|" + state["configuration"] + "|" + framework);
         var assemblies = new Dictionary<string, string>();
         var local = new Dictionary<ProjectId, string>(); var force = new HashSet<ProjectId>();
@@ -150,7 +150,7 @@ internal static class Program
         string Fingerprint(Project project, HashSet<ProjectId> active)
         {
             if (fingerprints.TryGetValue(project.Id, out var cached)) return cached;
-            if (!active.Add(project.Id)) throw new InvalidDataException("项目引用存在循环。");
+            if (!active.Add(project.Id)) throw new InvalidDataException("Project references contain a cycle.");
             var deps = project.ProjectReferences.OrderBy(r => keys[r.ProjectId]).Select(r => Fingerprint(solution.GetProject(r.ProjectId)!, active)).ToArray();
             active.Remove(project.Id);
             if (project.ProjectReferences.Any(r => force.Contains(r.ProjectId))) force.Add(project.Id);
@@ -162,7 +162,7 @@ internal static class Program
         var compilations = new Dictionary<ProjectId, Compilation>();
         foreach (var project in projects)
         {
-            var compilation = await project.GetCompilationAsync() ?? throw new InvalidDataException("无法创建编译：" + project.Name);
+            var compilation = await project.GetCompilationAsync() ?? throw new InvalidDataException("Could not create compilation: " + project.Name);
             if (isUnity && project.AnalyzerReferences.Count > 0)
             {
                 // Workspace's public compilation API does not expose generator
@@ -178,13 +178,13 @@ internal static class Program
                 driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out compilation, out var generatorDiagnostics);
                 var failures = driver.GetRunResult().Results.Where(r => r.Exception != null).Select(r => r.Exception!.Message)
                     .Concat(generatorDiagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Select(d => d.ToString())).ToArray();
-                if (failures.Length > 0) throw new InvalidDataException("Unity 源码生成器失败；保留上次完整索引：\n" + string.Join('\n', failures));
+                if (failures.Length > 0) throw new InvalidDataException("Unity source generator failed. Previous complete index retained: \n" + string.Join('\n', failures));
             }
             compilations[project.Id] = compilation;
-            if (!assemblies.TryAdd(compilation.Assembly.Identity.ToString(), keys[project.Id])) throw new InvalidDataException("不同项目拥有相同程序集标识，无法可靠区分符号：" + project.Name);
+            if (!assemblies.TryAdd(compilation.Assembly.Identity.ToString(), keys[project.Id])) throw new InvalidDataException("Projects share an assembly identity; symbols cannot be distinguished reliably: " + project.Name);
         }
         var old = File.Exists(Path.Combine(cache, "index.json")) ? Store.Read(Path.Combine(cache, "index.json")) : null;
-        if (old != null && old["schema"]?.GetValue<int>() != Store.Schema) throw new InvalidDataException("C# 索引版本不兼容。");
+        if (old != null && old["schema"]?.GetValue<int>() != Store.Schema) throw new InvalidDataException("Incompatible C# index version.");
         var oldUnits = old?["units"]?.AsArray().OfType<JsonObject>().ToDictionary(u => u["config_id"]!.GetValue<string>()) ?? new();
         var units = new JsonArray(); int indexed = 0, reused = 0;
         foreach (var project in projects)
@@ -193,10 +193,10 @@ internal static class Program
             string key = Store.Hash(keys[project.Id]); var compilation = compilations[project.Id];
             if (!force.Contains(project.Id) && oldUnits.TryGetValue(key, out var previous) && previous["fingerprint"]?.GetValue<string>() == fingerprints[project.Id]) { units.Add(previous.DeepClone()); reused++; continue; }
             var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).Take(30).ToArray();
-            if (errors.Length > 0) throw new InvalidDataException(string.Join('\n', errors.Select(d => d.ToString())) + "\nC# 编译诊断失败；保留上次完整索引。");
+            if (errors.Length > 0) throw new InvalidDataException(string.Join('\n', errors.Select(d => d.ToString())) + "\nC# compilation diagnostics failed. Previous complete index retained.");
             var payload = new Extractor(assemblies, keys[project.Id]).Extract(compilation);
             payload["file"] = project.FilePath!.Replace('\\', '/'); payload["config_id"] = key; payload["fingerprint"] = fingerprints[project.Id]; payload["language"] = "c#";
-            payload["scope_name"] = (isUnity ? "Unity · " : "") + project.Name + " · " + state["configuration"] + " · " + (framework.Length > 0 ? framework : "工程默认目标框架");
+            payload["scope_name"] = (isUnity ? "Unity · " : "") + project.Name + " · " + state["configuration"] + " · " + (framework.Length > 0 ? framework : "Project default target framework");
             units.Add(payload); indexed++;
         }
         if (workspaceFailures.Count > 0) throw new InvalidDataException(string.Join('\n', workspaceFailures));

@@ -67,7 +67,7 @@ def _find_library() -> str:
         if os.path.isdir(env):
             env = os.path.join(env, 'libclang.dll')
         if not os.path.isfile(env):
-            raise RuntimeError('指定的本机 libclang.dll 不存在，请修正分析环境：' + env)
+            raise RuntimeError('Local libclang.dll does not exist. Correct Analysis Environment settings: ' + env)
         return env
     clang = shutil.which('clang.exe') or shutil.which('clang')
     if clang:
@@ -76,7 +76,7 @@ def _find_library() -> str:
         if candidate and os.path.isfile(candidate):
             return candidate
     raise RuntimeError(
-        "找不到本机 libclang.dll。请自行安装 LLVM，再设置 VIVIDCODE_LIBCLANG 或在 vividcode 的分析环境中指定路径。"
+        "Local libclang.dll not found. Install LLVM and set VIVIDCODE_LIBCLANG or select its path in Analysis Environment."
     )
 
 

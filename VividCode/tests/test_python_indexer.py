@@ -96,7 +96,7 @@ class PythonIndexTests(unittest.TestCase):
         self.write('api.py', 'def changed():\n    return 1\n')
         self.assertEqual(self.run_index(), 0)
         self.assertEqual(self.data()['state']['indexed'], 1)
-        self.assertTrue(any(a == 'caller' and b.startswith('未解析') for a, b, _ in self.edges()))
+        self.assertTrue(any(a == 'caller' and b.startswith('Unresolved: ') for a, b, _ in self.edges()))
         before = self.data()['units']
         self.write('api.py', 'class syntax error:\n')
         self.assertEqual(self.run_index(), 1)
@@ -110,7 +110,7 @@ class PythonIndexTests(unittest.TestCase):
         self.write('a.py', 'def f(): pass\ndef local(f):\n    f()\ndef rebound():\n    x = C()\n    x = other()\n    x.run()\nclass C:\n    def run(self): pass\ndef outer():\n    def f(): pass\n    f()\ndef dynamic(obj):\n    getattr(obj, "run")()\n')
         self.write('b.py', 'def f(): pass\n')
         self.assertEqual(self.run_index(), 0)
-        for source, target in [('local', '未解析：f'), ('rebound', '未解析：x.run'), ('outer', 'outer.f')]:
+        for source, target in [('local', 'Unresolved: f'), ('rebound', 'Unresolved: x.run'), ('outer', 'outer.f')]:
             self.assertTrue(any(a == source and b == target for a, b, _ in self.edges()))
         self.assertTrue(any(a == 'dynamic' and r['type'] == 'possible_call' for a, b, r in self.edges()))
 
@@ -129,7 +129,7 @@ class PythonIndexTests(unittest.TestCase):
         self.write('use.py', 'import api as m\nfrom api import f\ndef typed(x: m.A):\n    x.run()\nclass C:\n    def f(self): pass\n    def bare(self):\n        f()\ndef handler():\n    try: pass\n    except Exception as f: f()\ndef pattern(value):\n    match value:\n        case {"f": f}: f()\n')
         self.assertEqual(self.run_index(), 0)
         for source, target, kind in [('typed', 'A.run', 'possible_call'), ('C.bare', 'f', 'calls'),
-                                      ('handler', '未解析：f', 'possible_call'), ('pattern', '未解析：f', 'possible_call')]:
+                                      ('handler', 'Unresolved: f', 'possible_call'), ('pattern', 'Unresolved: f', 'possible_call')]:
             self.assertTrue(any(a == source and b == target and r['type'] == kind for a, b, r in self.edges()), (source, target))
 
     def test_circular_reexports_ambiguous_modules_and_lifecycle_lock(self):
