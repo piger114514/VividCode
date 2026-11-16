@@ -136,4 +136,4 @@ VS 不自动准备全部语言组件，所需 prepare 脚本应显式执行，�
 
 ### 自选安装目录与再次安装
 
-0.1.1 示例包起提供目录选择，默认显示记录中的现有安装位置。保持该目录为升级；改选另一个空目录为迁移，保留组件、设置和缓存，校验成功后清理旧安装。新目录不能包含无关文件，也不能与旧目录相互嵌套。安装前关闭程序，完成后重开终端/IDE。用户共享根记录在 HKCU\Software\vividcode\InstallHome，并注册 VIVIDCODE_HOME 与 PATH；测试仍可显式覆盖 VIVIDCODE_HOME。打包命令可使用 `./package.ps1 -Version 0.1.1`。
+首个面向用户的发布版本为 0.1.0，支持选择安装目录，默认显示记录中的现有安装位置。保持该目录为升级；改选另一个空目录为迁移，保留组件、设置和缓存，校验成功后清理旧安装。新目录不能包含无关文件，也不能与旧目录相互嵌套。安装前关闭程序，完成后重开终端/IDE。用户共享根记录在 HKCU\Software\vividcode\InstallHome，并注册 VIVIDCODE_HOME 与 PATH；测试仍可显式覆盖 VIVIDCODE_HOME。打包命令可使用 `./package.ps1 -Version 0.1.0`。

@@ -30,6 +30,7 @@ let buffer = '', timer;
 fs.mkdirSync('.sessions',{recursive:true});
 const path=require('node:path'); let sessionFile=path.resolve('.sessions/current.jsonl');
 for(const name of ['current','archived','other'])fs.writeFileSync('.sessions/'+name+'.jsonl',JSON.stringify({type:'session',cwd:name==='other'?path.resolve('other'):process.cwd()})+'\n');
+for(const message of [{role:'assistant',content:'ignore assistant'},{role:'user',content:[{type:'image',data:'ignored'},{type:'text',text:'历史问题\n  '+ '🙂'.repeat(60)}]},{role:'user',content:'later question'}])fs.appendFileSync('.sessions/archived.jsonl',JSON.stringify({type:'message',message})+'\n');
 const emit = o => process.stdout.write(JSON.stringify(o) + '\r\n');
 process.stdin.on('data', chunk => {
  buffer += chunk.toString('utf8'); let i;
@@ -47,6 +48,7 @@ process.stdin.on('data', chunk => {
   else if (c.type === 'prompt') {
    if (c.message === 'handled') { response({disposition:'handled'}); continue; }
    if (c.message === 'reject') { emit({type:'response', command:c.type, id:c.id, success:false, error:'fixture rejected'}); continue; }
+   fs.appendFileSync(sessionFile,JSON.stringify({type:'message',message:{role:'user',content:c.message}})+'\n');
    response({disposition:'started'}); emit({type:'agent_start'});
    emit({type:'message_start', message:{role:'assistant'}});
    const packet = Buffer.from(JSON.stringify({type:'message_update',assistantMessageEvent:{type:'text_delta', delta:'流式回复\u2028下一段'}})+'\n');
@@ -114,8 +116,12 @@ process.stdin.on('end',()=>process.exit(0));
             QFile commands(root + "/commands.log"); check(commands.open(QIODevice::ReadOnly) && commands.readAll().contains("fixture-confirm"), "extension confirmation returned over RPC"); commands.close();
             auto *history=panel.findChild<QComboBox *>("piHistory");
             check(history->count()==2,"history includes only current project sessions");
+            check(history->currentText()=="normal","history keeps the first user prompt after subsequent turns");
             int archived=-1;for(int i=0;i<history->count();++i)if(history->itemData(i).toString().endsWith("archived.jsonl"))archived=i;
-            check(archived>=0,"archived project session discovered");history->setCurrentIndex(archived);emit history->activated(archived);
+            check(archived>=0,"archived project session discovered");
+            check(history->itemText(archived)==QStringLiteral("历史问题 ")+QString::fromUtf8("🙂").repeated(43)+QStringLiteral("…"),"history collapses whitespace and truncates at 48 graphemes without splitting emoji");
+            check(history->itemData(archived,Qt::ToolTipRole).toString().contains("archived"),"history tooltip retains session identity");
+            history->setCurrentIndex(archived);emit history->activated(archived);
             waitFor([&]{return !panel.isBusy()&&text->toPlainText().contains("Restored");});
             check(!text->toPlainText().contains("HIDDEN_"),"history filters thought and tool content");
             waitFor([&]{return !text->document()->resource(QTextDocument::ImageResource,QUrl("math:0")).value<QImage>().isNull();});

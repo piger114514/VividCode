@@ -203,8 +203,6 @@ public:
         setData(0, "relation"); setData(1, edge.sites);
         setData(2, edge.target); setData(3, edge.source);
         const QString name = relationDisplayName(edge.type);
-        label = new QGraphicsSimpleTextItem(name, this);
-        label->setFont(QApplication::font()); label->setBrush(color); label->setAcceptedMouseButtons(Qt::NoButton);
         QStringList locations;
         for (const auto &site : edge.sites) {
             const auto r = site.toObject();
@@ -237,8 +235,6 @@ public:
         arrow = QPolygonF{end, end - QPointF(std::cos(0.5) * 13, -std::sin(0.5) * 13),
             end - QPointF(std::cos(0.5) * 13, std::sin(0.5) * 13)};
         setPath(curve);
-        const auto middle = curve.pointAtPercent(0.5);
-        label->setPos(middle - QPointF(label->boundingRect().width() / 2, label->boundingRect().height() + 4));
     }
     QRectF boundingRect() const override { return QGraphicsPathItem::boundingRect().united(arrow.boundingRect()).adjusted(-5, -5, 5, 5); }
     QPainterPath shape() const override {
@@ -255,7 +251,6 @@ private:
     qreal bend;
     QColor color;
     QPolygonF arrow;
-    QGraphicsSimpleTextItem *label;
 };
 }
 

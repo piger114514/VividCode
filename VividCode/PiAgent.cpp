@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QSaveFile>
 #include <QCryptographicHash>
+#include <QTextBoundaryFinder>
 #ifdef Q_OS_WIN
 #define NOMINMAX
 #include <windows.h>
@@ -29,6 +30,27 @@ QString messageText(const QJsonObject &message) {
     for (const auto &part : message.value("content").toArray())
         if (part.toObject().value("type") == "text") parts.append(part.toObject().value("text").toString());
     return parts.join('\n');
+}
+QString sessionTitle(const QString &path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    while (!file.atEnd()) {
+        const auto entry = QJsonDocument::fromJson(file.readLine()).object();
+        const auto message = entry.value("message").toObject();
+        if (entry.value("type") != "message" || message.value("role") != "user") continue;
+        const QString text = messageText(message).simplified();
+        // Keep the first user message, even when it only contains an attachment.
+        if (text.isEmpty()) return {};
+        QTextBoundaryFinder boundary(QTextBoundaryFinder::Grapheme, text);
+        int end = 0;
+        for (int count = 0; count < 48; ++count) {
+            const int next = boundary.toNextBoundary();
+            if (next < 0) return text;
+            end = next;
+        }
+        return end < text.size() ? text.left(end) + QStringLiteral("…") : text;
+    }
+    return {};
 }
 QString piScript(const QString &command) {
     const QFileInfo info(command); const QString suffix = info.suffix().toLower();
@@ -182,8 +204,12 @@ void PiAgentPanel::refreshHistory() {
     const QSignalBlocker blocker(history); history->clear();
     if(!sessionFile.isEmpty()) {
         const auto files=QDir(QFileInfo(sessionFile).absolutePath()).entryInfoList({"*.jsonl"},QDir::Files,QDir::Time);
-        for(const auto &file:files) if(projectSession(file.absoluteFilePath()))
-            history->addItem(file.lastModified().toString("yyyy-MM-dd HH:mm")+" · "+file.completeBaseName().right(12),file.absoluteFilePath());
+        for(const auto &file:files) if(projectSession(file.absoluteFilePath())) {
+            const QString details = file.lastModified().toString("yyyy-MM-dd HH:mm")+" · "+file.completeBaseName().right(12);
+            const QString title = sessionTitle(file.absoluteFilePath());
+            history->addItem(title.isEmpty() ? details : title, file.absoluteFilePath());
+            history->setItemData(history->count()-1, details, Qt::ToolTipRole);
+        }
     }
     int selected=history->findData(sessionFile);
     if(selected<0){history->insertItem(0,UiLanguage::text("Current session"),sessionFile);selected=0;}history->setCurrentIndex(selected);
