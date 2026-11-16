@@ -1,0 +1,10 @@
+Official Microsoft sources (retrieved 2026-11-16):
+https://visualstudio.microsoft.com/license-terms/vs-setup-sdk/
+https://visualstudio.microsoft.com/wp-content/uploads/2017/01/VS-Setup-SDK-26-Aug-2016_updated-06Jan2017.docx
+https://visualstudio.microsoft.com/license-terms/vs2022-cruntime/
+https://visualstudio.microsoft.com/wp-content/uploads/2021/09/Visual-C-Runtime-2015-2022-License-1.docx
+https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution
+VC runtime files are unmodified app-local files from the installed Visual Studio
+2022 Build Tools VC/Redist/MSVC Microsoft.VC143.CRT directory, not debug_nonredist.
+The MIT license for vividcode does not relicense these files. Redistribution
+requires the applicable Microsoft developer license and REDIST terms.

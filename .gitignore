@@ -36,3 +36,5 @@ venv/
 !.env.example
 /VividCode/pi-renderer/node_modules/
 /VividCode/dist/
+!VividCode/licenses/qt/build-configuration/
+!VividCode/licenses/qt/build-configuration/**

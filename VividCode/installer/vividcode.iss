@@ -9,6 +9,7 @@
 [Setup]
 AppName=vividcode
 AppVersion={#PackageVersion}
+LicenseFile={#Payload}\runtime\licenses\BINARY-DISTRIBUTION-TERMS.txt
 AppId=vividcode-package
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible

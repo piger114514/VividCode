@@ -1,0 +1,92 @@
+[
+  {
+    "name": "@xmldom/xmldom",
+    "version": "0.9.12",
+    "license": "MIT",
+    "directory": "npm/@xmldom__xmldom"
+  },
+  {
+    "name": "argparse",
+    "version": "2.0.1",
+    "license": "Python-2.0",
+    "directory": "npm/argparse"
+  },
+  {
+    "name": "commander",
+    "version": "13.1.0",
+    "license": "MIT",
+    "directory": "npm/commander"
+  },
+  {
+    "name": "entities",
+    "version": "4.5.0",
+    "license": "BSD-2-Clause",
+    "directory": "npm/entities"
+  },
+  {
+    "name": "esm",
+    "version": "3.2.25",
+    "license": "MIT",
+    "directory": "npm/esm"
+  },
+  {
+    "name": "linkify-it",
+    "version": "5.0.2",
+    "license": "MIT",
+    "directory": "npm/linkify-it"
+  },
+  {
+    "name": "markdown-it",
+    "version": "14.1.0",
+    "license": "MIT",
+    "directory": "npm/markdown-it"
+  },
+  {
+    "name": "mathjax-full",
+    "version": "3.2.2",
+    "license": "Apache-2.0",
+    "directory": "npm/mathjax-full"
+  },
+  {
+    "name": "mdurl",
+    "version": "2.1.0",
+    "license": "MIT",
+    "directory": "npm/mdurl"
+  },
+  {
+    "name": "mhchemparser",
+    "version": "4.2.1",
+    "license": "Apache-2.0",
+    "directory": "npm/mhchemparser"
+  },
+  {
+    "name": "mj-context-menu",
+    "version": "0.6.1",
+    "license": "Apache-2.0",
+    "directory": "npm/mj-context-menu"
+  },
+  {
+    "name": "punycode.js",
+    "version": "2.3.1",
+    "license": "MIT",
+    "directory": "npm/punycode.js"
+  },
+  {
+    "name": "speech-rule-engine",
+    "version": "4.1.5",
+    "license": "Apache-2.0",
+    "directory": "npm/speech-rule-engine"
+  },
+  {
+    "name": "uc.micro",
+    "version": "2.1.0",
+    "license": "MIT",
+    "directory": "npm/uc.micro"
+  },
+  {
+    "name": "wicked-good-xpath",
+    "version": "1.3.0",
+    "license": "MIT",
+    "directory": "npm/wicked-good-xpath"
+  }
+]

@@ -23,6 +23,7 @@ if (!$StageOnly) {
     $Compiler = [IO.Path]::GetFullPath($Compiler)
 }
 $output = [IO.Path]::GetFullPath($OutputDirectory)
+& (Join-Path $PSScriptRoot 'prepare-legal.ps1') -RuntimeDirectory $RuntimeDirectory
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $stage = Join-Path $output ('stage-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $stage | Out-Null
@@ -39,7 +40,7 @@ foreach ($name in @('install-runtime.ps1','install-command.ps1','install-locatio
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'installer\install-package.ps1') -Destination $stage
 if ($StageOnly) { Write-Output "Staged package (not an EXE): $stage"; return }
 $filename = "vividcode-Setup-$Version-x64"
-& $Compiler "/DPackageVersion=$Version" "/DPayload=$stage" "/O$output" "/F$filename" (Join-Path $PSScriptRoot 'installer\vividcode.iss')
+& $Compiler /Q "/DPackageVersion=$Version" "/DPayload=$stage" "/O$output" "/F$filename" (Join-Path $PSScriptRoot 'installer\vividcode.iss')
 if ($LASTEXITCODE -ne 0) { throw "Installer compiler failed: $LASTEXITCODE (staging retained at $stage)" }
 $exe = Join-Path $output "$filename.exe"
 if (!(Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'Compiler did not produce the expected EXE.' }

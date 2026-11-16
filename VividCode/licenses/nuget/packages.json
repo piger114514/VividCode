@@ -1,0 +1,415 @@
+[
+  {
+    "name": "Humanizer.Core",
+    "version": "2.14.1",
+    "license": "MIT",
+    "assets": [
+      "lib/net6.0/Humanizer.dll"
+    ],
+    "directory": "nuget/Humanizer.Core-2.14.1"
+  },
+  {
+    "name": "Microsoft.Build.Framework",
+    "version": "17.7.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/Microsoft.Build.Framework.dll"
+    ],
+    "directory": "nuget/Microsoft.Build.Framework-17.7.2"
+  },
+  {
+    "name": "Microsoft.Build.Locator",
+    "version": "1.6.10",
+    "license": "MIT",
+    "assets": [
+      "lib/net6.0/Microsoft.Build.Locator.dll"
+    ],
+    "directory": "nuget/Microsoft.Build.Locator-1.6.10"
+  },
+  {
+    "name": "Microsoft.Build.Locator",
+    "version": "1.7.8",
+    "license": "MIT",
+    "assets": [
+      "lib/net6.0/Microsoft.Build.Locator.dll"
+    ],
+    "directory": "nuget/Microsoft.Build.Locator-1.7.8"
+  },
+  {
+    "name": "Microsoft.Build.Tasks.Core",
+    "version": "17.7.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/Microsoft.Build.Tasks.Core.dll"
+    ],
+    "directory": "nuget/Microsoft.Build.Tasks.Core-17.7.2"
+  },
+  {
+    "name": "Microsoft.Build.Utilities.Core",
+    "version": "17.7.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/Microsoft.Build.Utilities.Core.dll"
+    ],
+    "directory": "nuget/Microsoft.Build.Utilities.Core-17.7.2"
+  },
+  {
+    "name": "Microsoft.Build",
+    "version": "17.7.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/Microsoft.Build.dll"
+    ],
+    "directory": "nuget/Microsoft.Build-17.7.2"
+  },
+  {
+    "name": "Microsoft.CodeAnalysis.CSharp.Workspaces",
+    "version": "4.14.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.CodeAnalysis.CSharp.Workspaces.dll"
+    ],
+    "directory": "nuget/Microsoft.CodeAnalysis.CSharp.Workspaces-4.14.0"
+  },
+  {
+    "name": "Microsoft.CodeAnalysis.CSharp",
+    "version": "4.14.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.CodeAnalysis.CSharp.dll"
+    ],
+    "directory": "nuget/Microsoft.CodeAnalysis.CSharp-4.14.0"
+  },
+  {
+    "name": "Microsoft.CodeAnalysis.Common",
+    "version": "4.14.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.CodeAnalysis.dll"
+    ],
+    "directory": "nuget/Microsoft.CodeAnalysis.Common-4.14.0"
+  },
+  {
+    "name": "Microsoft.CodeAnalysis.Workspaces.Common",
+    "version": "4.14.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.CodeAnalysis.Workspaces.dll"
+    ],
+    "directory": "nuget/Microsoft.CodeAnalysis.Workspaces.Common-4.14.0"
+  },
+  {
+    "name": "Microsoft.CodeAnalysis.Workspaces.MSBuild",
+    "version": "4.14.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.CodeAnalysis.ExternalAccess.RazorCompiler.dll",
+      "lib/net8.0/Microsoft.CodeAnalysis.Workspaces.MSBuild.dll"
+    ],
+    "directory": "nuget/Microsoft.CodeAnalysis.Workspaces.MSBuild-4.14.0"
+  },
+  {
+    "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.DependencyInjection.Abstractions-9.0.0"
+  },
+  {
+    "name": "Microsoft.Extensions.DependencyInjection",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.DependencyInjection.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.DependencyInjection-9.0.0"
+  },
+  {
+    "name": "Microsoft.Extensions.Logging.Abstractions",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.Logging.Abstractions-9.0.0"
+  },
+  {
+    "name": "Microsoft.Extensions.Logging",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.Logging.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.Logging-9.0.0"
+  },
+  {
+    "name": "Microsoft.Extensions.Options",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.Options.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.Options-9.0.0"
+  },
+  {
+    "name": "Microsoft.Extensions.Primitives",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/Microsoft.Extensions.Primitives.dll"
+    ],
+    "directory": "nuget/Microsoft.Extensions.Primitives-9.0.0"
+  },
+  {
+    "name": "Microsoft.NET.StringTools",
+    "version": "17.7.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/Microsoft.NET.StringTools.dll"
+    ],
+    "directory": "nuget/Microsoft.NET.StringTools-17.7.2"
+  },
+  {
+    "name": "Microsoft.VisualStudio.Setup.Configuration.Interop",
+    "version": "3.2.2146",
+    "license": "Microsoft VS Setup SDK license",
+    "assets": [
+      "lib/netstandard2.1/Microsoft.VisualStudio.Setup.Configuration.Interop.dll"
+    ],
+    "directory": "nuget/Microsoft.VisualStudio.Setup.Configuration.Interop-3.2.2146"
+  },
+  {
+    "name": "Newtonsoft.Json",
+    "version": "13.0.3",
+    "license": "MIT",
+    "assets": [
+      "lib/net6.0/Newtonsoft.Json.dll"
+    ],
+    "directory": "nuget/Newtonsoft.Json-13.0.3"
+  },
+  {
+    "name": "System.CodeDom",
+    "version": "7.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/System.CodeDom.dll"
+    ],
+    "directory": "nuget/System.CodeDom-7.0.0"
+  },
+  {
+    "name": "System.Collections.Immutable",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Collections.Immutable.dll",
+      "lib/netstandard2.0/System.Collections.Immutable.dll"
+    ],
+    "directory": "nuget/System.Collections.Immutable-9.0.0"
+  },
+  {
+    "name": "System.CommandLine",
+    "version": "2.0.0-beta4.24528.1",
+    "license": "MIT",
+    "sourceCommit": "feb61c7f328a2401d74f4317b39d02126cfdfe24",
+    "assets": [
+      "lib/netstandard2.0/System.CommandLine.dll"
+    ],
+    "directory": "nuget/System.CommandLine-2.0.0-beta4.24528.1"
+  },
+  {
+    "name": "System.Composition.AttributedModel",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Composition.AttributedModel.dll"
+    ],
+    "directory": "nuget/System.Composition.AttributedModel-9.0.0"
+  },
+  {
+    "name": "System.Composition.Convention",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Composition.Convention.dll"
+    ],
+    "directory": "nuget/System.Composition.Convention-9.0.0"
+  },
+  {
+    "name": "System.Composition.Hosting",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Composition.Hosting.dll"
+    ],
+    "directory": "nuget/System.Composition.Hosting-9.0.0"
+  },
+  {
+    "name": "System.Composition.Runtime",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Composition.Runtime.dll"
+    ],
+    "directory": "nuget/System.Composition.Runtime-9.0.0"
+  },
+  {
+    "name": "System.Composition.TypedParts",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Composition.TypedParts.dll"
+    ],
+    "directory": "nuget/System.Composition.TypedParts-9.0.0"
+  },
+  {
+    "name": "System.Configuration.ConfigurationManager",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Configuration.ConfigurationManager.dll"
+    ],
+    "directory": "nuget/System.Configuration.ConfigurationManager-9.0.0"
+  },
+  {
+    "name": "System.Diagnostics.DiagnosticSource",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Diagnostics.DiagnosticSource.dll"
+    ],
+    "directory": "nuget/System.Diagnostics.DiagnosticSource-9.0.0"
+  },
+  {
+    "name": "System.Diagnostics.EventLog",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Diagnostics.EventLog.dll",
+      "runtimes/win/lib/net8.0/System.Diagnostics.EventLog.Messages.dll",
+      "runtimes/win/lib/net8.0/System.Diagnostics.EventLog.dll"
+    ],
+    "directory": "nuget/System.Diagnostics.EventLog-9.0.0"
+  },
+  {
+    "name": "System.Formats.Nrbf",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Formats.Nrbf.dll"
+    ],
+    "directory": "nuget/System.Formats.Nrbf-9.0.0"
+  },
+  {
+    "name": "System.IO.Pipelines",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.IO.Pipelines.dll"
+    ],
+    "directory": "nuget/System.IO.Pipelines-9.0.0"
+  },
+  {
+    "name": "System.Reflection.Metadata",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Reflection.Metadata.dll"
+    ],
+    "directory": "nuget/System.Reflection.Metadata-9.0.0"
+  },
+  {
+    "name": "System.Reflection.MetadataLoadContext",
+    "version": "7.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/System.Reflection.MetadataLoadContext.dll"
+    ],
+    "directory": "nuget/System.Reflection.MetadataLoadContext-7.0.0"
+  },
+  {
+    "name": "System.Resources.Extensions",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Resources.Extensions.dll"
+    ],
+    "directory": "nuget/System.Resources.Extensions-9.0.0"
+  },
+  {
+    "name": "System.Security.Cryptography.Pkcs",
+    "version": "7.0.2",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/System.Security.Cryptography.Pkcs.dll",
+      "runtimes/win/lib/net7.0/System.Security.Cryptography.Pkcs.dll"
+    ],
+    "directory": "nuget/System.Security.Cryptography.Pkcs-7.0.2"
+  },
+  {
+    "name": "System.Security.Cryptography.ProtectedData",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Security.Cryptography.ProtectedData.dll"
+    ],
+    "directory": "nuget/System.Security.Cryptography.ProtectedData-9.0.0"
+  },
+  {
+    "name": "System.Security.Cryptography.Xml",
+    "version": "7.0.1",
+    "license": "MIT",
+    "assets": [
+      "lib/net7.0/System.Security.Cryptography.Xml.dll"
+    ],
+    "directory": "nuget/System.Security.Cryptography.Xml-7.0.1"
+  },
+  {
+    "name": "System.Security.Permissions",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Security.Permissions.dll"
+    ],
+    "directory": "nuget/System.Security.Permissions-9.0.0"
+  },
+  {
+    "name": "System.Text.Encodings.Web",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Text.Encodings.Web.dll",
+      "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll"
+    ],
+    "directory": "nuget/System.Text.Encodings.Web-9.0.0"
+  },
+  {
+    "name": "System.Text.Json",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Text.Json.dll"
+    ],
+    "directory": "nuget/System.Text.Json-9.0.0"
+  },
+  {
+    "name": "System.Threading.Tasks.Dataflow",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Threading.Tasks.Dataflow.dll"
+    ],
+    "directory": "nuget/System.Threading.Tasks.Dataflow-9.0.0"
+  },
+  {
+    "name": "System.Windows.Extensions",
+    "version": "9.0.0",
+    "license": "MIT",
+    "assets": [
+      "lib/net8.0/System.Windows.Extensions.dll",
+      "runtimes/win/lib/net8.0/System.Windows.Extensions.dll"
+    ],
+    "directory": "nuget/System.Windows.Extensions-9.0.0"
+  }
+]

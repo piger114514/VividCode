@@ -1,0 +1,70 @@
+{
+  "bugs": {
+    "url": "https://github.com/zorkow/context-menu",
+    "email": "v.sorge@mathjax.org"
+  },
+  "dist": {
+    "shasum": "a043c5282bf7e1cf3821de07b13525ca6f85aa69",
+    "tarball": "https://registry.npmjs.org/mj-context-menu/-/mj-context-menu-0.6.1.tgz",
+    "fileCount": 120,
+    "integrity": "sha512-7NO5s6n10TIV96d4g2uDpG7ZDpIhMh0QNfGdJw/W47JswFcosz457wqz/b5sAKvl12sxINGFCn80NZHKwxQEXA==",
+    "signatures": [
+      {
+        "sig": "MEYCIQDiNC0/Uqm0eGgAqUzfqjuHycoH8WGguoYyGyjS8A6lJgIhAJ5XsHR1ZdplhyBa0lrVHo3cd4dSeZrMb1r1yBDfywkd",
+        "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+      }
+    ],
+    "unpackedSize": 273866,
+    "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.4\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJfPlWMCRA9TVsSAnZWagAA5nkP/ijmm9fWQHUNsshIjntI\nWSW/lHe8PXle+ytx80JF7sYjcZQbfPO6FiCra9exb3gY8VRsSwTcdZzvUBZp\nq3xNi+H2eDTAbQ7rAnkdWphNZyt/PyLAsW4erxxfug6kqkIYyVf1IHYDXsbv\nRQDR7oOvKt4638m3ib0s6YremQd9QtOe2ud3LKfA2jWfzIZWVCDfV9dweIqZ\nKxFY5SiEiutxc2F5tD2pYI8gDxfJY3qW87OD3L5VzDETP53hxrAwXGwhbzZ9\n5Lp4UnwYLvFges+UCcrDAyanGmvWWr5lbfSmKwlwBnUZ8NYla/fEOjKg0qTA\ndkE35a5JTlss1to4/UUcGhvGuPQ5f8EnjT3MnNP8t+sy7hlCUdT/CSjOtYO/\ngU6TWZ9JNYFiE/CgjGSQx5yfQn9hdCSn11m8ZOAWdxMHh4yxJOPKRjQhYyA/\nybG49rSFVwuJe814PHJ7C/JfhXuWa+lVX99wU1d9T+j85Yq8U8wUsTdT/JsM\nctoWL4KhBxbfYbQr2dFuVHmcaiHH8BhdxN1404kQzrwtOxrYwWHcrZIBtrXr\nPz1cEU7HMhIS4KjuSx6Xi2cmdyi+UihqssDfJt1BmHDfqBWtct42vCfkldDs\nZVc7ONpH/b5U+jsIuLdDn3JnMBGVEWuGS8mQWvOXXsKZ5seYsfw/+B7c330m\nKiZN\r\n=tSUt\r\n-----END PGP SIGNATURE-----\r\n"
+  },
+  "main": "dist/ContextMenu.js",
+  "name": "mj-context-menu",
+  "gitHead": "8ddd26a41f834cd23b9bb20737dfae5fa9b05eb4",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc; ./node_modules/.bin/webpack",
+    "prepare": "npx rimraf js; npx rimraf dist; ./node_modules/.bin/tsc; ./node_modules/.bin/webpack"
+  },
+  "_npmUser": {
+    "name": "zorkow",
+    "email": "Volker.Sorge@gmail.com"
+  },
+  "homepage": "https://github.com/zorkow/context-menu",
+  "keywords": [
+    "context-menu"
+  ],
+  "repository": {
+    "url": "git+https://github.com/zorkow/context-menu.git",
+    "type": "git"
+  },
+  "_npmVersion": "6.14.5",
+  "description": "A generic context menu",
+  "directories": {},
+  "maintainers": [
+    {
+      "name": "zorkow",
+      "email": "Volker.Sorge@gmail.com"
+    }
+  ],
+  "_nodeVersion": "14.3.0",
+  "dependencies": {},
+  "_hasShrinkwrap": false,
+  "devDependencies": {
+    "tslint": "^6.1.3",
+    "webpack": "^4.44.1",
+    "typescript": "^3.*",
+    "@babel/core": "^7.11.1",
+    "webpack-cli": "^3.3.12",
+    "babel-loader": "^8.1.0",
+    "@babel/preset-env": "^7.11.0",
+    "tslint-jsdoc-rules": "^0.2.0",
+    "terser-webpack-plugin": "^4.1.0",
+    "tslint-unix-formatter": "^0.2.0"
+  },
+  "_npmOperationalInternal": {
+    "tmp": "tmp/mj-context-menu_0.6.1_1597920651681_0.21826083191718504",
+    "host": "s3://npm-registry-packages"
+  },
+  "_id": "mj-context-menu@0.6.1",
+  "version": "0.6.1"
+}

@@ -1,0 +1,61 @@
+Qt 6.11.2 source and replacement instructions / Qt 源码与替换说明
+
+vividcode dynamically links Qt Core, Gui, Widgets, Network, Sql and Svg and
+their shipped plugins under LGPL-3.0-only. Qt is copyright The Qt Company Ltd.
+and its contributors; its embedded dependencies retain their own copyrights.
+See qtbase/LICENSES/LGPL-3.0-only.txt and GPL-3.0-only.txt, and attributions.json.
+Qt's BSD-licensed entry-point code and embedded third-party notices are retained.
+FreeType is used under the FreeType Project License alternative.
+Portions of this software are copyright © The FreeType Project (www.freetype.org).
+All rights reserved.
+
+Complete corresponding sources are provided by the vividcode publisher as
+separate assets alongside the binary in the SAME GitHub release, at no charge:
+https://github.com/piger114514/VividCode/releases/tag/0.1.0
+  qtbase-everywhere-src-6.11.2.tar.xz
+  qtsvg-everywhere-src-6.11.2.tar.xz
+  qt-build-and-relinking-6.11.2.zip
+The release SHA256SUMS.txt covers each archive. The Qt sources are unmodified.
+The archives' .tag commits match the installed Qt SBOM: qtbase
+ef55f427f2c8b410d34f8a7681020a3000cf6866; qtsvg
+17ca512f903f935282ebeca496aac5d11ba4199a.
+The build archive contains upstream configure options/summaries and SBOM files.
+Full Qt sources include bundled dependencies, CMake/configure scripts and licenses.
+Redistributors must also provide the corresponding sources/required information
+using an applicable GPLv3 section 6 method; do not distribute just the EXE without
+the source access and accompanying notices.
+
+Replacing Qt libraries on Windows x64:
+1. Close all vividcode processes. Back up the installation's runtime directory.
+2. Use the matching Qt sources, a compatible MSVC 2022 x64 toolchain and CMake.
+   In an x64 developer shell, configure a SHARED release build, e.g.:
+     mkdir qtbase-build
+     cd qtbase-build
+     ..\qtbase-everywhere-src-6.11.2\configure.bat -prefix C:\QtCustom -release -shared -opensource -confirm-license -nomake examples -nomake tests -qt-zlib
+     cmake --build . --parallel
+     cmake --install .
+   Configure qtsvg in a separate build directory with the installed base:
+     cd ..
+     mkdir qtsvg-build
+     cd qtsvg-build
+     C:\QtCustom\bin\qt-configure-module.bat ..\qtsvg-everywhere-src-6.11.2
+     cmake --build . --parallel
+     cmake --install .
+   Keep SQLite, Windows platform, Schannel TLS and SVG support enabled. Consult
+   the preserved upstream summaries for ABI/features. Adapt paths to your machine.
+3. Replace runtime/Qt6*.dll with compatible release x64 builds and update their
+   matching plugins (platforms, sqldrivers, tls, imageformats, iconengines, styles,
+   networkinformation). Do not mix debug/release or incompatible architectures.
+4. Start runtime/vividcode-viewer.exe or an existing project launcher. No library
+   signature/key check prevents running user-modified Qt libraries. The installer
+   checks copy integrity only during installation; it does not lock installed DLLs.
+5. If an ABI change needs an application rebuild, the complete MIT application
+   source, CMakeLists.txt and build.ps1 are available at the same 0.1.0 tag. Use
+   build.ps1 -QtRoot C:\QtCustom or set CMAKE_PREFIX_PATH to your Qt installation.
+   Back up custom libraries before upgrades; upgrades replace runtime files.
+
+本程序动态链接 Qt，用户可自行替换兼容的 Qt DLL，或使用公开的应用源码重新编译。
+Qt 对应源码包与构建信息在同一 0.1.0 Release 免费提供，不能仅分发安装包而忽略
+源码获取方式与声明。替换前关闭程序并备份 runtime；使用 x64 Release 且 ABI 兼容
+的库和插件，保留 Windows、SQLite、Schannel 和 SVG 功能。安装时的哈希校验仅用于
+确认复制正确，不限制安装后的库替换。微软专有组件条款不限制 Qt 的 LGPL 权利。

@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://registry.npmjs.org/mj-context-menu/0.6.1",
+    "sha256": "484957a982db225b768f2d1910eaa71847d78864679b67bbdfee56413cbdb7c5"
+  },
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.build.locator/1.6.10/microsoft.build.locator.1.6.10.nupkg",
+    "sha256": "84e145890882364903aadd0077fe18fec8208f8b74cd65e67c68c4f88fdcaaa3"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/dotnet/command-line-api/feb61c7f328a2401d74f4317b39d02126cfdfe24/LICENSE.md",
+    "sha256": "58fd5ebf25d75b5bb5f4cd407a9fef3befd3641e1af90a1d0716618e6430fc19"
+  }
+]

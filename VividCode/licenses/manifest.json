@@ -1,0 +1,1209 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "BINARY-DISTRIBUTION-TERMS.txt",
+      "sha256": "8bdd7bec7c4c9d75865780b1cc2eada375ed73ccd93b45c656aa57dbd9b943c0"
+    },
+    {
+      "path": "INNO-SETUP-LICENSE.txt",
+      "sha256": "2e5346868c2a18434489824e11d65c3031620f792fefc415d05f19cd441abf5c"
+    },
+    {
+      "path": "microsoft/SOURCES.txt",
+      "sha256": "d44598ce68805646ecca0616f62976e62b460579adbb410d394d87d2110d518c"
+    },
+    {
+      "path": "microsoft/VC-RUNTIME-LICENSE.txt",
+      "sha256": "76c6045b291b9fbd6049453142f8ca6f10e3d0e57b63aff6e57fe8398f04cef1"
+    },
+    {
+      "path": "microsoft/VC-RUNTIME-original.docx",
+      "sha256": "f1e3d56ceb2ad68aae0711b910375009e651ac5530fa0760f0dea6e81e54fae1"
+    },
+    {
+      "path": "microsoft/VS-SETUP-SDK-original.docx",
+      "sha256": "71388b83dbea6d60aedc3442128040de8dff1d45f0bc19eb5e0bc8911422e4c8"
+    },
+    {
+      "path": "microsoft/VS2022-REDIST.html",
+      "sha256": "8fc98f646adfda1e79e630ac5077a51f65ec87e085f89936cd34d50266840c67"
+    },
+    {
+      "path": "npm/@xmldom__xmldom/LICENSE",
+      "sha256": "4da724fc305d81606b245b324d4d2586916b9d248b23d82183df753ace0fdf71"
+    },
+    {
+      "path": "npm/argparse/LICENSE",
+      "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23"
+    },
+    {
+      "path": "npm/commander/LICENSE",
+      "sha256": "04512a63dce4d2d506ad612dc0bd7681ccf6e3655f7b6eaef7dfac8323d1ec0b"
+    },
+    {
+      "path": "npm/entities/LICENSE",
+      "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164"
+    },
+    {
+      "path": "npm/esm/LICENSE",
+      "sha256": "fe315c4bce49df19bf06297ca372b2b486f4351d09a487918711c8ed624dcbe8"
+    },
+    {
+      "path": "npm/linkify-it/LICENSE",
+      "sha256": "95e3f7f0e81e9b4940cdfaa1956aaff5e4dfd2fb1565041e7c78eb9a606f23e3"
+    },
+    {
+      "path": "npm/markdown-it/LICENSE",
+      "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473"
+    },
+    {
+      "path": "npm/mathjax-full/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "npm/mdurl/LICENSE",
+      "sha256": "6b6a356c4337e2446841f30f3cdf7e7023af8c5260b5e347c0f987b9f6aa2644"
+    },
+    {
+      "path": "npm/mhchemparser/LICENSE.txt",
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "path": "npm/mj-context-menu/LICENSE",
+      "sha256": "e3ba223bb1423f0aad8c3dfce0fe3148db48926d41e6fbc3afbbf5ff9e1c89cb"
+    },
+    {
+      "path": "npm/mj-context-menu/package-provenance.json",
+      "sha256": "45198e8bd25a09512e5e21e0916f4fdc603f5b1a50c7d5a77f840751b2e18864"
+    },
+    {
+      "path": "npm/packages.json",
+      "sha256": "513465224b619001545b5b1f62991a6ae1784da456fd1f501b43bd2c180d3df3"
+    },
+    {
+      "path": "npm/punycode.js/LICENSE-MIT.txt",
+      "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+    },
+    {
+      "path": "npm/speech-rule-engine/LICENSE",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "path": "npm/uc.micro/LICENSE.txt",
+      "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+    },
+    {
+      "path": "npm/wicked-good-xpath/LICENSE",
+      "sha256": "1691999de7a5de50698e735c25506ea8ab6b71d008d27ef9e1400a5075000e78"
+    },
+    {
+      "path": "nuget/Humanizer.Core-2.14.1/LICENSE.txt",
+      "sha256": "baebca0309090f4eca1b7a82c836cc91e48b2b92139c2280fb0ff69af922c2ae"
+    },
+    {
+      "path": "nuget/Humanizer.Core-2.14.1/LICENSE.upstream.txt",
+      "sha256": "e24ec7f2eea5c5f4b3e2c08308109ba99b49b4b56ea7ff0e0a178f2bdd4bbce8"
+    },
+    {
+      "path": "nuget/Humanizer.Core-2.14.1/package.nuspec",
+      "sha256": "9233ebeabcf74461613f4d3a71d503d0bfa8a7754e62fab83ace72110daf77e7"
+    },
+    {
+      "path": "nuget/Microsoft.Build-17.7.2/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build-17.7.2/LICENSE.upstream.txt",
+      "sha256": "9aebac42398b50e652a84a7b92d70e85cd1a9c8746558a743dc6cec11b8d7d3e"
+    },
+    {
+      "path": "nuget/Microsoft.Build-17.7.2/notices/THIRDPARTYNOTICES.txt",
+      "sha256": "01bb7cfadd7ebc022a5ff5dad8c9df0574ee0330f6f58ee497a27c0792dcb4f4"
+    },
+    {
+      "path": "nuget/Microsoft.Build-17.7.2/package.nuspec",
+      "sha256": "92506142fab54fb7f51fc80c2277d98c08bdd3681b59f651850d95a05991d63a"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Framework-17.7.2/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Framework-17.7.2/LICENSE.upstream.txt",
+      "sha256": "9aebac42398b50e652a84a7b92d70e85cd1a9c8746558a743dc6cec11b8d7d3e"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Framework-17.7.2/notices/THIRDPARTYNOTICES.txt",
+      "sha256": "01bb7cfadd7ebc022a5ff5dad8c9df0574ee0330f6f58ee497a27c0792dcb4f4"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Framework-17.7.2/package.nuspec",
+      "sha256": "9ee561a47aef3cb6a3ce1876e05500a3840df7726abecac49f0b77aae5d92066"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.6.10/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.6.10/LICENSE.upstream.txt",
+      "sha256": "990b71168a54194e2c0414bedfc3702b62cd0ae57a06240d874eb95ea8a81f69"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.6.10/package.nuspec",
+      "sha256": "5d879d054d6f56720ffc8f457b72783b0905d15cf53da02ec805f2ffa0b1bdd4"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.7.8/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.7.8/LICENSE.upstream.txt",
+      "sha256": "990b71168a54194e2c0414bedfc3702b62cd0ae57a06240d874eb95ea8a81f69"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Locator-1.7.8/package.nuspec",
+      "sha256": "d1d44e777b94ff14a26a8b1bac332ef8aa14d58f6240e30df7454640fc5359cd"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Tasks.Core-17.7.2/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Tasks.Core-17.7.2/LICENSE.upstream.txt",
+      "sha256": "9aebac42398b50e652a84a7b92d70e85cd1a9c8746558a743dc6cec11b8d7d3e"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Tasks.Core-17.7.2/notices/THIRDPARTYNOTICES.txt",
+      "sha256": "01bb7cfadd7ebc022a5ff5dad8c9df0574ee0330f6f58ee497a27c0792dcb4f4"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Tasks.Core-17.7.2/package.nuspec",
+      "sha256": "3d86eaa9de6be8508d5f925c408340521c6e057fdc86bf7ff2b47a976d41994b"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Utilities.Core-17.7.2/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Utilities.Core-17.7.2/LICENSE.upstream.txt",
+      "sha256": "9aebac42398b50e652a84a7b92d70e85cd1a9c8746558a743dc6cec11b8d7d3e"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Utilities.Core-17.7.2/notices/THIRDPARTYNOTICES.txt",
+      "sha256": "01bb7cfadd7ebc022a5ff5dad8c9df0574ee0330f6f58ee497a27c0792dcb4f4"
+    },
+    {
+      "path": "nuget/Microsoft.Build.Utilities.Core-17.7.2/package.nuspec",
+      "sha256": "e024879fa38e6bab9f93b2ad18162bb12ffa0c8a23b903b4e95d101cb353e01b"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Common-4.14.0/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Common-4.14.0/package.nuspec",
+      "sha256": "a9078fb18688996a941596452a3c214ddf6ac6a437e9fac05fb6df9aee0fdddc"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Common-4.14.0/ThirdPartyNotices.rtf",
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp-4.14.0/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp-4.14.0/package.nuspec",
+      "sha256": "bff26146813a2ba8450713193b662a4ae84ab69af44f348fc7359fb47f559d32"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp-4.14.0/ThirdPartyNotices.rtf",
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp.Workspaces-4.14.0/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp.Workspaces-4.14.0/package.nuspec",
+      "sha256": "80dc6177dbecdc543219dfbfc5b453543198cf223ed350cc44c45e9bf5866e14"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.CSharp.Workspaces-4.14.0/ThirdPartyNotices.rtf",
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.Common-4.14.0/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.Common-4.14.0/package.nuspec",
+      "sha256": "0c2a697f2b70b271be171f4efcbea3910670eb914e98e16f303b843aba528898"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.Common-4.14.0/ThirdPartyNotices.rtf",
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.MSBuild-4.14.0/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.MSBuild-4.14.0/package.nuspec",
+      "sha256": "cfce8014ee308119ec3d447e30c543df4b9ade393ab0b47eb20825b6ff98d129"
+    },
+    {
+      "path": "nuget/Microsoft.CodeAnalysis.Workspaces.MSBuild-4.14.0/ThirdPartyNotices.rtf",
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.DependencyInjection-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.DependencyInjection-9.0.0/package.nuspec",
+      "sha256": "53634709a58159c8387a7bd77f1849d5d6f7d6a913c28e087e5dbd83a6687bb0"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.DependencyInjection.Abstractions-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.DependencyInjection.Abstractions-9.0.0/package.nuspec",
+      "sha256": "eda64b8d4359a8bfd67eab97c8da24699e723c07751698482417537c635f09ae"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Logging-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Logging-9.0.0/package.nuspec",
+      "sha256": "2fe42588885a138c915a7f227a1b68edc232bbed83139c899fde40dc9db6597d"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Logging.Abstractions-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Logging.Abstractions-9.0.0/package.nuspec",
+      "sha256": "ece339d8d2d362ccb64382b97e77c30902dccc08057281300feb86b8d566f8a2"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Options-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Options-9.0.0/package.nuspec",
+      "sha256": "635f2f0ca6f89a8d7477be9150fc251d35fe6c53fa94024e379227ae9f0f63d0"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Primitives-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.Extensions.Primitives-9.0.0/package.nuspec",
+      "sha256": "f75b9c1c4c9565a391454a47e8f2034268910e6e42d2aacf0409152c6ca5b2e2"
+    },
+    {
+      "path": "nuget/Microsoft.NET.StringTools-17.7.2/LICENSE.txt",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/Microsoft.NET.StringTools-17.7.2/notices/THIRDPARTYNOTICES.txt",
+      "sha256": "01bb7cfadd7ebc022a5ff5dad8c9df0574ee0330f6f58ee497a27c0792dcb4f4"
+    },
+    {
+      "path": "nuget/Microsoft.NET.StringTools-17.7.2/package.nuspec",
+      "sha256": "0d29e06fa17107d1e11778380660ab101bed182fcd846e1a4c743597de9a76b2"
+    },
+    {
+      "path": "nuget/Microsoft.VisualStudio.Setup.Configuration.Interop-3.2.2146/LICENSE.txt",
+      "sha256": "f40ed7fd315291ac765f3661958db49d1e540d662699d86b1fab271f4f080bd0"
+    },
+    {
+      "path": "nuget/Microsoft.VisualStudio.Setup.Configuration.Interop-3.2.2146/package.nuspec",
+      "sha256": "4b602d52faebb1bea3e5aeaedbb26ddaafce01a98dfd1fe5303d451c4cd15c47"
+    },
+    {
+      "path": "nuget/Newtonsoft.Json-13.0.3/LICENSE.md",
+      "sha256": "b98a397897ff55f76cddc380041507a95a896b2946e0188703bf0496793d6516"
+    },
+    {
+      "path": "nuget/Newtonsoft.Json-13.0.3/LICENSE.txt",
+      "sha256": "43b44f6770228019ae1c3270a5a23df4b05681828c138f9ac3d5a9c8f376d465"
+    },
+    {
+      "path": "nuget/Newtonsoft.Json-13.0.3/package.nuspec",
+      "sha256": "64aeffca22289eeb3bd32cbe72722ac878d2eadcee9f8885f17daa2e8357c518"
+    },
+    {
+      "path": "nuget/packages.json",
+      "sha256": "341657ddae8f4335db7e31eb3d8d70008bbf5099b1c82ff878e5679d37ebd60b"
+    },
+    {
+      "path": "nuget/System.CodeDom-7.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.CodeDom-7.0.0/package.nuspec",
+      "sha256": "694a221f9f46aebcccb8e28693769d374d5435f244d2f86b19cca3773d7da927"
+    },
+    {
+      "path": "nuget/System.Collections.Immutable-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Collections.Immutable-9.0.0/package.nuspec",
+      "sha256": "37dcdf2d4535a4d323cd1410e55164899a490adcdd29e97582dce289fc3c9528"
+    },
+    {
+      "path": "nuget/System.CommandLine-2.0.0-beta4.24528.1/LICENSE.txt",
+      "sha256": "58fd5ebf25d75b5bb5f4cd407a9fef3befd3641e1af90a1d0716618e6430fc19"
+    },
+    {
+      "path": "nuget/System.Composition.AttributedModel-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Composition.AttributedModel-9.0.0/package.nuspec",
+      "sha256": "3952d2b0bce302fd167dc7fb64dc935b27ba4776a010ff6dd2b7432501fb6e48"
+    },
+    {
+      "path": "nuget/System.Composition.Convention-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Composition.Convention-9.0.0/package.nuspec",
+      "sha256": "18121a2fd8a15f2a3ca67b2fed6f3c8523eace9dc9cef54f71252f5810638ac3"
+    },
+    {
+      "path": "nuget/System.Composition.Hosting-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Composition.Hosting-9.0.0/package.nuspec",
+      "sha256": "2fda0fd75305939159d0a26a98653de2c6c98a003bd93a15cc51d4d9f4ec0515"
+    },
+    {
+      "path": "nuget/System.Composition.Runtime-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Composition.Runtime-9.0.0/package.nuspec",
+      "sha256": "36d9eb77c3ea49899d776115f6ebc48bdaa70455459b5efb918e36df6bae1d6c"
+    },
+    {
+      "path": "nuget/System.Composition.TypedParts-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Composition.TypedParts-9.0.0/package.nuspec",
+      "sha256": "8ff54e60b3b42a824ba976ee5de561fa99617b904985bc168870e48510374120"
+    },
+    {
+      "path": "nuget/System.Configuration.ConfigurationManager-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Configuration.ConfigurationManager-9.0.0/package.nuspec",
+      "sha256": "8dc7a3043437e64783081d893d2ac36d0a7ef6db54c01a80e4451d0d87ea206f"
+    },
+    {
+      "path": "nuget/System.Diagnostics.DiagnosticSource-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Diagnostics.DiagnosticSource-9.0.0/package.nuspec",
+      "sha256": "117e420e77a2026bc0efeeb495c764bb4585de1178f91bb5b88dabdbd98fc9db"
+    },
+    {
+      "path": "nuget/System.Diagnostics.EventLog-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Diagnostics.EventLog-9.0.0/package.nuspec",
+      "sha256": "ffe03442a96afd8f0ceef5dcc5d2cc805a31b6d7b295cc1c7e95f446ca5bfa95"
+    },
+    {
+      "path": "nuget/System.Formats.Nrbf-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Formats.Nrbf-9.0.0/package.nuspec",
+      "sha256": "6c49362fe809f512e5fb84f4ed54793f010af63b048b59fce241f3801f2f6f64"
+    },
+    {
+      "path": "nuget/System.IO.Pipelines-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.IO.Pipelines-9.0.0/package.nuspec",
+      "sha256": "b14a023d40edf0995bd2f5377c6d7b0b74b947c355328c5938a47a1e2d6d4f30"
+    },
+    {
+      "path": "nuget/System.Reflection.Metadata-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Reflection.Metadata-9.0.0/package.nuspec",
+      "sha256": "ed3681dc60819804b7b6879a009b946233c650804c2f0043f4af9faa0c203a25"
+    },
+    {
+      "path": "nuget/System.Reflection.MetadataLoadContext-7.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Reflection.MetadataLoadContext-7.0.0/package.nuspec",
+      "sha256": "369209236db62b1031e5cdea12b9bec445baa919792c5583be63e938df686acd"
+    },
+    {
+      "path": "nuget/System.Resources.Extensions-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Resources.Extensions-9.0.0/package.nuspec",
+      "sha256": "fe7c21c86a7f88b36004691ac4c2b17dc4cc3bef370f63f78aa6a595f4c4eb7d"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.Pkcs-7.0.2/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.Pkcs-7.0.2/package.nuspec",
+      "sha256": "09796b8a4cf451d520bfbea94c472dc39101ecd50456bbb77482d33a6b1434e5"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.ProtectedData-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.ProtectedData-9.0.0/package.nuspec",
+      "sha256": "c094543da0d2043a9590ee0caefce304cf45cd7becf4862fbb542ac03b9e8b8b"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.Xml-7.0.1/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Security.Cryptography.Xml-7.0.1/package.nuspec",
+      "sha256": "44f5f40c60db451d60ccaf90d63555b46e7e7521453c7dfe995d839b953347d5"
+    },
+    {
+      "path": "nuget/System.Security.Permissions-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Security.Permissions-9.0.0/package.nuspec",
+      "sha256": "e5e64a2bd9cf95895eb7e73727cba3fab83146a5431fd6bb065f8b6f392db449"
+    },
+    {
+      "path": "nuget/System.Text.Encodings.Web-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Text.Encodings.Web-9.0.0/package.nuspec",
+      "sha256": "5b0023fd33aa56866c4b1b4c630337e17660ed5d041bc829366539e926176451"
+    },
+    {
+      "path": "nuget/System.Text.Json-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Text.Json-9.0.0/package.nuspec",
+      "sha256": "2f0f8a6d3d80ff01dc895b762dee21ed6f9ee7e00f808800634d5ba3c42730b8"
+    },
+    {
+      "path": "nuget/System.Threading.Tasks.Dataflow-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Threading.Tasks.Dataflow-9.0.0/package.nuspec",
+      "sha256": "755d6b4237d0e1f1719d4ca1f1200b3993adaec4fab758ef45d3bbad48c9dee6"
+    },
+    {
+      "path": "nuget/System.Windows.Extensions-9.0.0/LICENSE.TXT",
+      "sha256": "fcc7466b3a24ac3c38d7f70fbff765ec7cda1533ae16c9da2bdf68b6658ac0c9"
+    },
+    {
+      "path": "nuget/System.Windows.Extensions-9.0.0/package.nuspec",
+      "sha256": "cefe1d6b7bb69329adbb7f4660dd14aa45b36aedf7a2fc50b94db10acc1f23e4"
+    },
+    {
+      "path": "qt/attributions.json",
+      "sha256": "e1870ea67b41fdfbadc4126bc0b8b574507f44fc0316fa5620365cd7d63955f2"
+    },
+    {
+      "path": "qt/build-configuration/config_qtbase.opt",
+      "sha256": "9e4af7506a3e75f2e60ca5f860b3c56191b3678a2780c5f729152a9c2f7244b8"
+    },
+    {
+      "path": "qt/build-configuration/config_qtbase.summary",
+      "sha256": "99d40060d0afec14c48e95ee9e93cb2cbba65fdff2525396d6f1a30293008ce6"
+    },
+    {
+      "path": "qt/build-configuration/config_qtsvg.opt",
+      "sha256": "ba1b61713b97d17eeb929a4cd3ca9d80aae0b9affa6354f347253eb8b7cd6a3b"
+    },
+    {
+      "path": "qt/build-configuration/config_qtsvg.summary",
+      "sha256": "378a05d700067d7aa67a648e85adca6f8dd95e23da3c9aa7db7aee5d86d612f4"
+    },
+    {
+      "path": "qt/qtbase/attributions/aglfn/LICENSE.AGLFN.txt",
+      "sha256": "40818155548ff41c67d3a40edf355e9658992b292c227f4c1147425cedc746c6"
+    },
+    {
+      "path": "qt/qtbase/attributions/android-gradle-wrapper/LICENSE",
+      "sha256": "cf234c4188d773406f640bf89be680d9288f40ff96901c70d643fcea96ad46df"
+    },
+    {
+      "path": "qt/qtbase/attributions/android-native-style/LICENSE",
+      "sha256": "4a51cf7f724f51bedb5fa4f9583a2762f1db8d05e43a577e2487c7aab2fdce18"
+    },
+    {
+      "path": "qt/qtbase/attributions/appmenu/LGPL-2.1-or-later.txt",
+      "sha256": "1ccf09bf2f598308df4bed9cd8e9657dc5cd0973d2800318f2e241486e2edf3f"
+    },
+    {
+      "path": "qt/qtbase/attributions/blake2/COPYING",
+      "sha256": "4103f471877ed0bae500752c5fcd7ecca409d4a4a8dc2ad40437daba60f1a2bc"
+    },
+    {
+      "path": "qt/qtbase/attributions/catch2/LICENSE.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "qt/qtbase/attributions/cmake-runcmake-test-modules/Copyright.txt",
+      "sha256": "0676e30827684487aa0ea8f72f01e9460a6320fa34a2888df0ad1dd3e8a06eb8"
+    },
+    {
+      "path": "qt/qtbase/attributions/cocoa-platform-plugin/LICENSE.COCOA.txt",
+      "sha256": "e9e5b9f66d21c0e88a4179525ab39cd8d7eac9af78a8404f322c32b0874783d5"
+    },
+    {
+      "path": "qt/qtbase/attributions/cycle/LICENSE.txt",
+      "sha256": "cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d"
+    },
+    {
+      "path": "qt/qtbase/attributions/d3d12memoryallocator/LICENSE.txt",
+      "sha256": "1b3941c52b26d42c510afbdf205a8b96a6d64f5a7b8ebff0287979fd91dfd52f"
+    },
+    {
+      "path": "qt/qtbase/attributions/dejayvu/DEJAVU-LICENSE",
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93"
+    },
+    {
+      "path": "qt/qtbase/attributions/doubleconversion/LICENSE",
+      "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+    },
+    {
+      "path": "qt/qtbase/attributions/easing/LICENSE",
+      "sha256": "92fac99458f1754b73edf50f9c9983e0efaa06ad96e2afd5e538c79f45b4b191"
+    },
+    {
+      "path": "qt/qtbase/attributions/forkfd/LICENSE",
+      "sha256": "d0d683ae18e78fbef90eb41168fb781920da2d12bf80704490f0882915c18ae0"
+    },
+    {
+      "path": "qt/qtbase/attributions/fractional-scale-v1/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/freetype/LICENSE.txt",
+      "sha256": "bf543cdda11864477b8d2ca2aa9afc2aaa8f9133461b4d962ed6ec73646256a1"
+    },
+    {
+      "path": "qt/qtbase/attributions/freetype-bdf/BDF-LICENSE.txt",
+      "sha256": "e4e792f29e66750f2e410fd7b50a567652c180f6ee15e1a4dfa0bb5cde524537"
+    },
+    {
+      "path": "qt/qtbase/attributions/freetype-pcf/PCF-LICENSE.txt",
+      "sha256": "6938597bfdeca0db191a8f9ede52eaf2482c2c71a0094c084747a1235f9958fe"
+    },
+    {
+      "path": "qt/qtbase/attributions/freetype-zlib/ZLIB-LICENSE.txt",
+      "sha256": "2b1f5d615382a151af3eb71462ad17d89e2efee8fa7664058d35d3d9237ebb19"
+    },
+    {
+      "path": "qt/qtbase/attributions/grayraster/LICENSE.txt",
+      "sha256": "bf543cdda11864477b8d2ca2aa9afc2aaa8f9133461b4d962ed6ec73646256a1"
+    },
+    {
+      "path": "qt/qtbase/attributions/harfbuzz-ng/COPYING",
+      "sha256": "ba8f810f2455c2f08e2d56bb49b72f37fcf68f1f4fade38977cfd7372050ad64"
+    },
+    {
+      "path": "qt/qtbase/attributions/icc-srgb-color-profile/LICENSE.txt",
+      "sha256": "9e34ff47b3a44814e183342e7e198d127a6740e29d20e8381fba7688dafc79dd"
+    },
+    {
+      "path": "qt/qtbase/attributions/libdbus-1-headers/LICENSE.LIBDBUS-1.txt",
+      "sha256": "ad90aa08bb1a9b7056aa51e2e215b36630855457cde5dffd36aa0faa7b169f24"
+    },
+    {
+      "path": "qt/qtbase/attributions/libpng/LICENSE",
+      "sha256": "bdb0a645ea18c60507d0368379b1ac5474b92255fcc2d115e07486a7672ba526"
+    },
+    {
+      "path": "qt/qtbase/attributions/libpsl/LICENSE.chromium",
+      "sha256": "1d7f52747a9169751cdf2641a8299c0098e9ecdf9429296ffd55bdb14c9ed5b3"
+    },
+    {
+      "path": "qt/qtbase/attributions/linuxperf/LICENSE.txt",
+      "sha256": "ed71cfca021790f74094e9810f42e31288e7f43cf00c8d9ac8d6f904124bd815"
+    },
+    {
+      "path": "qt/qtbase/attributions/md4c/LICENSE.md",
+      "sha256": "d30937367d5413e7eaa218b1640b8946ff76fd34d97152f6979fd96169d5d0fc"
+    },
+    {
+      "path": "qt/qtbase/attributions/opengl-es2-headers/LICENSE.KHRONOS.txt",
+      "sha256": "2e484f3c26ff5008c704a3ca9dd809d43f24a004a1abb6c202660fbff0d19715"
+    },
+    {
+      "path": "qt/qtbase/attributions/opengl-headers/LICENSE.KHRONOS.txt",
+      "sha256": "2e484f3c26ff5008c704a3ca9dd809d43f24a004a1abb6c202660fbff0d19715"
+    },
+    {
+      "path": "qt/qtbase/attributions/pcre2/LICENCE.md",
+      "sha256": "197d8a73ffee0d6b09adba2f9c677b5f5aede24edf89258a68e48248d010d811"
+    },
+    {
+      "path": "qt/qtbase/attributions/pcre2-sljit/LICENSE-SLJIT",
+      "sha256": "5f216505c0f6ea3273caec89e766eef93cdeb7bbb0c429f9360116d7c938feeb"
+    },
+    {
+      "path": "qt/qtbase/attributions/pixman/LICENSE",
+      "sha256": "942c4f2a80394d3f53599b8382e9f27349b95c45d92b69b84f26d404f4dd74a5"
+    },
+    {
+      "path": "qt/qtbase/attributions/presentation-time.xml/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/psl-data/PSL-LICENSE.txt",
+      "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
+    },
+    {
+      "path": "qt/qtbase/attributions/qeventdispatcher_cf/LICENSE.QEVENTDISPATCHER_CF.txt",
+      "sha256": "e9e5b9f66d21c0e88a4179525ab39cd8d7eac9af78a8404f322c32b0874783d5"
+    },
+    {
+      "path": "qt/qtbase/attributions/rfc6234/LICENSE",
+      "sha256": "7ccebd514aaabc86192f957d773cebf06577c12fe9f25ecd419c6cac5da7a14c"
+    },
+    {
+      "path": "qt/qtbase/attributions/rhi-miniengine-d3d12-mipmap/LICENSE.MiniEngine.txt",
+      "sha256": "cf248820bf1178370bb4f1670a59f8748d46bc96d0f64080cd631511c6046409"
+    },
+    {
+      "path": "qt/qtbase/attributions/sha3_endian/BRG_ENDIAN_LICENSE",
+      "sha256": "2fed6f252ca4a7e813811de3cd3cd08183edd4138bdee909410ef6eee394e82c"
+    },
+    {
+      "path": "qt/qtbase/attributions/sha3_keccak/CC0_LICENSE",
+      "sha256": "1f2786e2c5befeb4dcba6638db6528bf96ef5d2cf24bc85ab5a81ef00abef59d"
+    },
+    {
+      "path": "qt/qtbase/attributions/smooth-scaling-algorithm/LICENSE.QIMAGETRANSFORM.txt",
+      "sha256": "46b3cbfa2f2946b93291506351e9be1dd0a28d2a53260f5aa488abd36fbeca9d"
+    },
+    {
+      "path": "qt/qtbase/attributions/tinycbor/LICENSE",
+      "sha256": "3c6ba0b5bfa7830505301ffb336a17b0748e0d61c4d34216e9dc98f10e40395e"
+    },
+    {
+      "path": "qt/qtbase/attributions/valgrind/LICENSE.txt",
+      "sha256": "ec72eebd6326165156787da828caaa18386489387aefaa073c9bd40b8b2a400e"
+    },
+    {
+      "path": "qt/qtbase/attributions/vulkan-xml-spec/LICENSE.txt",
+      "sha256": "5f618873b0cdd1e84c611c5529212c2524bfc887bdfd7d1f3b568bad3c649612"
+    },
+    {
+      "path": "qt/qtbase/attributions/vulkanmemoryallocator/LICENSE.txt",
+      "sha256": "846d97c8b74ccaa92b9ad031140a04363b3b3985f318094552f297b8bda1c68e"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-color-management-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-eglstream-controller/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-fullscreen-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-linux-dmabuf-unstable-v1/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-pointer-gestures-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-pointer-warp-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-primary-selection-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-scaler-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-session-management-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-tablet-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-text-input-unstable-v1/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-text-input-unstable-v2/HPND_LICENSE.txt",
+      "sha256": "8172d52f3b7bba7d10af2f9134c63d0f699ba6b20a47e35f5ac45654c500bfd7"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-text-input-unstable-v3/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-viewporter-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-activation/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-decoration-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-output-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-shell-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-system-bell-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wayland-xdg-toplevel-icon-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/wlr-data-control-unstable-v1-protocol/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/xcb-xinput/LICENSE",
+      "sha256": "82775191bc05f85b40404d77bb69b1edeaeb4033f48387e9e5eab4dd67f5d6f1"
+    },
+    {
+      "path": "qt/qtbase/attributions/xdg-dialog-v1/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/xdg-foreign-unstable-v2/MIT_LICENSE.txt",
+      "sha256": "a8341b9c90ef447a77f55d550e6691e370d3ac15d60edb584def356e348ab828"
+    },
+    {
+      "path": "qt/qtbase/attributions/xserverhelper/LICENSE.XCONSORTIUM.txt",
+      "sha256": "a216b01291eb38fc1af93cfccf1fc67b48d9923612e517c2a695e95b3f03c22c"
+    },
+    {
+      "path": "qt/qtbase/attributions/zlib/LICENSE",
+      "sha256": "d7e3139972874dc8abdbbfce27ec1e6f942b28279dd7d27453630a8b4610e080"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/AFL-2.1.txt",
+      "sha256": "93bb4f7417aa775bab9026cc3d0af28aeb64451fc5a8ec651876785edd8eaf9b"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Apache-2.0.txt",
+      "sha256": "e3ba223bb1423f0aad8c3dfce0fe3148db48926d41e6fbc3afbbf5ff9e1c89cb"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Bitstream-Vera.txt",
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/blessing.txt",
+      "sha256": "592db1199aab67aafe4515db9808b420db122083807c5329b2f061951e79acbe"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/BSD-2-Clause.txt",
+      "sha256": "8fda146749ca071ac9cdce2e24d25444676ea48d1f9dccc2b7c15c054b717db8"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/BSD-3-Clause.txt",
+      "sha256": "9f0490f18656c6f2435bd14f603ef0c96434d1825615363dce43abb42ed1dcce"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/BSD-4-Clause.txt",
+      "sha256": "83faa0d205c316ce3efeafee465b6a165914fb29595968c08dc6437021b7b6fd"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/BSL-1.0.txt",
+      "sha256": "3abd6471b9a9a08d65ce771143f8e278bb4c1aeb10c1c2d476935a6b049653f5"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/CC0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/FTL.txt",
+      "sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/GFDL-1.3-no-invariants-only.txt",
+      "sha256": "110535522396708cea37c72a802c5e7e81391139f5f7985631c93ef242b206a4"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/GPL-2.0-only.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/GPL-2.0-or-later.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/GPL-3.0-only.txt",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/HPND.txt",
+      "sha256": "67ac968431270291f5e9cd3ed76705e1169f57082ee102093b2543b28cef63cf"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/IJG.txt",
+      "sha256": "1cb448f5e2e6d3aca60943f4eee1a04675628dc0266a074a42bc1560ebc28d61"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Imlib2.txt",
+      "sha256": "8846f2baba1a7f4c36f7ca19a923a000d8a21afa37cf0fe006f6ce88a6058a89"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/IPL-1.0.txt",
+      "sha256": "d5328e672fb1bff47ee18e890784541453380081cf3771bb7b3c06fc19c7d503"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LGPL-2.1-or-later.txt",
+      "sha256": "1ccf09bf2f598308df4bed9cd8e9657dc5cd0973d2800318f2e241486e2edf3f"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LGPL-3.0-only.txt",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/libpng-2.0.txt",
+      "sha256": "7317e078e2d3b5d7ba5a6159e650945153262b44b76f6700f8e9edb261c5143e"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Libpng.txt",
+      "sha256": "58fe669792f9b4e0740bf75ecfe90b5326128bb2ce7e27e1c342abd9db4d8ea6"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LicenseRef-BSD-3-Clause-with-PCRE2-Binary-Like-Packages-Exception.txt",
+      "sha256": "0526625fcc746a42d3f19a0ab357d3dc8479fdbe3bfd168825498f50215c7a63"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LicenseRef-ICC-License.txt",
+      "sha256": "9e34ff47b3a44814e183342e7e198d127a6740e29d20e8381fba7688dafc79dd"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LicenseRef-Lcs-Telegraphics.txt",
+      "sha256": "c10225ebbd5191bfdd761b0d7752c785f2453ab665d6c454473fb12d254668aa"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LicenseRef-Qt-Commercial.txt",
+      "sha256": "9b1f50aae6267f9d5e0ceb6775ee86450262c25ec7c0573e151fe5d3f18a4700"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/LicenseRef-SHA1-Public-Domain.txt",
+      "sha256": "65d86b8ec6b1cd8b8f6e64fd8710274ba00d6a3c520e00dfdcd1c3d2071f3305"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Linux-syscall-note.txt",
+      "sha256": "3f9e477523febab58de8b716ccfbcf02e6ef1c8e7728953905e8558637abe2a9"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/MIT-Khronos-old.txt",
+      "sha256": "3c58021633974f9ed3c3d445a374240a5244fd039628f4d7f6f3e674bc8e6694"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/MIT-open-group.txt",
+      "sha256": "c55d2ab72d8a4f9e9cd8fbd1379268e575e8cfa16874affa5899b75a6d754514"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/MIT.txt",
+      "sha256": "d040359701c01996a017d5c515678929cd1b0625e64cb86db44025fbb6cdf1fc"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/MPL-2.0.txt",
+      "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Qt-GPL-exception-1.0.txt",
+      "sha256": "40678d338ce53cd93f8b22b281a2ecbcaa3ee65ce60b25ffb0c462b0530846b2"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/SPL-1.0.txt",
+      "sha256": "f58f2f30909982445f97f1a61667261920a7caeab21ef5bea1b740f5b144d141"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Unicode-3.0.txt",
+      "sha256": "80bb6294022d8764adb36a9d65ebb6bd94efb1865918a71e31e6c247607d7634"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/X11.txt",
+      "sha256": "e2936c6509784b4f0ec27bac74182393866fad9422b29a70e085ff14aba87193"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Xerox.txt",
+      "sha256": "b6bc52205d01e10cf43dbb7b8aec06dcaa3b21d1486e7c9c0bec329ee8244d8d"
+    },
+    {
+      "path": "qt/qtbase/LICENSES/Zlib.txt",
+      "sha256": "d7e3139972874dc8abdbbfce27ec1e6f942b28279dd7d27453630a8b4610e080"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/android/LICENSE",
+      "sha256": "4a51cf7f724f51bedb5fa4f9583a2762f1db8d05e43a577e2487c7aab2fdce18"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/blake2/COPYING",
+      "sha256": "4103f471877ed0bae500752c5fcd7ecca409d4a4a8dc2ad40437daba60f1a2bc"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/D3D12MemoryAllocator/LICENSE.txt",
+      "sha256": "1b3941c52b26d42c510afbdf205a8b96a6d64f5a7b8ebff0287979fd91dfd52f"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/double-conversion/LICENSE",
+      "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/easing/LICENSE",
+      "sha256": "92fac99458f1754b73edf50f9c9983e0efaa06ad96e2afd5e538c79f45b4b191"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/forkfd/LICENSE",
+      "sha256": "d0d683ae18e78fbef90eb41168fb781920da2d12bf80704490f0882915c18ae0"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/freetype/docs/FTL.TXT",
+      "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/freetype/LICENSE.txt",
+      "sha256": "bf543cdda11864477b8d2ca2aa9afc2aaa8f9133461b4d962ed6ec73646256a1"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/gradle/LICENSE",
+      "sha256": "cf234c4188d773406f640bf89be680d9288f40ff96901c70d643fcea96ad46df"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/harfbuzz-ng/AUTHORS",
+      "sha256": "19bfe8f5ed100636cd24ab0c90a3f71c21d8b02d9ba00719447a0faab364d49f"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/harfbuzz-ng/COPYING",
+      "sha256": "ba8f810f2455c2f08e2d56bb49b72f37fcf68f1f4fade38977cfd7372050ad64"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/icc/LICENSE.txt",
+      "sha256": "9e34ff47b3a44814e183342e7e198d127a6740e29d20e8381fba7688dafc79dd"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/libjpeg/COPYRIGHT.txt",
+      "sha256": "e5b349c6a98d997a8d0f5fcfe5cc900b1f76bbc32743674c52a70981498748c0"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/libjpeg/LICENSE",
+      "sha256": "ba6bceebcba0fdd35488477c2cca8c4632ce82c74dbfbc87d886ce6fc4433579"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/libpng/LICENSE",
+      "sha256": "bdb0a645ea18c60507d0368379b1ac5474b92255fcc2d115e07486a7672ba526"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/libpsl/src/LICENSE.chromium",
+      "sha256": "1d7f52747a9169751cdf2641a8299c0098e9ecdf9429296ffd55bdb14c9ed5b3"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/md4c/LICENSE.md",
+      "sha256": "d30937367d5413e7eaa218b1640b8946ff76fd34d97152f6979fd96169d5d0fc"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/pcre2/AUTHORS.md",
+      "sha256": "66d9adef4d4bcb7c2dd99a499a89a52033375785edaa8a35ada0f2db7d05a1a4"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/pcre2/LICENSE-SLJIT",
+      "sha256": "5f216505c0f6ea3273caec89e766eef93cdeb7bbb0c429f9360116d7c938feeb"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/pixman/LICENSE",
+      "sha256": "942c4f2a80394d3f53599b8382e9f27349b95c45d92b69b84f26d404f4dd74a5"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/rfc6234/LICENSE",
+      "sha256": "7ccebd514aaabc86192f957d773cebf06577c12fe9f25ecd419c6cac5da7a14c"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/tinycbor/LICENSE",
+      "sha256": "3c6ba0b5bfa7830505301ffb336a17b0748e0d61c4d34216e9dc98f10e40395e"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/VulkanMemoryAllocator/LICENSE.txt",
+      "sha256": "846d97c8b74ccaa92b9ad031140a04363b3b3985f318094552f297b8bda1c68e"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/xcb/LICENSE",
+      "sha256": "82775191bc05f85b40404d77bb69b1edeaeb4033f48387e9e5eab4dd67f5d6f1"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/3rdparty/zlib/LICENSE",
+      "sha256": "d7e3139972874dc8abdbbfce27ec1e6f942b28279dd7d27453630a8b4610e080"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/corelib/kernel/LICENSE.QEVENTDISPATCHER_CF.txt",
+      "sha256": "e9e5b9f66d21c0e88a4179525ab39cd8d7eac9af78a8404f322c32b0874783d5"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/dbus/LICENSE.LIBDBUS-1.txt",
+      "sha256": "ad90aa08bb1a9b7056aa51e2e215b36630855457cde5dffd36aa0faa7b169f24"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/opengl/LICENSE.KHRONOS.txt",
+      "sha256": "2e484f3c26ff5008c704a3ca9dd809d43f24a004a1abb6c202660fbff0d19715"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/painting/LICENSE.QIMAGETRANSFORM.txt",
+      "sha256": "46b3cbfa2f2946b93291506351e9be1dd0a28d2a53260f5aa488abd36fbeca9d"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/painting/LICENSE.XCONSORTIUM.txt",
+      "sha256": "a216b01291eb38fc1af93cfccf1fc67b48d9923612e517c2a695e95b3f03c22c"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/rhi/LICENSE.MiniEngine.txt",
+      "sha256": "cf248820bf1178370bb4f1670a59f8748d46bc96d0f64080cd631511c6046409"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/text/LICENSE.AGLFN.txt",
+      "sha256": "40818155548ff41c67d3a40edf355e9658992b292c227f4c1147425cedc746c6"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/vulkan/LICENSE.txt",
+      "sha256": "5f618873b0cdd1e84c611c5529212c2524bfc887bdfd7d1f3b568bad3c649612"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/gui/vulkan/licenseheader.h.in",
+      "sha256": "6975a5d3dd6bb9e5fa9058f5d8739b68ca7d635fcfae8bec21949ec4331813ec"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/plugins/platforms/cocoa/LICENSE.COCOA.txt",
+      "sha256": "e9e5b9f66d21c0e88a4179525ab39cd8d7eac9af78a8404f322c32b0874783d5"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/testinternal/3rdparty/cmake/Copyright.txt",
+      "sha256": "0676e30827684487aa0ea8f72f01e9460a6320fa34a2888df0ad1dd3e8a06eb8"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/testlib/3rdparty/catch2/LICENSE.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/testlib/3rdparty/cycle/LICENSE.txt",
+      "sha256": "cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/testlib/3rdparty/linux/LICENSE.txt",
+      "sha256": "ed71cfca021790f74094e9810f42e31288e7f43cf00c8d9ac8d6f904124bd815"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/testlib/3rdparty/valgrind/LICENSE.txt",
+      "sha256": "ec72eebd6326165156787da828caaa18386489387aefaa073c9bd40b8b2a400e"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/tools/moc/util/licenseheader.cpp.in",
+      "sha256": "331466d1e3f460ef7f3fe1fcd926307b0594311a2ed286b24ea649c82cc36cc5"
+    },
+    {
+      "path": "qt/qtbase/source-notices/src/widgets/doc/images/licensewizard-flow.png",
+      "sha256": "7a0e08a4499da689b635d1c2582ceb86d4a76b94940f2faae733af6e97621c43"
+    },
+    {
+      "path": "qt/qtsvg/attributions/xsvg/LICENSE.XSVG.txt",
+      "sha256": "3a946598a9f674d44df764279ca0b85b5d6faba08f3bc75d8e0fcf6cd729a9bd"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/BSD-3-Clause.txt",
+      "sha256": "9f0490f18656c6f2435bd14f603ef0c96434d1825615363dce43abb42ed1dcce"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/GFDL-1.3-no-invariants-only.txt",
+      "sha256": "110535522396708cea37c72a802c5e7e81391139f5f7985631c93ef242b206a4"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/GPL-2.0-only.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/GPL-3.0-only.txt",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/HPND-sell-variant.txt",
+      "sha256": "3a946598a9f674d44df764279ca0b85b5d6faba08f3bc75d8e0fcf6cd729a9bd"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/LGPL-3.0-only.txt",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "qt/qtsvg/LICENSES/LicenseRef-Qt-Commercial.txt",
+      "sha256": "9b1f50aae6267f9d5e0ceb6775ee86450262c25ec7c0573e151fe5d3f18a4700"
+    },
+    {
+      "path": "qt/qtsvg/source-notices/src/svg/LICENSE.XSVG.txt",
+      "sha256": "3a946598a9f674d44df764279ca0b85b5d6faba08f3bc75d8e0fcf6cd729a9bd"
+    },
+    {
+      "path": "qt/sbom/qtbase-6.11.2.spdx.json",
+      "sha256": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24"
+    },
+    {
+      "path": "qt/sbom/qtsvg-6.11.2.spdx.json",
+      "sha256": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5"
+    },
+    {
+      "path": "qt/SOURCE-AND-RELINKING.txt",
+      "sha256": "5167c6e9d1952e526aee42ae16d0c4b00336f9bbe3ffacc956a57aa1d316af29"
+    },
+    {
+      "path": "sources.json",
+      "sha256": "e8ad7732aecc23a832b890c63b7e0b46566dacfab44cac0b23fefbc61c4cf405"
+    }
+  ]
+}

@@ -168,3 +168,11 @@ cd VividCode
 ## Ai使用情况
 
 本项目在开发过程中使用了 OpenAI Codex，辅助完成部分功能实现、问题排查、测试验证与文档整理。
+
+## 许可证与第三方组件
+
+vividcode 自有代码使用 [MIT 许可证](LICENSE)。安装包内的 Qt、微软运行库及其他第三方组件仍遵循各自的许可证，详见 [第三方声明](VividCode/THIRD_PARTY_NOTICES.txt)。
+
+本程序动态链接 Qt 6.11.2，按 LGPLv3 使用相应 Qt 模块。对应 Qt 源码与构建说明随同一 [Release](https://github.com/piger114514/VividCode/releases) 提供；用户可以替换兼容的 Qt 库，具体步骤见 [Qt 源码与替换说明](VividCode/licenses/qt/SOURCE-AND-RELINKING.txt)。
+
+Pi 是用户自行安装的独立第三方工具；vividcode 通过其 RPC 接口集成，不代表 Pi 或 OpenAI 官方参与维护或背书。

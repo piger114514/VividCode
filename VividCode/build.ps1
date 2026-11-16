@@ -34,6 +34,7 @@ if (!$crt) { throw 'Visual C++ x64 app-local redistributable directory not found
 Get-ChildItem -LiteralPath $crt.FullName -Filter '*.dll' -File | Copy-Item -Destination (Join-Path $buildDir 'Release') -Force
 
 Copy-Item -LiteralPath "$QtRoot\plugins\platforms\qoffscreen.dll" -Destination "$buildDir\Release\platforms\qoffscreen.dll" -Force
+& "$PSScriptRoot\prepare-legal.ps1" -RuntimeDirectory "$buildDir\Release"
 if ($RunTests) {
     $tests = @('ui_language','source_highlighting','prototype_smoke','ai_explanations','pi_agent','cli_lifecycle','generation_commands','local_environment')
     if ($Languages -contains 'cpp') { $tests += @('semantic_backend','semantic_ui') }
