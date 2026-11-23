@@ -215,10 +215,12 @@ public:
     void updatePath() {
         prepareGeometryChange();
         const auto a = from->sceneBoundingRect(), b = to->sceneBoundingRect();
-        const QPointF start(a.right(), a.center().y()), end(b.left(), b.center().y());
+        const bool loopBack = from == to || b.left() <= a.right();
+        const qreal portOffset = loopBack ? 0 : std::tanh(bend / 90.0) * qMin(a.height(), b.height()) / 3;
+        const QPointF start(a.right(), a.center().y() + portOffset), end(b.left(), b.center().y() + portOffset);
         QPainterPath curve;
         curve.moveTo(start);
-        if (from == to || end.x() - start.x() < 60) {
+        if (loopBack) {
             // 反向摆放及自调用从上方绕回，仍然右侧出、左侧进。
             const qreal clearance = 70 + qAbs(bend);
             const qreal top = qMin(a.top(), b.top()) - clearance;
@@ -226,10 +228,8 @@ public:
             curve.cubicTo(start + QPointF(clearance, 0), QPointF(start.x() + clearance, top), middle);
             curve.cubicTo(QPointF(end.x() - clearance, top), end - QPointF(clearance, 0), end);
         } else {
-            const qreal length = qMax(30.0, (end.x() - start.x()) / 4);
-            const QPointF middle = (start + end) / 2 + QPointF(0, bend);
-            curve.cubicTo(start + QPointF(length, 0), middle - QPointF(length, 0), middle);
-            curve.cubicTo(middle + QPointF(length, 0), end - QPointF(length, 0), end);
+            const QPointF handle((end.x() - start.x()) / 2, 0);
+            curve.cubicTo(start + handle, end - handle, end);
         }
         // 终点切线固定向右，箭头准确指向引用者的左侧。
         arrow = QPolygonF{end, end - QPointF(std::cos(0.5) * 13, -std::sin(0.5) * 13),

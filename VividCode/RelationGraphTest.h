@@ -87,8 +87,9 @@ inline bool runRelationGraphModelTest() {
             const auto path = static_cast<QGraphicsPathItem *>(item)->path();
             const auto start = path.elementAt(0), firstControl = path.elementAt(1);
             const auto lastControl = path.elementAt(path.elementCount() - 2), end = path.elementAt(path.elementCount() - 1);
-            if (QLineF(QPointF(start.x, start.y), QPointF(a.right(), a.center().y())).length() > 0.001 ||
-                QLineF(QPointF(end.x, end.y), QPointF(b.left(), b.center().y())).length() > 0.001 ||
+            if (qAbs(start.x - a.right()) > 0.001 || start.y < a.top() || start.y > a.bottom() ||
+                qAbs(end.x - b.left()) > 0.001 || end.y < b.top() || end.y > b.bottom() ||
+                (end.x > start.x && path.elementCount() != 4) ||
                 firstControl.x <= start.x || qAbs(firstControl.y - start.y) > 0.001 ||
                 lastControl.x >= end.x || qAbs(lastControl.y - end.y) > 0.001) return false;
         }

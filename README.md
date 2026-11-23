@@ -6,7 +6,7 @@ vividcode 是一款面向 Windows 的代码分析与可视化工具，支持 C/C
 
 [下载安装包](https://github.com/piger114514/VividCode/releases) · [反馈问题](https://github.com/piger114514/VividCode/issues)
 
-版本：**0.1.0**（Windows x64）。
+版本：**0.1.1**（Windows x64）。
 
 ## 可以用它做什么？
 
